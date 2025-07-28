@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Öğrenme Yol Haritası - KariyerAI</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="flex items-center gap-4">
+                    <a href="dashboard.html" class="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <span class="logo-text">KariyerAI</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding: 2rem 20px;">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">Öğrenme Yol Haritası</h1>
+            <p class="text-gray-600">Kişiselleştirilmiş öğrenme deneyiminiz ve skill tree'niz</p>
+        </div>
+
+        <div class="grid lg:grid-cols-4 gap-8">
+            <!-- Skill Selection Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Beceri Ağacı</h3>
+                        <p class="text-gray-600">Öğrenmek istediğiniz beceriyi seçin</p>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="skill-tree-item active" onclick="selectSkill('sql')">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium">SQL</h4>
+                                <span class="badge badge-outline">Orta</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">Veritabanı yönetimi ve sorgulama</p>
+                            <div class="flex items-center justify-between text-xs">
+                                <span>2/8 modül</span>
+                                <span>4-6 hafta</span>
+                            </div>
+                            <div class="progress mt-2">
+                                <div class="progress-bar" style="width: 25%"></div>
+                            </div>
+                        </div>
+
+                        <div class="skill-tree-item" onclick="selectSkill('nodejs')">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium">Node.js</h4>
+                                <span class="badge badge-outline">Orta-Zor</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">JavaScript ile backend geliştirme</p>
+                            <div class="flex items-center justify-between text-xs">
+                                <span>0/10 modül</span>
+                                <span>6-8 hafta</span>
+                            </div>
+                            <div class="progress mt-2">
+                                <div class="progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+
+                        <div class="skill-tree-item" onclick="selectSkill('docker')">
+                            <div class="flex items-center justify-between mb-2">
+                                <h4 class="font-medium">Docker</h4>
+                                <span class="badge badge-outline">Orta</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-2">Konteyner teknolojisi ve DevOps</p>
+                            <div class="flex items-center justify-between text-xs">
+                                <span>0/6 modül</span>
+                                <span>3-4 hafta</span>
+                            </div>
+                            <div class="progress mt-2">
+                                <div class="progress-bar" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Achievements -->
+                <div class="card mt-6">
+                    <div class="card-header">
+                        <h3 class="flex items-center gap-2">
+                            <i class="fas fa-trophy text-yellow-500"></i>
+                            <span>Başarılar</span>
+                        </h3>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="achievement-item earned">
+                            <div class="achievement-badge yellow">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">İlk Adım</p>
+                                <p class="text-xs text-gray-600">İlk modülü tamamladınız</p>
+                                <span class="badge badge-secondary text-xs mt-1">+50 XP</span>
+                            </div>
+                        </div>
+
+                        <div class="achievement-item earned">
+                            <div class="achievement-badge green">
+                                <i class="fas fa-star"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Hızlı Öğrenci</p>
+                                <p class="text-xs text-gray-600">Bir günde 3 ders tamamladınız</p>
+                                <span class="badge badge-secondary text-xs mt-1">+100 XP</span>
+                            </div>
+                        </div>
+
+                        <div class="achievement-item">
+                            <div class="achievement-badge gray">
+                                <i class="fas fa-trophy"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-medium">Pratik Ustası</p>
+                                <p class="text-xs text-gray-600">5 pratik egzersizi tamamladınız</p>
+                                <span class="badge badge-secondary text-xs mt-1">+200 XP</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Learning Content -->
+            <div class="lg:col-span-3">
+                <!-- Skill Overview -->
+                <div class="card mb-8">
+                    <div class="card-header">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h2 class="text-2xl font-bold">SQL Öğrenme Yolu</h2>
+                                <p class="text-gray-600">Veritabanı yönetimi ve sorgulama</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="badge badge-outline mb-2">Orta</span>
+                                <p class="text-sm text-gray-600">Tahmini süre: 4-6 hafta</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-4">
+                            <span class="text-sm text-gray-600">İlerleme: 2/8 modül tamamlandı</span>
+                            <span class="text-sm font-medium">%25</span>
+                        </div>
+                        <div class="progress">
+                            <div class="progress-bar" style="width: 25%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Learning Modules -->
+                <div id="skillTreeContainer" class="space-y-6">
+                    <!-- Module 1 - Completed -->
+                    <div class="card module-card completed">
+                        <div class="flex items-start gap-4">
+                            <div class="flex flex-col items-center">
+                                <div class="module-status-indicator completed">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="module-connector"></div>
+                            </div>
+                            
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-lg font-semibold">SQL Temelleri</h3>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-video"></i>
+                                        <span class="badge badge-outline">video</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-gray-600 mb-4">Veritabanı kavramları ve temel SQL komutları</p>
+                                
+                                <div class="flex items-center gap-6 text-sm text-gray-500 mb-4">
+                                    <span><i class="fas fa-clock mr-1"></i>2 saat</span>
+                                    <span><i class="fas fa-star mr-1"></i>+100 XP</span>
+                                    <span><i class="fas fa-book-open mr-1"></i>3/3 ders</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <button class="btn btn-outline btn-small">
+                                        <i class="fas fa-check-circle mr-2"></i>Tamamlandı
+                                    </button>
+                                    <a href="kariyer-simulasyonu.html" class="btn btn-outline btn-small">
+                                        <i class="fas fa-users mr-2"></i>Simülasyon
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Module 2 - Completed -->
+                    <div class="card module-card completed">
+                        <div class="flex items-start gap-4">
+                            <div class="flex flex-col items-center">
+                                <div class="module-status-indicator completed">
+                                    <i class="fas fa-check-circle"></i>
+                                </div>
+                                <div class="module-connector"></div>
+                            </div>
+                            
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-lg font-semibold">SELECT ve Filtreleme</h3>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-code"></i>
+                                        <span class="badge badge-outline">interactive</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-gray-600 mb-4">Veri sorgulama ve filtreleme teknikleri</p>
+                                
+                                <div class="flex items-center gap-6 text-sm text-gray-500 mb-4">
+                                    <span><i class="fas fa-clock mr-1"></i>3 saat</span>
+                                    <span><i class="fas fa-star mr-1"></i>+150 XP</span>
+                                    <span><i class="fas fa-book-open mr-1"></i>3/3 ders</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <button class="btn btn-outline btn-small">
+                                        <i class="fas fa-check-circle mr-2"></i>Tamamlandı
+                                    </button>
+                                    <a href="kariyer-simulasyonu.html" class="btn btn-outline btn-small">
+                                        <i class="fas fa-users mr-2"></i>Simülasyon
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Module 3 - Current -->
+                    <div class="card module-card current">
+                        <div class="flex items-start gap-4">
+                            <div class="flex flex-col items-center">
+                                <div class="module-status-indicator current">
+                                    <i class="fas fa-play-circle"></i>
+                                </div>
+                                <div class="module-connector"></div>
+                            </div>
+                            
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-lg font-semibold">JOIN İşlemleri</h3>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-file-alt"></i>
+                                        <span class="badge badge-outline">project</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-gray-600 mb-4">Tablolar arası ilişkiler ve birleştirme</p>
+                                
+                                <div class="flex items-center gap-6 text-sm text-gray-500 mb-4">
+                                    <span><i class="fas fa-clock mr-1"></i>4 saat</span>
+                                    <span><i class="fas fa-star mr-1"></i>+200 XP</span>
+                                    <span><i class="fas fa-book-open mr-1"></i>1/3 ders</span>
+                                </div>
+
+                                <!-- Lessons Progress -->
+                                <div class="mb-4">
+                                    <div class="grid md:grid-cols-2 gap-2">
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <i class="fas fa-check-circle text-green-500"></i>
+                                            <span class="text-green-700">INNER JOIN</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <i class="fas fa-circle text-gray-300"></i>
+                                            <span class="text-gray-600">LEFT/RIGHT JOIN</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 text-sm">
+                                            <i class="fas fa-circle text-gray-300"></i>
+                                            <span class="text-gray-600">FULL OUTER JOIN</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <button class="btn btn-primary btn-small">
+                                        <i class="fas fa-play mr-2"></i>Devam Et
+                                    </button>
+                                    <a href="kariyer-simulasyonu.html" class="btn btn-outline btn-small">
+                                        <i class="fas fa-users mr-2"></i>Simülasyon
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Module 4 - Locked -->
+                    <div class="card module-card locked">
+                        <div class="flex items-start gap-4">
+                            <div class="flex flex-col items-center">
+                                <div class="module-status-indicator locked">
+                                    <i class="fas fa-lock"></i>
+                                </div>
+                            </div>
+                            
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <h3 class="text-lg font-semibold">Aggregate Fonksiyonlar</h3>
+                                    <div class="flex items-center gap-2">
+                                        <i class="fas fa-bolt"></i>
+                                        <span class="badge badge-outline">quiz</span>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-gray-600 mb-4">COUNT, SUM, AVG gibi toplama fonksiyonları</p>
+                                
+                                <div class="flex items-center gap-6 text-sm text-gray-500 mb-4">
+                                    <span><i class="fas fa-clock mr-1"></i>3 saat</span>
+                                    <span><i class="fas fa-star mr-1"></i>+150 XP</span>
+                                </div>
+                                
+                                <div class="flex items-center gap-3">
+                                    <button class="btn btn-outline btn-small" disabled>
+                                        <i class="fas fa-lock mr-2"></i>Kilitli
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Continue Learning CTA -->
+                <div class="card mt-8 cta-card">
+                    <div class="text-center p-6">
+                        <h3 class="text-xl font-semibold mb-2">Öğrenmeye Devam Edin!</h3>
+                        <p class="text-gray-600 mb-4">
+                            Günde sadece 30 dakika ayırarak 4-6 hafta içinde SQL uzmanı olabilirsiniz.
+                        </p>
+                        <div class="flex justify-center gap-4">
+                            <button class="btn btn-primary">
+                                <i class="fas fa-play mr-2"></i>
+                                Bugünkü Derse Başla
+                            </button>
+                            <a href="kariyer-simulasyonu.html" class="btn btn-outline">
+                                <i class="fas fa-bolt mr-2"></i>
+                                Pratik Yap
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+    <script>
+        function selectSkill(skillName) {
+            // Remove active class from all skill tree items
+            document.querySelectorAll('.skill-tree-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            // Add active class to selected item
+            event.target.closest('.skill-tree-item').classList.add('active');
+            
+            showNotification(`${skillName.toUpperCase()} beceri ağacı yükleniyor...`, 'info');
+            
+            // Here you would load the specific skill tree content
+            setTimeout(() => {
+                showNotification(`${skillName.toUpperCase()} beceri ağacı yüklendi!`, 'success');
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

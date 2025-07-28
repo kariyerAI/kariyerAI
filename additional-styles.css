@@ -1,0 +1,613 @@
+/* Additional styles for new components */
+
+/* Skill Tree Items */
+.skill-tree-item {
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.skill-tree-item:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.skill-tree-item.active {
+  border-color: #3b82f6;
+  background: #dbeafe;
+}
+
+/* Module Cards */
+.module-card {
+  transition: all 0.2s;
+}
+
+.module-card.current {
+  border: 2px solid #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.module-card.completed {
+  background: #f0fdf4;
+  border-color: #22c55e;
+}
+
+.module-card.locked {
+  opacity: 0.6;
+  background: #f9fafb;
+}
+
+.module-status-indicator {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  color: white;
+}
+
+.module-status-indicator.completed {
+  background: #22c55e;
+}
+
+.module-status-indicator.current {
+  background: #3b82f6;
+}
+
+.module-status-indicator.available {
+  background: #9ca3af;
+}
+
+.module-status-indicator.locked {
+  background: #d1d5db;
+}
+
+.module-connector {
+  width: 2px;
+  height: 4rem;
+  background: #d1d5db;
+  margin-top: 0.5rem;
+}
+
+/* Option Cards */
+.option-card {
+  padding: 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.option-card:hover {
+  border-color: #3b82f6;
+  background: #f0f9ff;
+}
+
+.option-card.selected {
+  border-color: #3b82f6;
+  background: #dbeafe;
+}
+
+.option-label {
+  flex: 1;
+  cursor: pointer;
+  line-height: 1.5;
+}
+
+/* Skill Analysis Cards */
+.skill-analysis-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.skill-progress-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1.5rem;
+}
+
+.skill-gap-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  padding: 1rem;
+}
+
+/* Insight Cards */
+.insight-card {
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid;
+}
+
+.insight-card.positive {
+  border-color: #22c55e;
+  background: #f0fdf4;
+}
+
+.insight-card.warning {
+  border-color: #f59e0b;
+  background: #fffbeb;
+}
+
+/* Achievement Items */
+.achievement-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.achievement-item.earned {
+  background: #fef3c7;
+}
+
+.achievement-badge {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: white;
+}
+
+.achievement-badge.yellow {
+  background: #f59e0b;
+}
+
+.achievement-badge.blue {
+  background: #3b82f6;
+}
+
+.achievement-badge.green {
+  background: #22c55e;
+}
+
+.achievement-badge.gray {
+  background: #9ca3af;
+}
+
+/* Job Cards */
+.job-card {
+  transition: all 0.2s;
+}
+
+.job-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.company-logo {
+  width: 3rem;
+  height: 3rem;
+  background: #f3f4f6;
+  border-radius: 0.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  color: #6b7280;
+}
+
+.match-indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+}
+
+.match-indicator.green {
+  background: #22c55e;
+}
+
+.match-indicator.yellow {
+  background: #f59e0b;
+}
+
+.match-indicator.red {
+  background: #ef4444;
+}
+
+.skill-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.skill-badge.have {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.skill-badge.missing {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.benefit-badge {
+  padding: 0.25rem 0.5rem;
+  background: #f1f5f9;
+  color: #475569;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+/* Tabs */
+.tabs-container {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.tabs-list {
+  display: flex;
+  gap: 0;
+}
+
+.tab-trigger {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  background: transparent;
+  color: #6b7280;
+  font-weight: 500;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+}
+
+.tab-trigger:hover {
+  color: #3b82f6;
+}
+
+.tab-trigger.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
+
+.tab-content {
+  display: none;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+/* Weekly Activity Chart */
+.weekly-activity-chart {
+  display: flex;
+  justify-content: space-between;
+  align-items: end;
+  height: 200px;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+}
+
+.activity-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.activity-bar {
+  width: 2rem;
+  background: #e5e7eb;
+  border-radius: 0.25rem;
+  position: relative;
+  display: flex;
+  align-items: end;
+  justify-content: center;
+  min-height: 1rem;
+}
+
+.activity-bar.active {
+  background: #3b82f6;
+}
+
+.activity-value {
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.25rem;
+}
+
+.day-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.day-details {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+.day-details small {
+  font-size: 0.625rem;
+  color: #6b7280;
+}
+
+/* Activity Summary */
+.activity-summary {
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+}
+
+.activity-summary.blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.activity-summary.green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.activity-summary.purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+/* Achievement Cards */
+.achievement-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+}
+
+.achievement-card.earned {
+  background: #fef3c7;
+  border-color: #f59e0b;
+}
+
+/* Job Match Cards */
+.job-match-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+}
+
+/* CTA Card */
+.cta-card {
+  background: linear-gradient(135deg, #dbeafe, #ede9fe);
+  border: 1px solid #c7d2fe;
+}
+
+/* User Avatar */
+.user-avatar {
+  width: 2.5rem;
+  height: 2.5rem;
+  background: #f3f4f6;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+}
+
+/* Task Indicator */
+.task-indicator {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 50%;
+}
+
+.task-indicator.quiz {
+  background: #3b82f6;
+}
+
+.task-indicator.project {
+  background: #22c55e;
+}
+
+.task-indicator.scenario {
+  background: #8b5cf6;
+}
+
+/* Activity Icon */
+.activity-icon {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.875rem;
+  color: white;
+}
+
+.activity-icon.course {
+  background: #3b82f6;
+}
+
+.activity-icon.skill {
+  background: #22c55e;
+}
+
+.activity-icon.job {
+  background: #8b5cf6;
+}
+
+.activity-icon.achievement {
+  background: #f59e0b;
+}
+
+/* Badge Variants */
+.badge-red {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge-blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.badge-yellow {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge-purple {
+  background: #ede9fe;
+  color: #7c3aed;
+}
+
+.badge-orange {
+  background: #fed7aa;
+  color: #c2410c;
+}
+
+.badge-gray {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
+.badge-danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge-secondary {
+  background: #f1f5f9;
+  color: #475569;
+}
+
+/* Notification Styles */
+.notification {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1000;
+  max-width: 400px;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
+  animation: slideIn 0.3s ease-out;
+}
+
+.notification-content {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  color: white;
+}
+
+.notification-success {
+  background: #22c55e;
+}
+
+.notification-error {
+  background: #ef4444;
+}
+
+.notification-warning {
+  background: #f59e0b;
+}
+
+.notification-info {
+  background: #3b82f6;
+}
+
+.notification-close {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  margin-left: auto;
+  padding: 0.25rem;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .tabs-list {
+    flex-wrap: wrap;
+  }
+
+  .tab-trigger {
+    flex: 1;
+    min-width: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.875rem;
+  }
+
+  .weekly-activity-chart {
+    height: 150px;
+    padding: 0.5rem;
+  }
+
+  .activity-bar {
+    width: 1.5rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .module-status-indicator {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+
+  .achievement-badge {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .option-card {
+    padding: 0.75rem;
+  }
+
+  .skill-tree-item {
+    padding: 0.75rem;
+  }
+
+  .card {
+    padding: 1rem;
+  }
+
+  .weekly-activity-chart {
+    height: 120px;
+  }
+
+  .day-details {
+    display: none;
+  }
+}

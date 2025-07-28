@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profil Oluştur - KariyerAI</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <a href="index.html" class="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Ana Sayfaya Dön</span>
+                </a>
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <span class="logo-text">KariyerAI</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="max-width: 1000px; padding: 2rem 20px;">
+        <!-- Page Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-4">Profilinizi Oluşturun</h1>
+            <p class="text-xl text-gray-600">CV'nizi yükleyin veya bilgilerinizi manuel olarak girin</p>
+        </div>
+
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- CV Upload Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="flex items-center gap-2">
+                        <i class="fas fa-upload"></i>
+                        <span>CV Yükle</span>
+                    </h3>
+                    <p class="text-gray-600">PDF formatında CV'nizi yükleyin, AI otomatik olarak analiz edecek</p>
+                </div>
+                <div class="file-upload" id="fileUploadArea">
+                    <i class="fas fa-upload"></i>
+                    <p class="mb-2">CV'nizi buraya sürükleyin veya tıklayın</p>
+                    <p class="text-sm text-gray-500">PDF, DOC, DOCX (Max 5MB)</p>
+                    <button class="btn btn-primary mt-4">Dosya Seç</button>
+                    <input type="file" id="cvFile" accept=".pdf,.doc,.docx" style="display: none;">
+                </div>
+            </div>
+
+            <!-- Manual Entry Section -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="flex items-center gap-2">
+                        <i class="fas fa-user"></i>
+                        <span>Manuel Giriş</span>
+                    </h3>
+                    <p class="text-gray-600">Bilgilerinizi manuel olarak girin</p>
+                </div>
+                <div class="form-container">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="form-group">
+                            <label class="form-label" for="firstName">Ad</label>
+                            <input type="text" id="firstName" class="form-input" placeholder="Adınız">
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" for="lastName">Soyad</label>
+                            <input type="text" id="lastName" class="form-input" placeholder="Soyadınız">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="email">E-posta</label>
+                        <input type="email" id="email" class="form-input" placeholder="ornek@email.com">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="phone">Telefon</label>
+                        <input type="tel" id="phone" class="form-input" placeholder="+90 555 123 45 67">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="location">Konum</label>
+                        <input type="text" id="location" class="form-input" placeholder="İstanbul, Türkiye">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Professional Information -->
+        <div class="card mt-8">
+            <div class="card-header">
+                <h3 class="flex items-center gap-2">
+                    <i class="fas fa-briefcase"></i>
+                    <span>Profesyonel Bilgiler</span>
+                </h3>
+            </div>
+            <div class="form-container">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="currentTitle">Mevcut Pozisyon</label>
+                        <input type="text" id="currentTitle" class="form-input" placeholder="ör. Senior Yazılım Geliştirici">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="experienceLevel">Deneyim Seviyesi</label>
+                        <select id="experienceLevel" class="form-select">
+                            <option value="">Deneyim seviyenizi seçin</option>
+                            <option value="junior">Junior (0-2 yıl)</option>
+                            <option value="mid">Mid-Level (2-5 yıl)</option>
+                            <option value="senior">Senior (5-8 yıl)</option>
+                            <option value="lead">Lead/Principal (8+ yıl)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="summary">Profesyonel Özet</label>
+                    <textarea id="summary" class="form-textarea" placeholder="Kendinizi ve kariyerinizi kısaca özetleyin..." rows="4"></textarea>
+                </div>
+
+                <!-- Work Experience -->
+                <div class="form-group">
+                    <div class="flex items-center justify-between mb-4">
+                        <label class="form-label text-base font-semibold">İş Deneyimi</label>
+                        <button id="addExperienceBtn" class="btn btn-outline btn-small">
+                            <i class="fas fa-plus mr-2"></i>
+                            Deneyim Ekle
+                        </button>
+                    </div>
+                    <div id="experienceContainer">
+                        <!-- Experience items will be added here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Skills Section -->
+        <div class="card mt-8">
+            <div class="card-header">
+                <h3 class="flex items-center gap-2">
+                    <i class="fas fa-award"></i>
+                    <span>Beceriler</span>
+                </h3>
+            </div>
+            <div class="form-container">
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="skillInput" class="form-input" placeholder="Beceri ekleyin (ör. JavaScript, Python, SQL)">
+                    <button id="addSkillBtn" class="btn btn-primary">Ekle</button>
+                </div>
+                <div id="skillsContainer" class="skills-container">
+                    <!-- Skills will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Education Section -->
+        <div class="card mt-8">
+            <div class="card-header">
+                <h3 class="flex items-center gap-2">
+                    <i class="fas fa-graduation-cap"></i>
+                    <span>Eğitim</span>
+                </h3>
+            </div>
+            <div class="form-container">
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="university">Üniversite</label>
+                        <input type="text" id="university" class="form-input" placeholder="Üniversite adı">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="degree">Derece</label>
+                        <input type="text" id="degree" class="form-input" placeholder="ör. Bilgisayar Mühendisliği Lisans">
+                    </div>
+                </div>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label" for="graduationYear">Mezuniyet Yılı</label>
+                        <input type="text" id="graduationYear" class="form-input" placeholder="2020">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="gpa">GPA (Opsiyonel)</label>
+                        <input type="text" id="gpa" class="form-input" placeholder="3.5/4.0">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex justify-center gap-4 mt-8">
+            <button class="btn btn-outline btn-large">
+                Taslak Olarak Kaydet
+            </button>
+            <button class="btn btn-primary btn-large" onclick="completeProfile()">
+                Profili Tamamla ve Analiz Et
+            </button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
