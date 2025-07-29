@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İş Eşleştirme - KariyerAI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="flex items-center gap-4">
+                    <a href="../html/dashboard_page.html" class="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <span class="logo-text">KariyerAI</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding: 2rem 20px;">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">İş Eşleştirme</h1>
+            <p class="text-gray-600">Profilinize uygun <span id="jobCount">15</span> iş ilanı bulundu</p>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-8">
+            <div class="card-header">
+                <h3 class="flex items-center gap-2">
+                    <i class="fas fa-filter"></i>
+                    <span>Filtreler</span>
+                </h3>
+            </div>
+            <div class="grid md:grid-cols-4 gap-4">
+                <div class="form-group">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                        <input type="text" id="jobSearch" class="form-input pl-10" placeholder="Pozisyon ara...">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <select id="locationFilter" class="form-select">
+                        <option value="">Konum seç</option>
+                        <option value="istanbul">İstanbul</option>
+                        <option value="ankara">Ankara</option>
+                        <option value="izmir">İzmir</option>
+                        <option value="remote">Uzaktan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select id="experienceFilter" class="form-select">
+                        <option value="">Deneyim seviyesi</option>
+                        <option value="junior">Junior</option>
+                        <option value="mid">Mid-Level</option>
+                        <option value="senior">Senior</option>
+                        <option value="lead">Lead/Principal</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <button id="filterBtn" class="btn btn-primary w-full">
+                        <i class="fas fa-search mr-2"></i>
+                        Filtrele
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Listings -->
+        <div id="jobListings" class="space-y-6">
+            <!-- Jobs will be loaded here -->
+        </div>
+
+        <!-- Load More -->
+        <div class="text-center mt-8">
+            <button class="btn btn-outline btn-large" onclick="loadMoreJobs()">
+                Daha Fazla İş İlanı Yükle
+            </button>
+        </div>
+    </div>
+
+    <script src="../js/job_matching_page.js"></script>
+    <script>
+        // Load more jobs function
+        function loadMoreJobs() {
+            //showNotification("Daha fazla iş ilanı yükleniyor...", "info");
+            setTimeout(() => {
+                //showNotification("Yeni iş ilanları yüklendi!", "success");
+            }, 1500);
+        }
+    </script>
+</body>
+</html>

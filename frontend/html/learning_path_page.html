@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İlerleme Takibi - KariyerAI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="flex items-center gap-4">
+                    <a href="../html/dashboard_page.html" class="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <span class="logo-text">KariyerAI</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4">
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="container" style="padding: 2rem 20px;">
+        <!-- Page Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold mb-2">İlerleme Takibi</h1>
+            <p class="text-gray-600">Öğrenme yolculuğunuzun detaylı analizi ve istatistikleri</p>
+        </div>
+
+        <!-- Overview Stats -->
+        <div class="stats-grid mb-8">
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <p class="stat-label">Toplam XP</p>
+                        <p id="totalXP" class="stat-value">2,450</p>
+                    </div>
+                    <div class="stat-icon blue">
+                        <i class="fas fa-star"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="progress">
+                        <div class="progress-bar" style="width: 82%"></div>
+                    </div>
+                    <p class="text-xs text-gray-500 mt-1">Mid-Level → Senior Developer</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <p class="stat-label">Haftalık Hedef</p>
+                        <p id="weeklyProgress" class="stat-value">180/300</p>
+                    </div>
+                    <div class="stat-icon green">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="progress">
+                        <div id="weeklyProgressBar" class="progress-bar" style="width: 60%"></div>
+                    </div>
+                    <p class="text-xs text-green-600 mt-1">%60 tamamlandı</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <p class="stat-label">Öğrenme Serisi</p>
+                        <p id="streak" class="stat-value">7 gün</p>
+                    </div>
+                    <div class="stat-icon orange">
+                        <i class="fas fa-fire"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-orange-600 mt-4">Harika! Devam edin</p>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-header">
+                    <div>
+                        <p class="stat-label">Tamamlanan</p>
+                        <p id="coursesProgress" class="stat-value">8/15</p>
+                    </div>
+                    <div class="stat-icon purple">
+                        <i class="fas fa-book-open"></i>
+                    </div>
+                </div>
+                <p class="text-xs text-purple-600 mt-4">Kurs modülü</p>
+            </div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs-container mb-6">
+            <div class="tabs-list">
+                <button class="tab-trigger active" onclick="switchTab('skills')">Beceri İlerlemesi</button>
+                <button class="tab-trigger" onclick="switchTab('activity')">Haftalık Aktivite</button>
+                <button class="tab-trigger" onclick="switchTab('achievements')">Başarılar</button>
+                <button class="tab-trigger" onclick="switchTab('jobs')">İş Eşleştirme</button>
+            </div>
+        </div>
+
+        <!-- Skills Progress Tab -->
+        <div id="skillsTab" class="tab-content active">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="flex items-center gap-2">
+                        <i class="fas fa-chart-bar"></i>
+                        <span>Beceri Gelişim Analizi</span>
+                    </h3>
+                    <p class="text-gray-600">Son 30 gündeki beceri seviyesi değişimleri</p>
+                </div>
+                <div class="space-y-6">
+                    <div class="skill-progress-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <h4 class="font-semibold text-lg">JavaScript</h4>
+                                <span class="badge badge-green">Güçlü</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-sm text-gray-600">
+                                <span><i class="fas fa-clock mr-1"></i>12 saat</span>
+                                <span><i class="fas fa-star mr-1"></i>+150 XP</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Mevcut Seviye</span>
+                                    <span class="font-medium">%85</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: 85%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Gelişim</span>
+                                    <span class="font-medium text-green-600">+5 puan</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="progress flex-1">
+                                        <div class="progress-bar bg-green-500" style="width: 25%"></div>
+                                    </div>
+                                    <i class="fas fa-trending-up text-green-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="skill-progress-card">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center gap-3">
+                                <h4 class="font-semibold text-lg">SQL</h4>
+                                <span class="badge badge-orange">Öğreniyor</span>
+                            </div>
+                            <div class="flex items-center gap-4 text-sm text-gray-600">
+                                <span><i class="fas fa-clock mr-1"></i>15 saat</span>
+                                <span><i class="fas fa-star mr-1"></i>+300 XP</span>
+                            </div>
+                        </div>
+                        
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Mevcut Seviye</span>
+                                    <span class="font-medium">%45</span>
+                                </div>
+                                <div class="progress">
+                                    <div class="progress-bar" style="width: 45%"></div>
+                                </div>
+                            </div>
+
+                            <div>
+                                <div class="flex justify-between text-sm mb-2">
+                                    <span>Gelişim</span>
+                                    <span class="font-medium text-green-600">+15 puan</span>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <div class="progress flex-1">
+                                        <div class="progress-bar bg-green-500" style="width: 75%"></div>
+                                    </div>
+                                    <i class="fas fa-trending-up text-green-500"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Weekly Activity Tab -->
+        <div id="activityTab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="flex items-center gap-2">
+                        <i class="fas fa-calendar"></i>
+                        <span>Haftalık Aktivite</span>
+                    </h3>
+                    <p class="text-gray-600">Son 7 günlük öğrenme aktiviteniz</p>
+                </div>
+                <div id="weeklyActivityChart" class="weekly-activity-chart mb-6">
+                    <!-- Activity chart will be loaded here -->
+                </div>
+
+                <div class="grid md:grid-cols-3 gap-4">
+                    <div class="activity-summary blue">
+                        <p class="text-2xl font-bold">180</p>
+                        <p class="text-sm">Toplam XP</p>
+                    </div>
+                    <div class="activity-summary green">
+                        <p class="text-2xl font-bold">4</p>
+                        <p class="text-sm">Tamamlanan Ders</p>
+                    </div>
+                    <div class="activity-summary purple">
+                        <p class="text-2xl font-bold">5</p>
+                        <p class="text-sm">Simülasyon</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Achievements Tab -->
+        <div id="achievementsTab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="flex items-center gap-2">
+                        <i class="fas fa-trophy text-yellow-500"></i>
+                        <span>Son Başarılar</span>
+                    </h3>
+                    <p class="text-gray-600">Kazandığınız rozetler ve başarılar</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="achievement-card earned">
+                        <div class="achievement-badge yellow">
+                            <i class="fas fa-star"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold">SQL Başlangıcı</h4>
+                            <p class="text-sm text-gray-600">SQL temellerini başarıyla tamamladınız</p>
+                            <div class="flex items-center gap-4 mt-2">
+                                <span class="text-xs text-gray-500">2 gün önce</span>
+                                <span class="badge badge-secondary">+200 XP</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-check-circle text-green-500"></i>
+                    </div>
+
+                    <div class="achievement-card earned">
+                        <div class="achievement-badge blue">
+                            <i class="fas fa-book-open"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold">Hızlı Öğrenci</h4>
+                            <p class="text-sm text-gray-600">Bir günde 3 ders tamamladınız</p>
+                            <div class="flex items-center gap-4 mt-2">
+                                <span class="text-xs text-gray-500">3 gün önce</span>
+                                <span class="badge badge-secondary">+100 XP</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-check-circle text-green-500"></i>
+                    </div>
+
+                    <div class="achievement-card earned">
+                        <div class="achievement-badge green">
+                            <i class="fas fa-trophy"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold">Konsistent Öğrenci</h4>
+                            <p class="text-sm text-gray-600">7 gün üst üste öğrenme aktivitesi</p>
+                            <div class="flex items-center gap-4 mt-2">
+                                <span class="text-xs text-gray-500">1 hafta önce</span>
+                                <span class="badge badge-secondary">+150 XP</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-check-circle text-green-500"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Job Matching Tab -->
+        <div id="jobsTab" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="flex items-center gap-2">
+                        <i class="fas fa-users"></i>
+                        <span>İş Eşleştirme Geçmişi</span>
+                    </h3>
+                    <p class="text-gray-600">Beceri gelişiminizle birlikte artan iş fırsatları</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="job-match-card">
+                        <div>
+                            <h4 class="font-medium">Bu hafta</h4>
+                            <p class="text-sm text-gray-600">8 eşleştirme • 3 başvuru • 1 mülakat</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-trending-up text-green-500"></i>
+                            <span class="badge badge-green">Artış</span>
+                        </div>
+                    </div>
+
+                    <div class="job-match-card">
+                        <div>
+                            <h4 class="font-medium">Geçen hafta</h4>
+                            <p class="text-sm text-gray-600">5 eşleştirme • 2 başvuru • 0 mülakat</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-trending-up text-green-500"></i>
+                            <span class="badge badge-green">Artış</span>
+                        </div>
+                    </div>
+
+                    <div class="job-match-card">
+                        <div>
+                            <h4 class="font-medium">2 hafta önce</h4>
+                            <p class="text-sm text-gray-600">3 eşleştirme • 1 başvuru • 0 mülakat</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-minus text-gray-400"></i>
+                            <span class="badge badge-secondary">Stabil</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <h4 class="font-medium text-green-800 mb-2">🎉 Harika İlerleme!</h4>
+                    <p class="text-sm text-green-700">
+                        Son 3 haftada iş eşleştirmeleriniz %60 arttı. SQL ve Node.js becerilerinizi geliştirmeniz bu artışın
+                        ana nedeni. Devam edin!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="grid md:grid-cols-2 gap-6 mt-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Bir sonraki hedefin</h3>
+                    <p class="text-gray-600">Kariyerinde bir sonraki adım</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span>Senior Developer seviyesine</span>
+                        <span class="badge badge-outline">550 XP kaldı</span>
+                    </div>
+                    <div class="progress">
+                        <div class="progress-bar" style="width: 82%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600">
+                        Node.js ve Docker becerilerinizi geliştirerek hedefinize daha hızlı ulaşabilirsiniz.
+                    </p>
+                    <a href="../html/learning_path_page.html" class="btn btn-primary w-full">
+                        <i class="fas fa-book-open mr-2"></i>
+                        Öğrenmeye Devam Et
+                    </a>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>Performans Özeti</h3>
+                    <p class="text-gray-600">Bu ayki genel performansınız</p>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-between">
+                        <span class="text-sm">Öğrenme Konsistansı</span>
+                        <span class="text-sm font-medium text-green-600">Mükemmel</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm">Beceri Gelişimi</span>
+                        <span class="text-sm font-medium text-blue-600">Hızlı</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm">İş Eşleştirme</span>
+                        <span class="text-sm font-medium text-purple-600">Artan</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-sm">Genel Skor</span>
+                        <span class="text-sm font-medium">8.5/10</span>
+                    </div>
+                    <a href="../html/skill_analysis_page.html" class="btn btn-outline w-full">
+                        <i class="fas fa-chart-bar mr-2"></i>
+                        Detaylı Analiz
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/learning_path_page.js"></script>
+    <script>
+        function switchTab(tabName) {
+            // Remove active class from all tabs
+            document.querySelectorAll('.tab-trigger').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            
+            // Add active class to selected tab
+            event.target.classList.add('active');
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Load tab-specific content
+            if (tabName === 'activity') {
+                loadWeeklyActivity();
+            }
+        }
+    </script>
+</body>
+</html>
