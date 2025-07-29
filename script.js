@@ -218,50 +218,289 @@ function setupFileUpload() {
   }
 }
 
-// Handle File Upload
-function handleFileUpload(file) {
-  if (file.type === "application/pdf" || file.type.includes("document")) {
-    showNotification("CV başarıyla yüklendi! AI analizi başlatılıyor...", "success")
+// Gemini API konfigürasyonu
+const GEMINI_API_KEY = 'AIzaSyBfJAn7qJ_gKyLR4xBvTguQzY7nb_GtLjM'; 
+const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
 
-    // Simulate AI analysis
-    setTimeout(() => {
-      showNotification("CV analizi tamamlandı! Profil bilgileri otomatik dolduruldu.", "success")
-      // Here you would populate form fields with extracted data
-      populateFormFromCV()
-    }, 3000)
-  } else {
-    showNotification("Lütfen geçerli bir CV dosyası yükleyin (PDF, DOC, DOCX)", "error")
-  }
-}
 
-// Populate Form from CV (simulated)
-function populateFormFromCV() {
-  // Simulate extracted data
-  const extractedData = {
-    firstName: "Ahmet",
-    lastName: "Yılmaz",
-    email: "ahmet.yilmaz@email.com",
-    phone: "+90 555 123 45 67",
-    location: "İstanbul, Türkiye",
-    currentTitle: "Frontend Developer",
-    summary: "Deneyimli frontend developer. React ve JavaScript konularında uzman.",
-    skills: ["JavaScript", "React", "HTML", "CSS", "Git"],
-  }
 
-  // Fill form fields
-  Object.keys(extractedData).forEach((key) => {
-    const input = document.getElementById(key)
-    if (input && key !== "skills") {
-      input.value = extractedData[key]
+// Handle File Upload - Hata yönetimi geliştirildi
+async function handleFileUpload(file) {
+  console.log('Dosya yükleme başladı:', file.name, file.type);
+  updateUploadStatus("CV yükleniyor...", "info");
+
+  if (file.type === "application/pdf" || file.type.includes("document") || file.type === "text/plain") {
+    updateUploadStatus("CV başarıyla yüklendi! AI analizi başlatılıyor...", "info");
+    showNotification("CV başarıyla yüklendi! AI analizi başlatılıyor...", "success");
+
+    try {
+      console.log('Dosya okunuyor...');
+      const fileText = await extractTextFromFile(file);
+      console.log('Dosya başarıyla okundu, uzunluk:', fileText.length);
+
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      console.log('AI analizi başlatılıyor...');
+      const analysisResult = await analyzeWithGemini(fileText);
+      console.log('Analiz sonucu:', analysisResult);
+
+      showNotification("CV analizi tamamlandı! Profil bilgileri otomatik dolduruldu.", "success");
+      updateUploadStatus("CV analizi tamamlandı! Profil bilgileri otomatik dolduruldu.", "success");
+
+      populateFormFromCV(analysisResult);
+      console.log('🧪 AI Analiz sonucu:', analysisResult);
+
+    } catch (error) {
+      console.error('CV analizi hatası detayı:', error);
+      const msg = `Analiz hatası: ${error.message}. Lütfen geçerli bir CV dosyası yükleyin.`;
+      showNotification(msg, "error");
+      updateUploadStatus(msg, "error");
     }
-  })
 
-  // Add skills
-  if (extractedData.skills) {
-    skills = [...extractedData.skills]
-    updateSkillsDisplay()
+  } else {
+    const msg = "Lütfen geçerli bir CV dosyası yükleyin (PDF, DOC, DOCX, TXT)";
+    showNotification(msg, "error");
+    updateUploadStatus(msg, "error");
   }
 }
+
+
+function updateUploadStatus(message, type = "info") {
+  const statusDiv = document.getElementById("uploadStatus");
+  statusDiv.textContent = message;
+  statusDiv.style.color = type === "error" ? "red" : "green";
+}
+
+
+async function extractTextFromPDF(file) {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+  let text = '';
+  for (let i = 1; i <= pdf.numPages; i++) {
+    const page = await pdf.getPage(i);
+    const content = await page.getTextContent();
+    const strings = content.items.map(item => item.str);
+    text += strings.join(' ') + '\n';
+  }
+  return text;
+}
+
+
+// extractTextFromFile fonksiyonun şöyle olabilir:
+
+async function extractTextFromFile(file) {
+  if (file.type === "application/pdf") {
+    return extractTextFromPDF(file);
+  } else if (file.type === "text/plain") {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = e => resolve(e.target.result);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  } else {
+    throw new Error("Sadece PDF ve düz metin dosyaları destekleniyor.");
+  }
+}
+
+
+// Gemini AI ile CV analizi - Hata yönetimi geliştirildi
+async function analyzeWithGemini(cvText) {
+  console.log('CV analizi başlatılıyor...');
+
+
+const prompt = `
+Lütfen aşağıdaki CV metnini dikkatlice analiz et ve aşağıdaki JSON yapısına uygun şekilde, **sadece** JSON olarak yanıt ver:
+Örnek JSON yapısı:
+
+{
+  "firstName": "ad",
+  "lastName": "soyad",
+  "email": "email@domain.com",
+  "phone": "telefon",
+  "location": "şehir, ülke",
+  "currentTitle": "mevcut pozisyon",
+  "summary": "kısa özet",
+  "experienceLevel": "junior | mid | senior | lead",
+  "skills": ["beceri1", "beceri2"],
+  "experiences": [{"company": "şirket", "position": "pozisyon", "duration": "2022-2024", "description": "açıklama"}],
+  "education": {
+    "university": "üniversite",
+    "degree": "bölüm",
+    "graduationYear": "2022",
+    "gpa": "3.5/4.0"
+  }
+}
+
+Aşağıdaki metni kullanarak yukarıdaki örneğe göre bir çıktı ver. Staj ve iş sürelerini dikkat ederek experienceLevel alanını doldur. 
+
+${cvText}
+`
+
+
+  try {
+    console.log('Gemini API çağrısı yapılıyor...');
+    
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 saniye timeout
+
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        contents: [{
+          parts: [{
+            text: prompt
+          }]
+        }],
+        generationConfig: {
+          temperature: 0.1,
+          maxOutputTokens: 1000
+        }
+      }),
+      signal: controller.signal
+    });
+
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('API Hatası:', response.status, errorText);
+      throw new Error(`API Error: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('API Yanıtı alındı:', data);
+    
+    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
+      throw new Error('Geçersiz API yanıtı');
+    }
+
+    const aiResponse = data.candidates[0].content.parts[0].text;
+    const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
+    
+    const parsedData = JSON.parse(cleanedResponse);
+    console.log('CV analizi tamamlandı:', parsedData);
+    
+    return parsedData;
+    
+  } catch (error) {
+    console.error('Gemini API hatası detayı:', error);
+    
+  }
+}
+
+
+
+// Populate Form from CV - Hata korumalı versiyon
+function populateFormFromCV(extractedData) {
+  console.log('Form doldurma başladı:', extractedData);
+
+  try {
+    // Temel bilgileri doldur
+    const basicFields = ['firstName', 'lastName', 'email', 'phone', 'location', 'currentTitle', 'summary'];
+    basicFields.forEach(field => {
+      const input = document.getElementById(field);
+      if (input && extractedData[field]) {
+        if(input.tagName.toLowerCase() === 'textarea') {
+          input.value = extractedData[field];
+        } else {
+          input.value = extractedData[field];
+        }
+        console.log(`${field} dolduruldu:`, extractedData[field]);
+      }
+    });
+
+    // Deneyim seviyesi doldur (select)
+    if (extractedData.experienceLevel) {
+      const level = extractedData.experienceLevel.toLowerCase().trim();
+      const validOptions = ["junior", "mid", "senior", "lead"];
+      if (validOptions.includes(level)) {
+        const select = document.getElementById("experienceLevel");
+        if (select) {
+          select.value = level;
+          console.log("Deneyim seviyesi dolduruldu:", level);
+        }
+      } else {
+        console.warn("Bilinmeyen deneyim seviyesi:", level);
+      }
+    }
+
+    // GPA doldur (opsiyonel, education içinde olabilir)
+    if (extractedData.education && extractedData.education.gpa) {
+      const gpaInput = document.getElementById("gpa");
+      if (gpaInput) {
+        gpaInput.value = extractedData.education.gpa;
+        console.log("GPA dolduruldu:", extractedData.education.gpa);
+      }
+    }
+
+    // Becerileri ekle
+    if (extractedData.skills && Array.isArray(extractedData.skills) && extractedData.skills.length > 0) {
+      skills = [...extractedData.skills];
+      updateSkillsDisplay();
+      console.log('Beceriler eklendi:', skills);
+    } else {
+      skills = [];
+      console.log('Beceri bulunamadı, boş array');
+    }
+
+    // Deneyimleri ekle
+    if (extractedData.experiences && Array.isArray(extractedData.experiences) && extractedData.experiences.length > 0) {
+experiences = extractedData.experiences.map((exp, index) => ({
+  id: Date.now() + index,
+  position: exp.position || '',          // API ile birebir uyumlu
+  company: exp.company || '',
+  location: exp.location || '',
+  duration: exp.duration || '',         
+  description: exp.description || '',            
+  matchScore: exp.matchScore || 0,   
+  requiredSkills: exp.requiredSkills || [],  
+  missingSkills: exp.missingSkills || [],    
+  benefits: exp.benefits || [],       
+  salary: exp.salary || '',
+  applicants: exp.applicants || 0,
+  type: exp.type || ''
+}));
+
+
+
+      updateExperienceDisplay();
+      console.log('Deneyimler eklendi:', experiences);
+    } else {
+      experiences = [];
+      console.log('Deneyim bulunamadı, boş array');
+    }
+
+    // Eğitim bilgilerini doldur
+    if (extractedData.education && typeof extractedData.education === 'object') {
+      const educationFields = {
+        'university': extractedData.education.university || '',
+        'degree': extractedData.education.degree || '', 
+        'graduationYear': extractedData.education.graduationYear || ''
+      };
+      
+      Object.keys(educationFields).forEach(field => {
+        const input = document.getElementById(field);
+        if (input && educationFields[field]) {
+          input.value = educationFields[field];
+          console.log(`Eğitim ${field} dolduruldu:`, educationFields[field]);
+        }
+      });
+    }
+
+    saveUserData();
+    console.log('Form doldurma tamamlandı');
+
+  } catch (error) {
+    console.error('Form doldurma hatası:', error);
+    showNotification("Form doldurma sırasında hata oluştu.", "error");
+  }
+}
+
 
 // Setup Skills Input
 function setupSkillsInput() {
@@ -350,6 +589,7 @@ function removeExperience(experienceId) {
   saveUserData()
 }
 
+
 // Update Experience Display
 function updateExperienceDisplay() {
   const experienceContainer = document.getElementById("experienceContainer")
@@ -367,11 +607,11 @@ function updateExperienceDisplay() {
                         <i class="fas fa-building"></i>
                     </div>
                     <div>
-                        <h4 class="text-xl font-semibold mb-1">${exp.title}</h4>
+                        <h4 class="text-xl font-semibold mb-1">${exp.position}</h4>
                         <div class="flex items-center gap-4 text-gray-600">
                             <span><i class="fas fa-building mr-1"></i>${exp.company}</span>
                             <span><i class="fas fa-map-marker-alt mr-1"></i>${exp.location}</span>
-                            <span><i class="fas fa-clock mr-1"></i>${exp.posted}</span>
+                            <span><i class="fas fa-clock mr-1"></i>${exp.duration}</span>
                         </div>
                     </div>
                 </div>
@@ -384,7 +624,8 @@ function updateExperienceDisplay() {
                 </div>
             </div>
             
-            <p class="text-gray-700 mb-4">${exp.description}</p>
+            <p class="text-gray-700 mb-4">${exp.description || 'Açıklama yok'}</p>
+
             
             <div class="grid md:grid-cols-2 gap-4 mb-4">
                 <div>

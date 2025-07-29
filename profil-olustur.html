@@ -6,6 +6,33 @@
     <title>Profil Oluştur - KariyerAI</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+<style>
+  /* Butonlar ve yan haklar gizlensin */
+  #experienceContainer .btn,
+  #experienceContainer .benefit-badge,
+  /* Yan haklar başlığı ve kapsayıcı div */
+  #experienceContainer > div > .grid.md\:grid-cols-2.gap-4.mb-4 > div:nth-child(2),
+
+  /* Gerekli Beceriler bölümü */
+  #experienceContainer > div > .grid.md\:grid-cols-2.gap-4.mb-4 > div:first-child,
+
+  /* Eşleşme göstergeleri, yazılar ve başvuru sayısı */
+  #experienceContainer .match-indicator,
+  #experienceContainer .text-sm.font-medium,
+  #experienceContainer .badge,
+  #experienceContainer span i.fas.fa-users,
+  #experienceContainer span:nth-child(2),
+
+  /* Dolar işareti */
+  #experienceContainer span i.fas.fa-dollar-sign
+  {
+    display: none !important;
+  }
+</style>
+
+
+
 </head>
 <body>
     <!-- Header -->
@@ -50,6 +77,7 @@
                     <button class="btn btn-primary mt-4">Dosya Seç</button>
                     <input type="file" id="cvFile" accept=".pdf,.doc,.docx" style="display: none;">
                 </div>
+                <div id="uploadStatus" style="margin-top: 1rem; font-weight: bold;"></div>
             </div>
 
             <!-- Manual Entry Section -->
