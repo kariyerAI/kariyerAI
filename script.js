@@ -1,7 +1,10 @@
+const BACKEND_URL = 'http://127.0.0.1:5000';
+
 // Global Variables
 let currentUser = null
 let skills = []
 let experiences = []
+
 
 // DOM Content Loaded
 document.addEventListener("DOMContentLoaded", () => {
@@ -218,9 +221,7 @@ function setupFileUpload() {
   }
 }
 
-// Gemini API konfigürasyonu
-const GEMINI_API_KEY = 'AIzaSyBfJAn7qJ_gKyLR4xBvTguQzY7nb_GtLjM'; 
-const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent';
+
 
 
 
@@ -244,7 +245,7 @@ async function handleFileUpload(file) {
       const analysisResult = await analyzeWithGemini(fileText);
       console.log('Analiz sonucu:', analysisResult);
 
-      showNotification("CV analizi tamamlandı! Profil bilgileri otomatik dolduruldu.", "success");
+      //showNotification("CV analizi tamamlandı! Profil bilgileri otomatik dolduruldu.", "success");
       updateUploadStatus("CV analizi tamamlandı! Profil bilgileri otomatik dolduruldu.", "success");
 
       populateFormFromCV(analysisResult);
@@ -304,13 +305,13 @@ async function extractTextFromFile(file) {
   }
 }
 
+// Mevcut analyzeWithGemini fonksiyonunu tamamen bu şekilde değiştir:
 
-// Gemini AI ile CV analizi - Hata yönetimi geliştirildi
 async function analyzeWithGemini(cvText) {
   console.log('CV analizi başlatılıyor...');
 
-
-const prompt = `
+  // Prompt'u aynı tut (değişiklik yok)
+  const prompt = `
 Lütfen aşağıdaki CV metnini dikkatlice analiz et ve aşağıdaki JSON yapısına uygun şekilde, **sadece** JSON olarak yanıt ver:
 Örnek JSON yapısı:
 
@@ -336,30 +337,23 @@ Lütfen aşağıdaki CV metnini dikkatlice analiz et ve aşağıdaki JSON yapıs
 Aşağıdaki metni kullanarak yukarıdaki örneğe göre bir çıktı ver. Staj ve iş sürelerini dikkat ederek experienceLevel alanını doldur. 
 
 ${cvText}
-`
-
+`;
 
   try {
-    console.log('Gemini API çağrısı yapılıyor...');
+    console.log('Backend üzerinden Gemini API çağrısı yapılıyor...');
     
+    // ESKİ FETCH KODUNU SİL, YENİSİNİ YAZ:
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 saniye timeout
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 saniye timeout (biraz daha uzun)
 
-    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+    // Backend'e istek at (Gemini'ye direkt değil)
+    const response = await fetch(`${BACKEND_URL}/analyze-cv`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        contents: [{
-          parts: [{
-            text: prompt
-          }]
-        }],
-        generationConfig: {
-          temperature: 0.1,
-          maxOutputTokens: 1000
-        }
+        cvText: cvText
       }),
       signal: controller.signal
     });
@@ -368,33 +362,30 @@ ${cvText}
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('API Hatası:', response.status, errorText);
-      throw new Error(`API Error: ${response.status}`);
+      console.error('Backend API Hatası:', response.status, errorText);
+      throw new Error(`Backend API Error: ${response.status}`);
     }
 
-    const data = await response.json();
-    console.log('API Yanıtı alındı:', data);
+    const result = await response.json();
+    console.log('Backend API Yanıtı alındı:', result);
     
-    if (!data.candidates || !data.candidates[0] || !data.candidates[0].content) {
-      throw new Error('Geçersiz API yanıtı');
+    // Backend'den gelen yanıtı kontrol et
+    if (!result.success) {
+      throw new Error(result.message || 'Backend analiz hatası');
     }
 
-    const aiResponse = data.candidates[0].content.parts[0].text;
-    const cleanedResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
-    
-    const parsedData = JSON.parse(cleanedResponse);
+    const parsedData = result.data;
     console.log('CV analizi tamamlandı:', parsedData);
     
     return parsedData;
     
   } catch (error) {
-    console.error('Gemini API hatası detayı:', error);
+    console.error('CV analizi hatası detayı:', error);
     
+    // Hata durumunda boş obje döndür (mevcut kodunla uyumlu)
+    throw new Error(`CV analizi başarısız: ${error.message}`);
   }
 }
-
-
-
 // Populate Form from CV - Hata korumalı versiyon
 function populateFormFromCV(extractedData) {
   console.log('Form doldurma başladı:', extractedData);
@@ -701,65 +692,365 @@ function updateExperience(experienceId, field, value) {
   }
 }
 
-// Complete Profile
-function completeProfile() {
-  // Validate required fields
-  const requiredFields = ["firstName", "lastName", "email"]
-  const missingFields = []
 
-  requiredFields.forEach((field) => {
-    const input = document.getElementById(field)
-    if (!input || !input.value.trim()) {
-      missingFields.push(field)
+async function completeProfile() {
+  try {
+    // Formdan verileri topla
+    const profileData = {
+      firstName: document.getElementById('firstName').value.trim(),
+      lastName: document.getElementById('lastName').value.trim(),
+      email: document.getElementById('email').value.trim(),
+      phone: document.getElementById('phone').value.trim(),
+      location: document.getElementById('location').value.trim(),
+      currentTitle: document.getElementById('currentTitle').value.trim(),
+      experienceLevel: document.getElementById('experienceLevel').value,
+      summary: document.getElementById('summary').value.trim(),
+      skills: skills, // Global skills array
+      experiences: experiences, // Global experiences array
+      university: document.getElementById('university').value.trim(),
+      degree: document.getElementById('degree').value.trim(),
+      graduationYear: document.getElementById('graduationYear').value.trim(),
+      gpa: document.getElementById('gpa').value.trim(),
+    };
+
+    // Backend'e POST isteği gönder
+    const response = await fetch(`${BACKEND_URL}/save-profile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(profileData)
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
     }
-  })
 
-  if (missingFields.length > 0) {
-    showNotification("Lütfen tüm gerekli alanları doldurun.", "error")
-    return
+    const result = await response.json();
+    
+    if (result.success) {
+      showNotification('Profil başarıyla kaydedildi!', 'success');
+      // Dashboard'a yönlendir
+      setTimeout(() => {
+        window.location.href = 'dashboard.html';
+      }, 1500);
+    } else {
+      throw new Error(result.message || 'Profil kaydedilirken hata oluştu');
+    }
+
+  } catch (error) {
+    console.error('Profil kaydetme hatası:', error);
+    showNotification(`Hata: ${error.message}`, 'error');
   }
-
-  // Create user object
-  const userData = {
-    id: Date.now(),
-    firstName: document.getElementById("firstName").value,
-    lastName: document.getElementById("lastName").value,
-    email: document.getElementById("email").value,
-    phone: document.getElementById("phone").value,
-    location: document.getElementById("location").value,
-    currentTitle: document.getElementById("currentTitle").value,
-    summary: document.getElementById("summary").value,
-    skills: skills,
-    experiences: experiences,
-    createdAt: new Date().toISOString(),
-    xp: 0,
-    level: "Beginner",
-    completedCourses: 0,
-  }
-
-  // Save user data
-  localStorage.setItem("kariyerAI_user", JSON.stringify(userData))
-  currentUser = userData
-
-  showNotification("Profil başarıyla oluşturuldu! Dashboard'a yönlendiriliyorsunuz...", "success")
-
-  setTimeout(() => {
-    window.location.href = "dashboard.html"
-  }, 2000)
 }
+
 
 // Dashboard Functions
+// Dashboard Functions - Güncellenmiş versiyon
 function initializeDashboard() {
+  // Kullanıcı kontrolü
+  loadUserData(); // Önce kullanıcı verilerini yükle
+  
   if (!currentUser) {
-    window.location.href = "profil-olustur.html"
-    return
+    console.log("Kullanıcı oturumu bulunamadı, profil oluşturma sayfasına yönlendiriliyor...");
+    window.location.href = "profil-olustur.html";
+    return;
   }
 
-  updateDashboardStats()
-  loadRecentActivities()
-  loadSkillGaps()
-  loadUpcomingTasks()
+  console.log("Dashboard başlatılıyor, kullanıcı:", currentUser);
+  
+  // Kullanıcı bilgilerini güncelle
+  updateUserWelcomeMessage();
+  updateDashboardStats();
+  loadRecentActivities();
+  loadSkillGaps();
+  loadUpcomingTasks();
 }
+
+// Kullanıcı karşılama mesajını güncelle
+function updateUserWelcomeMessage() {
+  const welcomeMessage = document.querySelector('h1');
+  const userDescription = document.querySelector('p.text-gray-600');
+  
+  if (currentUser && welcomeMessage) {
+    const firstName = currentUser.firstName || 'Kullanıcı';
+    const currentTitle = currentUser.currentTitle || '';
+    
+    // Hoş geldin mesajını güncelle
+    welcomeMessage.innerHTML = `Hoş geldin, ${firstName}! 👋`;
+    
+    // Alt açıklama metnini güncelle
+    if (userDescription && currentTitle) {
+      userDescription.textContent = `${currentTitle} olarak kariyerinde bugün hangi adımı atacaksın?`;
+    } else if (userDescription) {
+      userDescription.textContent = `Kariyerinde bugün hangi adımı atacaksın?`;
+    }
+    
+    console.log(`Hoş geldin mesajı güncellendi: ${firstName}`);
+  }
+}
+
+// Kullanıcı profilini navbar'da güncelle
+function updateUserProfile() {
+  const userAvatar = document.querySelector('.user-avatar');
+  
+  if (currentUser && userAvatar) {
+    // Eğer kullanıcının profil fotoğrafı varsa onu göster
+    if (currentUser.profilePhoto) {
+      userAvatar.innerHTML = `<img src="${currentUser.profilePhoto}" alt="Profil" class="w-8 h-8 rounded-full">`;
+    } else {
+      // İlk harflerle avatar oluştur
+      const initials = getInitials(currentUser.firstName, currentUser.lastName);
+      userAvatar.innerHTML = `
+        <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium">
+          ${initials}
+        </div>
+      `;
+    }
+  }
+}
+
+// İsim ve soyisimden baş harfleri al
+function getInitials(firstName, lastName) {
+  const first = firstName ? firstName.charAt(0).toUpperCase() : '';
+  const last = lastName ? lastName.charAt(0).toUpperCase() : '';
+  return first + last || 'U'; // Eğer isim yoksa 'U' (User) kullan
+}
+
+// Dashboard istatistiklerini güncelle (kullanıcı verilerine göre)
+function updateDashboardStats() {
+  const stats = {
+    xp: currentUser?.xp || 0,
+    level: getUserLevel(currentUser?.xp || 0),
+    nextLevelXp: getNextLevelXP(currentUser?.xp || 0),
+    jobMatches: currentUser?.jobMatches || 0,
+    completedCourses: currentUser?.completedCourses || 0,
+    skillsLearned: currentUser?.skills ? currentUser.skills.length : 0,
+  };
+
+  console.log("Dashboard istatistikleri:", stats);
+
+  // Stat display'lerini güncelle
+  updateElement("userLevel", stats.level);
+  updateElement("jobMatches", stats.jobMatches);
+  updateElement("completedCourses", stats.completedCourses);
+
+  // Progress bar'ı güncelle
+  const xpProgress = document.getElementById("xpProgress");
+  if (xpProgress) {
+    const progressBar = xpProgress.querySelector(".progress-bar");
+    const xpText = xpProgress.parentElement.querySelector(".text-xs.text-gray-500");
+    
+    if (progressBar) {
+      const progressPercent = (stats.xp / stats.nextLevelXp) * 100;
+      progressBar.style.width = `${Math.min(progressPercent, 100)}%`;
+    }
+    
+    if (xpText) {
+      xpText.textContent = `${stats.xp} / ${stats.nextLevelXp} XP`;
+    }
+  }
+}
+
+// XP'ye göre seviye hesapla
+function getUserLevel(xp) {
+  if (xp < 500) return "Başlangıç";
+  if (xp < 1500) return "Junior";
+  if (xp < 3000) return "Mid-Level";
+  if (xp < 5000) return "Senior";
+  return "Expert";
+}
+
+// Bir sonraki seviye için gerekli XP'yi hesapla
+function getNextLevelXP(currentXP) {
+  const levels = [500, 1500, 3000, 5000, 10000];
+  for (let levelXP of levels) {
+    if (currentXP < levelXP) {
+      return levelXP;
+    }
+  }
+  return levels[levels.length - 1]; // Max level
+}
+
+// Kullanıcıya özel beceri eksikliklerini yükle
+function loadSkillGaps() {
+  // Kullanıcının mevcut becerilerini al
+  const userSkills = currentUser?.skills || [];
+  
+  // İş ilanlarında aranan ama kullanıcıda olmayan becerileri tespit et
+  const industrySkills = [
+    { skill: "Node.js", importance: "Yüksek", jobs: 15, progress: 0 },
+    { skill: "SQL", importance: "Yüksek", jobs: 12, progress: 0 },
+    { skill: "Docker", importance: "Orta", jobs: 8, progress: 0 },
+    { skill: "MongoDB", importance: "Orta", jobs: 6, progress: 0 },
+    { skill: "GraphQL", importance: "Orta", jobs: 4, progress: 0 }
+  ];
+
+  // Kullanıcının sahip olmadığı becerileri filtrele
+  const skillGaps = industrySkills.filter(item => 
+    !userSkills.some(userSkill => 
+      userSkill.toLowerCase().includes(item.skill.toLowerCase())
+    )
+  ).slice(0, 3); // En fazla 3 tane göster
+
+  const skillGapsContainer = document.getElementById("skillGaps");
+  if (skillGapsContainer) {
+    if (skillGaps.length === 0) {
+      skillGapsContainer.innerHTML = `
+        <div class="text-center py-6">
+          <i class="fas fa-trophy text-green-500 text-3xl mb-2"></i>
+          <h4 class="font-medium text-green-600">Harika! Şu anda kritik beceri eksikliğiniz yok.</h4>
+          <p class="text-sm text-gray-600">Mevcut becerileriniz sektör taleplerini karşılıyor.</p>
+        </div>
+      `;
+    } else {
+      skillGapsContainer.innerHTML = skillGaps
+        .map(gap => `
+          <div class="flex items-center justify-between p-4 border rounded-lg">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <h4 class="font-medium">${gap.skill}</h4>
+                <span class="badge ${gap.importance === "Yüksek" ? "badge-danger" : "badge-secondary"}">${gap.importance}</span>
+              </div>
+              <p class="text-sm text-gray-600">${gap.jobs} iş ilanında gerekli</p>
+              ${gap.progress > 0 ? `
+                <div class="progress mt-2">
+                  <div class="progress-bar" style="width: ${gap.progress}%"></div>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">%${gap.progress} tamamlandı</p>
+              ` : ""}
+            </div>
+            <a href="ogrenme-yol-haritasi.html" class="btn btn-small btn-primary">
+              ${gap.progress > 0 ? "Devam Et" : "Başla"}
+            </a>
+          </div>
+        `).join("");
+    }
+  }
+
+  console.log("Beceri eksiklikleri yüklendi:", skillGaps);
+}
+
+// Kullanıcıya özel yaklaşan görevleri yükle
+function loadUpcomingTasks() {
+  const userLevel = getUserLevel(currentUser?.xp || 0);
+  const userSkills = currentUser?.skills || [];
+  
+  // Kullanıcı seviyesine göre görevler
+  let tasks = [];
+  
+  if (userLevel === "Başlangıç") {
+    tasks = [
+      { title: "Profil Tamamlama", type: "profile", deadline: "Bugün", difficulty: "Kolay" },
+      { title: "İlk Beceri Testi", type: "quiz", deadline: "2 gün", difficulty: "Kolay" },
+      { title: "CV Yükleme", type: "document", deadline: "3 gün", difficulty: "Kolay" }
+    ];
+  } else if (userLevel === "Junior") {
+    tasks = [
+      { title: "JavaScript Temel Quiz", type: "quiz", deadline: "Bugün", difficulty: "Kolay" },
+      { title: "İlk Proje: Todo App", type: "project", deadline: "1 hafta", difficulty: "Orta" },
+      { title: "Teknik Mülakat Simülasyonu", type: "scenario", deadline: "5 gün", difficulty: "Orta" }
+    ];
+  } else {
+    tasks = [
+      { title: "İleri Seviye React Quiz", type: "quiz", deadline: "2 gün", difficulty: "Zor" },
+      { title: "API Integration Projesi", type: "project", deadline: "1 hafta", difficulty: "Zor" },
+      { title: "Senior Mülakat Simülasyonu", type: "scenario", deadline: "3 gün", difficulty: "Zor" }
+    ];
+  }
+
+  const tasksContainer = document.getElementById("upcomingTasks");
+  if (tasksContainer) {
+    if (tasks.length === 0) {
+      tasksContainer.innerHTML = `
+        <div class="text-center py-6">
+          <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
+          <h4 class="font-medium text-green-600">Tüm görevler tamamlandı!</h4>
+          <p class="text-sm text-gray-600">Yeni görevler için geri gelin.</p>
+        </div>
+      `;
+    } else {
+      tasksContainer.innerHTML = tasks
+        .map(task => `
+          <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+            <div class="flex items-center gap-3">
+              <div class="task-indicator ${task.type}"></div>
+              <div>
+                <h4 class="font-medium">${task.title}</h4>
+                <p class="text-sm text-gray-600">${task.deadline} • ${task.difficulty}</p>
+              </div>
+            </div>
+            <button class="btn btn-small">
+              <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        `).join("");
+    }
+  }
+
+  console.log("Yaklaşan görevler yüklendi:", tasks);
+}
+
+// Son aktiviteleri kullanıcıya göre yükle
+function loadRecentActivities() {
+  // Kullanıcının gerçek aktivitelerini simüle et
+  const activities = [];
+  
+  if (currentUser?.skills && currentUser.skills.length > 0) {
+    activities.push({
+      type: "skill",
+      title: `${currentUser.skills[0]} becerisi güncellendi`,
+      time: "2 saat önce",
+      xp: 50
+    });
+  }
+  
+  if (currentUser?.completedCourses > 0) {
+    activities.push({
+      type: "course",
+      title: "Yeni eğitim modülü tamamlandı",
+      time: "1 gün önce",
+      xp: 100
+    });
+  }
+  
+  activities.push(
+    { type: "job", title: "Yeni iş eşleştirmeleri", time: "2 gün önce", xp: 0 },
+    { type: "achievement", title: "Profil tamamlama rozeti", time: "3 gün önce", xp: 150 }
+  );
+
+  const activitiesContainer = document.getElementById("recentActivities");
+  if (activitiesContainer) {
+    activitiesContainer.innerHTML = activities
+      .map(activity => `
+        <div class="flex items-start gap-3 p-3 border rounded-lg">
+          <div class="activity-icon ${activity.type}">
+            <i class="fas ${getActivityIcon(activity.type)}"></i>
+          </div>
+          <div class="flex-1">
+            <p class="font-medium text-sm">${activity.title}</p>
+            <p class="text-xs text-gray-500">${activity.time}</p>
+            ${activity.xp > 0 ? `<span class="badge">+${activity.xp} XP</span>` : ""}
+          </div>
+        </div>
+      `).join("");
+  }
+
+  console.log("Son aktiviteler yüklendi:", activities);
+}
+
+// initializeDashboard fonksiyonunu çağırdığımızda kullanıcı profil bilgilerini de güncelle
+document.addEventListener("DOMContentLoaded", () => {
+  initializeApp();
+  setupEventListeners();
+  loadUserData();
+  setupAnimations();
+  
+  // Dashboard sayfasındaysak kullanıcı profilini güncelle
+  if (getCurrentPage() === "dashboard") {
+    updateUserProfile();
+  }
+});
 
 // Update Dashboard Stats
 function updateDashboardStats() {

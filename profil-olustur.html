@@ -6,7 +6,23 @@
     <title>Profil Oluştur - KariyerAI</title>
     <link rel="stylesheet" href="styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+ /* // Supabase bağlantısı (kütüphane yüklendikten sonra)
+  const supabase = window.supabase.createClient(process.env.SUPABASE_URL, process.env.SUPABASE_API_KEY);
+
+  async function completeProfile() {
+    // supabase burada kullanılabilir
+    const { data, error } = await supabase.from("profiles").select("*");
+    if (error) {
+      console.error("Veri alınamadı:", error);
+    } else {
+      console.log("Profil verisi:", data);
+    }
+  }*/
+</script>
+
 <style>
   /* Butonlar ve yan haklar gizlensin */
   #experienceContainer .btn,
@@ -213,6 +229,31 @@
                 </div>
             </div>
         </div>
+        
+   <!-- Giriş Bilgileri -->
+<div class="card mt-8">
+    <div class="card-header">
+        <h3 class="flex items-center gap-2">
+            <i class="fas fa-user"></i>
+            <span>Şifre Oluştur</span>
+        </h3>
+    </div>
+    <div class="card-body form-container">
+        <div class="form-group mb-4">
+            <label class="form-label" for="loginPassword">Şifre</label>
+            <input type="password" id="loginPassword" class="form-input" placeholder="Şifreniz">
+        </div>
+        <div class="form-group mb-4">
+            <label class="form-label" for="loginPassword">Tekrar Şifre</label>
+            <input type="password" id="loginPassword" class="form-input" placeholder="Şifreniz">
+        </div>
+        <div id="signin" class="signin-container">
+            <p class="text-sm text-gray-600">Zaten bir hesabınız var mı? <a href="login.html" class="text-blue-600 hover:underline">Giriş yapın</a></p>
+           
+        </div>
+    </div>
+</div>
+
 
         <!-- Action Buttons -->
         <div class="flex justify-center gap-4 mt-8">
