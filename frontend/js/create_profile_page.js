@@ -551,4 +551,6 @@ async function completeProfile() {
 
   } catch (error) {
     console.error('Profil kaydetme hatası:', error);
-    //showNotification(`Hata: ${error.mes
+    //showNotification(`Hata: ${error.message}`, 'error');
+  }
+}

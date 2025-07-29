@@ -281,4 +281,28 @@ function loadUpcomingTasks() {
   const tasks = [
     { title: "JavaScript ES6+ Quiz", type: "quiz", deadline: "Bugün", difficulty: "Kolay" },
     { title: "React Project: Todo App", type: "project", deadline: "3 gün", difficulty: "Orta" },
-    { title: "API Integration Se
+    { title: "API Integration Senaryosu", type: "scenario", deadline: "1 hafta", difficulty: "Zor" },
+  ]
+
+  const tasksContainer = document.getElementById("upcomingTasks")
+  if (tasksContainer) {
+    tasksContainer.innerHTML = tasks
+      .map(
+        (task) => `
+            <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                <div class="flex items-center gap-3">
+                    <div class="task-indicator ${task.type}"></div>
+                    <div>
+                        <h4 class="font-medium">${task.title}</h4>
+                        <p class="text-sm text-gray-600">${task.deadline} • ${task.difficulty}</p>
+                    </div>
+                </div>
+                <button class="btn btn-small">
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        `,
+      )
+      .join("")
+  }
+}
