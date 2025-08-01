@@ -1,116 +1,57 @@
-// Global Sabitler ve Değişkenler
+// main.js - Fixed Version
+
+// Global Constants and Variables
 const BACKEND_URL = 'http://127.0.0.1:5000';
 let currentUser = null;
 let skills = [];
 let experiences = [];
 
-// DOM İçeriği Yüklendiğinde
-document.addEventListener("DOMContentLoaded", () => {
-  initializeApp();
-  setupEventListeners();
-  loadUserData();
-  setupAnimations();
-});
-
-// Uygulamayı Başlatma
-function initializeApp() {
-  console.log("KariyerAI uygulaması başlatılıyor...");
-
-  const userData = localStorage.getItem("kariyerAI_user");
-  if (userData) {
-    currentUser = JSON.parse(userData);
-  }
-
-  const currentPage = getCurrentPage();
-  switch (currentPage) {
-    case "onboarding_page":
-      initializeHomePage();
-      break;
-    case "create_profile_page":
-      initializeProfilePage();
-      break;
-    case "dashboard_page":
-      initializeDashboard();
-      break;
-    case "job_matching":
-      initializeJobMatching();
-      break;
-    case "skill_analysis":
-      initializeSkillAnalysis();
-      break;
-    case "learning_path_page":
-      initializeLearningPath();
-      break;
-    case "career_simulation":
-      initializeCareerSimulation();
-      break;
-    case "ilerleme-takibi":
-      initializeProgressTracking();
-      break;
-  }
-}
-
-// Sayfanın adını alma
+// Get current page name
 function getCurrentPage() {
   const path = window.location.pathname;
-  const page = path.split("/").pop().replace(".html", "") || "index";
-  return page;
+  const page = path.split("/").pop().replace(".html", "").replace("_page", "");
+  return page || "index";
 }
 
-// Olay dinleyicilerini ayarlama
-function setupEventListeners() {
-  const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
-  if (mobileMenuToggle) {
-    mobileMenuToggle.addEventListener("click", toggleMobileMenu);
-  }
-
-  const closeModal = document.querySelector(".close");
-  if (closeModal) {
-    closeModal.addEventListener("click", closeModalHandler);
-  }
-
-  window.addEventListener("click", (event) => {
-    const modal = document.getElementById("demoModal");
-    if (event.target === modal) {
-      modal.style.display = "none";
-    }
-  });
-
-  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
-    anchor.addEventListener("click", function (e) {
-      e.preventDefault();
-      const target = document.querySelector(this.getAttribute("href"));
-      if (target) {
-        target.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
-      }
-    });
-  });
-}
-
-// Kullanıcı verilerini yükleme
+// Load user data from localStorage
 function loadUserData() {
-  const userData = localStorage.getItem("kariyerAI_user");
-  if (userData) {
-    currentUser = JSON.parse(userData);
-    skills = currentUser.skills || [];
-    experiences = currentUser.experiences || [];
+  try {
+    const userData = localStorage.getItem("kariyerAI_user");
+    if (userData) {
+      currentUser = JSON.parse(userData);
+      skills = currentUser.skills || [];
+      experiences = currentUser.experiences || [];
+      console.log("User data loaded:", currentUser);
+    } else {
+      currentUser = null;
+      skills = [];
+      experiences = [];
+      console.log("No user data found");
+    }
+  } catch (error) {
+    console.error("Error loading user data:", error);
+    currentUser = null;
+    skills = [];
+    experiences = [];
   }
 }
 
-// Kullanıcı verilerini kaydetme
+// Save user data to localStorage
 function saveUserData() {
-  if (currentUser) {
-    currentUser.skills = skills;
-    currentUser.experiences = experiences;
-    currentUser.lastUpdated = new Date().toISOString();
-    localStorage.setItem("kariyerAI_user", JSON.stringify(currentUser));
+  try {
+    if (currentUser) {
+      currentUser.skills = skills;
+      currentUser.experiences = experiences;
+      currentUser.lastUpdated = new Date().toISOString();
+      localStorage.setItem("kariyerAI_user", JSON.stringify(currentUser));
+      console.log("User data saved");
+    }
+  } catch (error) {
+    console.error("Error saving user data:", error);
   }
 }
 
-// Animasyonları ayarlama
+// Setup animations
 function setupAnimations() {
   const observerOptions = {
     threshold: 0.1,
@@ -125,28 +66,32 @@ function setupAnimations() {
     });
   }, observerOptions);
 
+  // Observe elements that need animation
   document.querySelectorAll(".fade-in, .slide-in-left, .slide-in-right").forEach((el) => {
     observer.observe(el);
   });
 }
 
-// Home Page Functions
+// Initialize home/onboarding page
 function initializeHomePage() {
-  // Add animation classes to elements
-  const featureCards = document.querySelectorAll(".feature-card")
+  console.log("Initializing home page...");
+  
+  // Add animation classes to feature cards
+  const featureCards = document.querySelectorAll(".feature-card");
   featureCards.forEach((card, index) => {
-    card.classList.add("fade-in")
-    card.style.animationDelay = `${index * 0.1}s`
-  })
+    card.classList.add("fade-in");
+    card.style.animationDelay = `${index * 0.1}s`;
+  });
 
-  const steps = document.querySelectorAll(".step")
+  // Add animation classes to steps
+  const steps = document.querySelectorAll(".step");
   steps.forEach((step, index) => {
-    step.classList.add("slide-in-left")
-    step.style.animationDelay = `${index * 0.2}s`
-  })
+    step.classList.add("slide-in-left");
+    step.style.animationDelay = `${index * 0.2}s`;
+  });
 }
 
-// Diğer genel işlevler
+// Toggle mobile menu
 function toggleMobileMenu() {
   const nav = document.querySelector(".nav");
   if (nav) {
@@ -154,6 +99,7 @@ function toggleMobileMenu() {
   }
 }
 
+// Show demo modal
 function showDemo() {
   const modal = document.getElementById("demoModal");
   if (modal) {
@@ -161,6 +107,7 @@ function showDemo() {
   }
 }
 
+// Close modal
 function closeModalHandler() {
   const modal = document.getElementById("demoModal");
   if (modal) {
@@ -168,3 +115,108 @@ function closeModalHandler() {
   }
 }
 
+// Setup event listeners
+function setupEventListeners() {
+  // Mobile menu toggle
+  const mobileMenuToggle = document.querySelector(".mobile-menu-toggle");
+  if (mobileMenuToggle) {
+    mobileMenuToggle.addEventListener("click", toggleMobileMenu);
+  }
+
+  // Modal close button
+  const closeModal = document.querySelector(".close");
+  if (closeModal) {
+    closeModal.addEventListener("click", closeModalHandler);
+  }
+
+  // Click outside modal to close
+  window.addEventListener("click", (event) => {
+    const modal = document.getElementById("demoModal");
+    if (event.target === modal) {
+      modal.style.display = "none";
+    }
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach((anchor) => {
+    anchor.addEventListener("click", function (e) {
+      e.preventDefault();
+      const target = document.querySelector(this.getAttribute("href"));
+      if (target) {
+        target.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      }
+    });
+  });
+}
+
+// Initialize the application
+function initializeApp() {
+  console.log("KariyerAI application starting...");
+
+  const currentPage = getCurrentPage();
+  console.log("Current page:", currentPage);
+
+  // Sadece profil tamamlanmış sayfalarda userData yüklensin
+  if (currentPage !== "create_profile") {
+    loadUserData();
+  } else {
+    currentUser = null;
+    skills = [];
+    experiences = [];
+    console.log("Profile creation page - no user data loaded");
+  }
+  // Initialize page-specific functionality
+  switch (currentPage) {
+    case "onboarding":
+    case "index":
+      initializeHomePage();
+      break;
+    case "create_profile":
+      // This will be handled by create_profile_page.js
+      console.log("Profile creation page detected");
+      break;
+    case "dashboard":
+      // This will be handled by dashboard_page.js
+      console.log("Dashboard page detected");
+      break;
+    case "job_matching":
+      console.log("Job matching page detected");
+      break;
+    case "skill_analysis":
+      console.log("Skill analysis page detected");
+      break;
+    case "learning_path":
+      console.log("Learning path page detected");
+      break;
+    case "career_simulation":
+      console.log("Career simulation page detected");
+      break;
+    default:
+      console.log("Default page initialization for:", currentPage);
+  }
+}
+
+// Utility functions that other files can use
+window.KariyerAI = {
+  // Export useful functions for other scripts
+  loadUserData,
+  saveUserData,
+  getCurrentPage,
+  BACKEND_URL,
+  get currentUser() { return currentUser; },
+  set currentUser(value) { currentUser = value; },
+  get skills() { return skills; },
+  set skills(value) { skills = value; },
+  get experiences() { return experiences; },
+  set experiences(value) { experiences = value; }
+};
+
+// Start the application when DOM is loaded
+document.addEventListener("DOMContentLoaded", () => {
+  initializeApp();
+  setupEventListeners();
+  setupAnimations();
+});
