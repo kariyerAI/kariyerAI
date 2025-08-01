@@ -168,4 +168,5 @@ export function applyJobFilters() {
   setTimeout(() => {
    // showNotification("Filtreler uygulandı!", "success")
     loadJobListings()
-  }, 1000
+  }, 1000)
+}

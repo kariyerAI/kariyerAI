@@ -164,4 +164,7 @@ function showDemo() {
 function closeModalHandler() {
   const modal = document.getElementById("demoModal");
   if (modal) {
-    modal.style.display 
+    modal.style.display = "none";
+  }
+}
+
