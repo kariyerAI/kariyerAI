@@ -2,6 +2,8 @@ let currentScenario = null;
 let currentScore = 0;
 let currentStep = 1;
 let totalSteps = 1; // şimdilik 1 senaryo varsayıyoruz
+let currentTaskIndex = 0;
+let inTaskFlow = true; // Görev adımlarında mıyız?
 
 // Sayfa başlatıldığında çağrılır
 export async function initializeCareerSimulation() {
@@ -44,12 +46,14 @@ async function loadSimulationScenario(email) {
 
         if (data.success && data.data) {
             currentScenario = data.data;
-            displayScenario(currentScenario);
-            displayDailySchedule(currentScenario.daily_schedule || []);
-            displayEmails(currentScenario.emails || []);
-            displayMeetings(currentScenario.meetings || []);
+            // displayScenario(currentScenario); // Bunu yoruma al
+            // displayDailySchedule(currentScenario.daily_schedule || []);
+            // displayEmails(currentScenario.emails || []);
+            // displayMeetings(currentScenario.meetings || []);
+            startTaskFlow(); // Görev adımlarını başlat
         } else {
-            showNotification("Simülasyon yüklenemedi.", "warning");
+            // Backend'den gelen hata mesajını kullanıcıya göster
+            showNotification(data.message || "Simülasyon yüklenemedi.", "warning");
         }
     } catch (err) {
         console.error("Simülasyon hatası:", err);
@@ -278,5 +282,97 @@ function setupSimulationTimer() {
 
 // === Basit bildirim fonksiyonu ===
 function showNotification(message, type = "info") {
-    console.log(`[${type}] ${message}`);
+    alert(message); // Basit çözüm, daha iyisi için toast ekleyebilirsin
+}
+
+// === Görev adımı gösterimi ===
+async function showTaskStep() {
+    const tasks = currentScenario.daily_schedule;
+    if (currentTaskIndex >= tasks.length) {
+        inTaskFlow = false;
+        displayScenario(currentScenario); // Kritik soru ekranı
+        return;
+    }
+    const task = tasks[currentTaskIndex];
+    const container = document.getElementById("scenarioContainer");
+
+    // Kullanıcı bilgisini al
+    let user = window.KariyerAI?.currentUser || JSON.parse(localStorage.getItem("kariyerAI_user") || "{}");
+
+    // Görev için LLM'den mini-senaryo çek
+    let taskSim = null;
+    try {
+        const res = await fetch("http://127.0.0.1:5000/task-simulation", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task, user }) // <-- user da gönderiliyor!
+        });
+        const data = await res.json();
+        if (data.success) {
+            taskSim = data.data;
+        }
+    } catch (e) {
+        // Hata olursa statik göster
+    }
+
+    container.innerHTML = `
+        <div class="p-6">
+            <h2 class="text-xl font-bold mb-4">Görev ${currentTaskIndex + 1} / ${tasks.length}</h2>
+            <p><strong>Saat:</strong> ${task.time}</p>
+            <p><strong>Görev:</strong> ${task.task}</p>
+            <p><strong>Öncelik:</strong> ${task.priority}</p>
+            <p><strong>Departman:</strong> ${task.department}</p>
+            <p><strong>Ekip:</strong> ${task.team_size}</p>
+            <p><strong>Araçlar:</strong> ${(task.tools || []).join(", ")}</p>
+            <p><strong>Süre:</strong> ${task.duration_min} dk</p>
+            ${taskSim ? renderTaskSimulation(taskSim) : ""}
+            <button class="btn btn-primary mt-6" id="nextTaskBtn">Görevi Tamamla</button>
+        </div>
+    `;
+    document.getElementById("nextTaskBtn").onclick = nextTaskStep;
+}
+
+function renderTaskSimulation(sim) {
+    return `
+        ${sim.emails && sim.emails.length ? `
+            <div class="mb-4">
+                <h4 class="font-medium mb-2">Örnek E-postalar:</h4>
+                <ul>
+                    ${sim.emails.map(mail => `<li><b>${mail.from}</b>: <b>${mail.subject}</b> - ${mail.summary}</li>`).join("")}
+                </ul>
+            </div>
+        ` : ""}
+        ${sim.code_snippet ? `<div class="mb-4"><b>Kod Snippet:</b><pre>${sim.code_snippet}</pre></div>` : ""}
+        ${sim.error_message ? `<div class="mb-4"><b>Hata Mesajı:</b> ${sim.error_message}</div>` : ""}
+        ${sim.customer_request ? `<div class="mb-4"><b>Müşteri İsteği:</b> ${sim.customer_request}</div>` : ""}
+        ${sim.test_result ? `<div class="mb-4"><b>Test Sonucu:</b> ${sim.test_result}</div>` : ""}
+        ${sim.observation_report ? `<div class="mb-4"><b>Gözlem Raporu:</b> ${sim.observation_report}</div>` : ""}
+        ${sim.meeting_summary ? `<div class="mb-4"><b>Toplantı Özeti:</b> ${sim.meeting_summary}</div>` : ""}
+        ${sim.mini_event ? `<div class="mb-4"><b>Olay:</b> ${sim.mini_event}</div>` : ""}
+        ${sim.decision ? `
+            <div class="mb-4">
+                <b>${sim.decision.question}</b>
+                <ul>
+                    ${sim.decision.options.map(opt => `
+                        <li>
+                            <input type="radio" name="task_decision" value="${opt.id}" id="opt_${opt.id}">
+                            <label for="opt_${opt.id}">${opt.text}</label>
+                        </li>
+                    `).join("")}
+                </ul>
+            </div>
+        ` : ""}
+    `;
+}
+
+function nextTaskStep() {
+    currentTaskIndex++;
+    showTaskStep();
+}
+
+function startTaskFlow() {
+    if (!currentScenario || !currentScenario.daily_schedule) return;
+    currentTaskIndex = 0;
+    inTaskFlow = true;
+    showTaskStep();
 }
