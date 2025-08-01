@@ -1,308 +1,469 @@
-function initializeApp() {
-  console.log("KariyerAI uygulaması başlatılıyor...");
+// dashboard_page.js - Fixed User Data Loading
 
-  const userData = localStorage.getItem("kariyerAI_user");
-  if (userData) {
-    currentUser = JSON.parse(userData);
-  }
-
-  const currentPage = getCurrentPage();
-  switch (currentPage) {
-    case "onboarding_page":
-      initializeHomePage();
-      break;
-    case "create_profile_page":
-      initializeProfilePage();
-      break;
-    case "dashboard_page":
-      initializeDashboard();
-      break;
-    case "job_matching":
-      initializeJobMatching();
-      break;
-    case "skill_analysis":
-      initializeSkillAnalysis();
-      break;
-    case "learning_path_page":
-      initializeLearningPath();
-      break;
-    case "career_simulation":
-      initializeCareerSimulation();
-      break;
-    case "ilerleme-takibi":
-      initializeProgressTracking();
-      break;
-  }
-}
-// Dashboard Functions
-// Dashboard Functions - Güncellenmiş versiyon
+// Initialize dashboard
 function initializeDashboard() {
-  // Kullanıcı kontrolü
-  loadUserData(); // Önce kullanıcı verilerini yükle
+  console.log("Initializing dashboard...");
   
-  if (!currentUser) {
-    console.log("Kullanıcı oturumu bulunamadı, profil oluşturma sayfasına yönlendiriliyor...");
-    window.location.href = "../html/create_profile_page.html";
+  // First ensure user data is loaded from localStorage
+  if (window.KariyerAI && typeof window.KariyerAI.loadUserData === 'function') {
+    window.KariyerAI.loadUserData();
+  }
+  
+  loadUserProfile();
+  loadDashboardStats();
+  loadSkillGaps();
+  loadUpcomingTasks();
+  loadRecentActivities();
+  setupDashboardEventListeners();
+}
+
+// Load user profile information
+function loadUserProfile() {
+  let user = null;
+  const activeEmail = localStorage.getItem("currentEmail"); // 🔹 Login sonrası kaydedilen email
+
+  // Method 1: From window.KariyerAI global object
+  if (window.KariyerAI?.currentUser && window.KariyerAI.currentUser.email === activeEmail) {
+    user = window.KariyerAI.currentUser;
+    console.log("User loaded from KariyerAI global:", user);
+  }
+  
+  // Method 2: Direct from localStorage
+  if (!user) {
+    try {
+      const userData = localStorage.getItem("kariyerAI_user");
+      if (userData) {
+        const parsed = JSON.parse(userData);
+        if (!activeEmail || parsed.email === activeEmail) {   // ✅ Email eşleşme kontrolü
+          user = parsed;
+          if (window.KariyerAI) {
+            window.KariyerAI.currentUser = user;
+          }
+          console.log("User loaded from localStorage:", user);
+        }
+      }
+    } catch (error) {
+      console.error("Error reading from localStorage:", error);
+    }
+  }
+
+  // Method 3: URL param check
+  if (!user) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const profileCreated = urlParams.get('profileCreated');
+    if (profileCreated === 'true') {
+      setTimeout(() => {
+        loadUserProfile();
+      }, 500);
+      return;
+    }
+  }
+
+  if (!user) {
+    console.log("No user data found in any location");
+    showNoUserDataMessage();
     return;
   }
 
-  console.log("Dashboard başlatılıyor, kullanıcı:", currentUser);
+  // --- (Alttaki kodların tamamı aynı kalır) ---
+
+
+
+  // Update user display elements
+  updateElement('userDisplayName', user.firstName || user.first_name || 'Kullanıcı');
+  updateElement('userDisplayTitle', user.currentTitle || user.current_title || 'Pozisyon');
   
-  // Kullanıcı bilgilerini güncelle
-  updateUserWelcomeMessage();
-  updateDashboardStats();
-  loadRecentActivities();
-  loadSkillGaps();
-  loadUpcomingTasks();
+  const fullName = `${user.firstName || user.first_name || ''} ${user.lastName || user.last_name || ''}`.trim();
+  updateElement('userFullName', fullName || 'Kullanıcı Adı');
+  updateElement('userCurrentTitle', user.currentTitle || user.current_title || 'Pozisyon');
+  updateElement('userLocation', user.location || 'Lokasyon');
+  
+  const skillCount = (user.skills || []).length;
+  updateElement('userSkillCount', `${skillCount} Beceri`);
+  updateElement('userExperienceLevel', getExperienceLevelText(user.experienceLevel || user.experience_level));
+
+  // Update avatar
+  const avatar = document.getElementById('userProfileAvatar');
+  if (avatar) {
+    const firstLetter = (user.firstName || user.first_name || 'U').charAt(0).toUpperCase();
+    avatar.textContent = firstLetter;
+  }
+  
+  console.log("User profile loaded successfully:", {
+    name: fullName,
+    title: user.currentTitle || user.current_title,
+    skills: skillCount
+  });
 }
 
-// Kullanıcı karşılama mesajını güncelle
-function updateUserWelcomeMessage() {
-  const welcomeMessage = document.querySelector('h1');
-  const userDescription = document.querySelector('p.text-gray-600');
-  
-  if (currentUser && welcomeMessage) {
-    const firstName = currentUser.firstName || 'Kullanıcı';
-    const currentTitle = currentUser.currentTitle || '';
+// Show message when no user data is found
+function showNoUserDataMessage() {
+  const container = document.querySelector('.container');
+  if (container) {
+    // Create a notice for missing user data
+    const notice = document.createElement('div');
+    notice.className = 'card bg-yellow-50 border-yellow-200 mb-6';
+    notice.innerHTML = `
+      <div class="card-body text-center">
+        <i class="fas fa-exclamation-triangle text-yellow-500 text-3xl mb-3"></i>
+        <h3 class="text-lg font-semibold mb-2">Profil Bilgisi Bulunamadı</h3>
+        <p class="text-gray-600 mb-4">Dashboard'ı kullanabilmek için önce profilinizi oluşturmanız gerekiyor.</p>
+        <a href="../html/create_profile_page.html" class="btn btn-primary">
+          <i class="fas fa-user-plus mr-2"></i>
+          Profil Oluştur
+        </a>
+      </div>
+    `;
     
-    // Hoş geldin mesajını güncelle
-    welcomeMessage.innerHTML = `Hoş geldin, ${firstName}! 👋`;
-    
-    // Alt açıklama metnini güncelle
-    if (userDescription && currentTitle) {
-      userDescription.textContent = `${currentTitle} olarak kariyerinde bugün hangi adımı atacaksın?`;
-    } else if (userDescription) {
-      userDescription.textContent = `Kariyerinde bugün hangi adımı atacaksın?`;
+    // Insert notice at the beginning of container
+    const welcomeSection = container.querySelector('.mb-8');
+    if (welcomeSection) {
+      welcomeSection.after(notice);
     }
-    
-    console.log(`Hoş geldin mesajı güncellendi: ${firstName}`);
   }
 }
 
-// Kullanıcı profilini navbar'da güncelle
-function updateUserProfile() {
-  const userAvatar = document.querySelector('.user-avatar');
-  
-  if (currentUser && userAvatar) {
-    // Eğer kullanıcının profil fotoğrafı varsa onu göster
-    if (currentUser.profilePhoto) {
-      userAvatar.innerHTML = `<img src="${currentUser.profilePhoto}" alt="Profil" class="w-8 h-8 rounded-full">`;
-    } else {
-      // İlk harflerle avatar oluştur
-      const initials = getInitials(currentUser.firstName, currentUser.lastName);
-      userAvatar.innerHTML = `
-        <div class="w-8 h-8 rounded-full bg-blue-500 text-white flex items-center justify-center text-sm font-medium">
-          ${initials}
-        </div>
-      `;
-    }
+// Get experience level text
+function getExperienceLevelText(level) {
+  const levels = {
+    'junior': 'Junior (0-2 yıl)',
+    'mid': 'Mid-Level (2-5 yıl)',
+    'senior': 'Senior (5-8 yıl)',
+    'lead': 'Lead/Principal (8+ yıl)'
+  };
+  return levels[level] || 'Belirtilmemiş';
+}
+
+// Update element text content safely
+function updateElement(id, content) {
+  const element = document.getElementById(id);
+  if (element) {
+    element.textContent = content;
+  } else {
+    console.warn(`Element with id '${id}' not found`);
   }
 }
 
-// İsim ve soyisimden baş harfleri al
-function getInitials(firstName, lastName) {
-  const first = firstName ? firstName.charAt(0).toUpperCase() : '';
-  const last = lastName ? lastName.charAt(0).toUpperCase() : '';
-  return first + last || 'U'; // Eğer isim yoksa 'U' (User) kullan
-}
-
-// Dashboard istatistiklerini kullanıcı verilerine göre güncelle
-function updateDashboardStats() {
-  // Kullanıcının gerçek verilerini kullan
-  const userXP = currentUser.xp || 150; // Yeni kullanıcı için başlangıç XP
-  const userLevel = getUserLevel(userXP);
-  const nextLevelXP = getNextLevelXP(userXP);
-  const userSkillsCount = currentUser.skills ? currentUser.skills.length : 0;
-  const completedCourses = currentUser.completedCourses || 0;
+// Load dashboard statistics
+function loadDashboardStats() {
+  // Get user data for personalized stats
+  const user = window.KariyerAI?.currentUser;
   
-  // Dinamik iş eşleştirme sayısı (beceri sayısına ve lokasyona göre)
-  const baseJobMatches = Math.min(Math.max(userSkillsCount * 3, 2), 30);
-  const locationMultiplier = getLocationJobMultiplier(currentUser.location);
-  const jobMatches = Math.round(baseJobMatches * locationMultiplier);
-  
-  const stats = {
-    xp: userXP,
-    level: userLevel,
-    nextLevelXp: nextLevelXP,
-    jobMatches: jobMatches,
-    completedCourses: completedCourses,
-    skillsLearned: userSkillsCount,
+  // Mock data for now - replace with real API calls
+  const mockStats = {
+    level: user ? 'Level 2' : 'Level 1',
+    xp: user ? 250 : 0,
+    xpForNextLevel: 500,
+    jobMatches: user ? 12 : 0,
+    completedCourses: user ? 3 : 0,
+    weeklyXP: user ? 75 : 0,
+    weeklyGoal: 300,
+    dailyStreak: user ? 3 : 0
   };
 
-  console.log("Dashboard istatistikleri güncelleniyor:", stats);
-
-  // Stat display'lerini güncelle
-  updateElement("userLevel", stats.level);
-  updateElement("jobMatches", stats.jobMatches);
-  updateElement("completedCourses", stats.completedCourses);
-
-  // Progress bar'ı güncelle
-  const xpProgress = document.getElementById("xpProgress");
-  if (xpProgress) {
-    const progressBar = xpProgress.querySelector(".progress-bar");
-    const xpText = xpProgress.parentElement.querySelector(".text-xs.text-gray-500");
-    
-    if (progressBar && stats.nextLevelXp > 0) {
-      const progressPercent = (stats.xp / stats.nextLevelXp) * 100;
-      progressBar.style.width = `${Math.min(progressPercent, 100)}%`;
-    }
-    
-    if (xpText) {
-      xpText.textContent = `${stats.xp} / ${stats.nextLevelXp} XP`;
-    }
-  }
-
-  // Haftalık progress güncelle
-  updateWeeklyProgress(stats.xp);
-
-  // Yeni badge'ler varsa göster
-  if (stats.xp > 0 && stats.xp % 500 === 0) {
-    showNotification(`Tebrikler! ${stats.level} seviyesine ulaştınız! 🎉`, "success");
-  }
-}
-// XP'ye göre seviye hesapla
-function getUserLevel(xp) {
-  if (xp < 500) return "Başlangıç";
-  if (xp < 1500) return "Junior";
-  if (xp < 3000) return "Mid-Level";
-  if (xp < 5000) return "Senior";
-  return "Expert";
-}
-
-// Bir sonraki seviye için gerekli XP'yi hesapla
-function getNextLevelXP(currentXP) {
-  const levels = [500, 1500, 3000, 5000, 10000];
-  for (let levelXP of levels) {
-    if (currentXP < levelXP) {
-      return levelXP;
-    }
-  }
-  return levels[levels.length - 1]; // Max level
-}
-
-// initializeDashboard fonksiyonunu çağırdığımızda kullanıcı profil bilgilerini de güncelle
-document.addEventListener("DOMContentLoaded", () => {
-  initializeApp();
-  setupEventListeners();
-  loadUserData();
-  setupAnimations();
+  // Update level progress
+  updateElement('userLevel', mockStats.level);
+  updateProgressBar('xpProgress', mockStats.xp, mockStats.xpForNextLevel);
   
-  // Dashboard sayfasındaysak kullanıcı profilini güncelle
-  if (getCurrentPage() === "dashboard") {
-    updateUserProfile();
+  const xpText = document.querySelector('#xpProgress + p');
+  if (xpText) {
+    xpText.textContent = `${mockStats.xp} / ${mockStats.xpForNextLevel} XP`;
   }
+
+  // Update other stats
+  updateElement('jobMatches', mockStats.jobMatches.toString());
+  updateElement('completedCourses', mockStats.completedCourses.toString());
+  updateElement('weeklyGoalText', `${mockStats.weeklyXP}/${mockStats.weeklyGoal} XP`);
+  updateElement('dailyStreak', `${mockStats.dailyStreak} gün`);
+  
+  updateProgressBar('weeklyProgressBar', mockStats.weeklyXP, mockStats.weeklyGoal);
+}
+
+// Update progress bar
+function updateProgressBar(id, current, total) {
+  const progressBar = document.getElementById(id);
+  if (progressBar) {
+    const percentage = Math.min((current / total) * 100, 100);
+    progressBar.style.width = `${percentage}%`;
+  }
+}
+
+// Load skill gaps
+function loadSkillGaps() {
+  const container = document.getElementById('skillGaps');
+  if (!container) return;
+
+  // Show loading
+  container.innerHTML = `
+    <div class="text-center py-6">
+      <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
+      <p class="text-gray-500">Beceri analizi yapılıyor...</p>
+    </div>
+  `;
+
+  // Check if user has skills to analyze
+  const user = window.KariyerAI?.currentUser;
+  const userSkills = user?.skills || [];
+
+  setTimeout(() => {
+    if (userSkills.length === 0) {
+      container.innerHTML = `
+        <div class="text-center py-6">
+          <i class="fas fa-info-circle text-blue-400 text-2xl mb-2"></i>
+          <p class="text-gray-500">Beceri analizi için önce profilinize beceriler ekleyin</p>
+          <a href="../html/create_profile_page.html" class="btn btn-outline btn-small mt-3">
+            Beceri Ekle
+          </a>
+        </div>
+      `;
+      return;
+    }
+
+    // Mock skill gaps data based on user skills
+    const mockSkillGaps = [
+      { skill: 'React.js', priority: 'high', demand: 85, gap: 70 },
+      { skill: 'Python', priority: 'medium', demand: 72, gap: 45 },
+      { skill: 'AWS', priority: 'high', demand: 68, gap: 80 },
+      { skill: 'Docker', priority: 'medium', demand: 55, gap: 60 }
+    ];
+
+    container.innerHTML = mockSkillGaps.map(gap => `
+      <div class="skill-gap-item mb-4 p-4 border rounded-lg hover:bg-gray-50">
+        <div class="flex justify-between items-center mb-2">
+          <div class="flex items-center gap-2">
+            <span class="font-medium">${gap.skill}</span>
+            <span class="badge ${gap.priority === 'high' ? 'badge-red' : 'badge-orange'}">
+              ${gap.priority === 'high' ? 'Yüksek' : 'Orta'} Öncelik
+            </span>
+          </div>
+          <span class="text-sm text-gray-600">${gap.demand}% Talep</span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">Eksiklik:</span>
+          <div class="flex-1 bg-gray-200 rounded-full h-2">
+            <div class="bg-orange-500 h-2 rounded-full" style="width: ${gap.gap}%"></div>
+          </div>
+          <span class="text-sm font-medium">${gap.gap}%</span>
+        </div>
+      </div>
+    `).join('');
+  }, 1500);
+}
+
+// Load upcoming tasks
+function loadUpcomingTasks() {
+  const container = document.getElementById('upcomingTasks');
+  if (!container) return;
+
+  // Show loading
+  container.innerHTML = `
+    <div class="text-center py-6">
+      <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
+      <p class="text-gray-500">Görevler yükleniyor...</p>
+    </div>
+  `;
+
+  // Mock tasks data
+  setTimeout(() => {
+    const mockTasks = [
+      {
+        id: 1,
+        title: 'React.js Temelleri Kursu',
+        type: 'learning',
+        priority: 'high',
+        dueDate: '2 gün içinde',
+        xp: 100
+      },
+      {
+        id: 2,
+        title: 'Portfolio Projesini Güncelle',
+        type: 'project',
+        priority: 'medium',
+        dueDate: '1 hafta içinde',
+        xp: 150
+      },
+      {
+        id: 3,
+        title: 'İş Başvurusu Yap',
+        type: 'job',
+        priority: 'high',
+        dueDate: '3 gün içinde',
+        xp: 50
+      }
+    ];
+
+    container.innerHTML = mockTasks.map(task => `
+      <div class="task-item mb-3 p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+        <div class="flex justify-between items-start mb-2">
+          <div class="flex items-center gap-2">
+            <i class="fas ${getTaskIcon(task.type)} text-blue-500"></i>
+            <span class="font-medium">${task.title}</span>
+          </div>
+          <span class="badge ${task.priority === 'high' ? 'badge-red' : 'badge-orange'}">
+            ${task.priority === 'high' ? 'Acil' : 'Normal'}
+          </span>
+        </div>
+        <div class="flex justify-between items-center text-sm text-gray-600">
+          <span>${task.dueDate}</span>
+          <span class="text-blue-600 font-medium">+${task.xp} XP</span>
+        </div>
+      </div>
+    `).join('');
+  }, 1200);
+}
+
+// Get task icon based on type
+function getTaskIcon(type) {
+  const icons = {
+    'learning': 'fa-book-open',
+    'project': 'fa-code',
+    'job': 'fa-briefcase'
+  };
+  return icons[type] || 'fa-tasks';
+}
+
+// Load recent activities
+function loadRecentActivities() {
+  const container = document.getElementById('recentActivities');
+  if (!container) return;
+
+  // Show loading
+  container.innerHTML = `
+    <div class="text-center py-6">
+      <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
+      <p class="text-gray-500">Aktiviteler yükleniyor...</p>
+    </div>
+  `;
+
+  // Mock activities data
+  setTimeout(() => {
+    const user = window.KariyerAI?.currentUser;
+    const mockActivities = user ? [
+      {
+        id: 1,
+        action: 'Profil oluşturuldu',
+        detail: `${user.firstName || 'Kullanıcı'} profili`,
+        time: 'Az önce',
+        icon: 'fa-user-check',
+        color: 'text-green-500'
+      },
+      {
+        id: 2,
+        action: 'Beceriler eklendi',
+        detail: `${(user.skills || []).length} beceri`,
+        time: '5 dakika önce',
+        icon: 'fa-plus-circle',
+        color: 'text-blue-500'
+      },
+      {
+        id: 3,
+        action: 'İş deneyimi güncellendi',
+        detail: `${(user.experiences || []).length} deneyim`,
+        time: '10 dakika önce',
+        icon: 'fa-briefcase',
+        color: 'text-purple-500'
+      }
+    ] : [
+      {
+        id: 1,
+        action: 'Hoş geldiniz!',
+        detail: 'KariyerAI\'ya katıldınız',
+        time: 'Az önce',
+        icon: 'fa-hand-wave',
+        color: 'text-yellow-500'
+      }
+    ];
+
+    container.innerHTML = mockActivities.map(activity => `
+      <div class="activity-item mb-3 p-3 border-l-4 border-gray-200 bg-gray-50 rounded-r-lg">
+        <div class="flex items-center gap-3">
+          <i class="fas ${activity.icon} ${activity.color}"></i>
+          <div class="flex-1">
+            <p class="text-sm font-medium">${activity.action}</p>
+            <p class="text-xs text-gray-600">${activity.detail}</p>
+          </div>
+          <span class="text-xs text-gray-500">${activity.time}</span>
+        </div>
+      </div>
+    `).join('');
+  }, 800);
+}
+
+// Setup dashboard event listeners
+function setupDashboardEventListeners() {
+  // Add click handlers for interactive elements
+  const quickActionButtons = document.querySelectorAll('.btn[href]');
+  quickActionButtons.forEach(button => {
+    button.addEventListener('click', (e) => {
+      console.log('Navigation to:', button.getAttribute('href'));
+    });
+  });
+
+  // Add notification bell click handler
+  const notificationBell = document.querySelector('.notification-bell');
+  if (notificationBell) {
+    notificationBell.addEventListener('click', () => {
+      alert('Bildirimler özelliği yakında eklenecek!');
+    });
+  }
+
+  // Add user avatar click handler
+  const userAvatar = document.querySelector('.user-avatar');
+  if (userAvatar) {
+    userAvatar.addEventListener('click', () => {
+      alert('Kullanıcı menüsü yakında eklenecek!');
+    });
+  }
+}
+
+// Debug function to check user data
+function debugUserData() {
+  console.log("=== User Data Debug ===");
+  console.log("window.KariyerAI:", window.KariyerAI);
+  console.log("window.KariyerAI.currentUser:", window.KariyerAI?.currentUser);
+  
+  try {
+    const localStorageData = localStorage.getItem("kariyerAI_user");
+    console.log("localStorage data:", localStorageData);
+    if (localStorageData) {
+      console.log("Parsed localStorage:", JSON.parse(localStorageData));
+    }
+  } catch (error) {
+    console.error("Error reading localStorage:", error);
+  }
+  console.log("========================");
+}
+
+// Refresh dashboard data
+function refreshDashboard() {
+  console.log('Refreshing dashboard...');
+  debugUserData(); // Add debug info
+  loadUserProfile();
+  loadDashboardStats();
+  loadSkillGaps();
+  loadUpcomingTasks();
+  loadRecentActivities();
+}
+
+// Initialize dashboard when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+  // Small delay to ensure main.js has loaded
+  setTimeout(() => {
+    initializeDashboard();
+  }, 100);
 });
 
+// Export functions for external use
+window.dashboardFunctions = {
+  initializeDashboard,
+  refreshDashboard,
+  loadUserProfile,
+  loadDashboardStats,
+  debugUserData
+};
 
-// Load Recent Activities
-function loadRecentActivities() {
-  const activities = [
-    { type: "course", title: "React Hooks Eğitimi Tamamlandı", time: "2 saat önce", xp: 150 },
-    { type: "skill", title: "TypeScript becerisi eklendi", time: "1 gün önce", xp: 100 },
-    { type: "job", title: "5 yeni iş eşleştirmesi", time: "2 gün önce", xp: 0 },
-    { type: "achievement", title: "Frontend Master rozetini kazandınız", time: "3 gün önce", xp: 200 },
-  ]
-
-  const activitiesContainer = document.getElementById("recentActivities")
-  if (activitiesContainer) {
-    activitiesContainer.innerHTML = activities
-      .map(
-        (activity) => `
-            <div class="flex items-start gap-3 p-3 border rounded-lg">
-                <div class="activity-icon ${activity.type}">
-                    <i class="fas ${getActivityIcon(activity.type)}"></i>
-                </div>
-                <div class="flex-1">
-                    <p class="font-medium text-sm">${activity.title}</p>
-                    <p class="text-xs text-gray-500">${activity.time}</p>
-                    ${activity.xp > 0 ? `<span class="badge">+${activity.xp} XP</span>` : ""}
-                </div>
-            </div>
-        `,
-      )
-      .join("")
-  }
-}
-
-// Get Activity Icon
-function getActivityIcon(type) {
-  const icons = {
-    course: "fa-book-open",
-    skill: "fa-star",
-    job: "fa-briefcase",
-    achievement: "fa-trophy",
-  }
-  return icons[type] || "fa-circle"
-}
-
-// Load Skill Gaps
-function loadSkillGaps() {
-  const skillGaps = [
-    { skill: "Node.js", importance: "Yüksek", jobs: 15, progress: 0 },
-    { skill: "SQL", importance: "Orta", jobs: 8, progress: 30 },
-    { skill: "Docker", importance: "Orta", jobs: 6, progress: 0 },
-  ]
-
-  const skillGapsContainer = document.getElementById("skillGaps")
-  if (skillGapsContainer) {
-    skillGapsContainer.innerHTML = skillGaps
-      .map(
-        (gap) => `
-            <div class="flex items-center justify-between p-4 border rounded-lg">
-                <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                        <h4 class="font-medium">${gap.skill}</h4>
-                        <span class="badge ${gap.importance === "Yüksek" ? "badge-danger" : "badge-secondary"}">${gap.importance}</span>
-                    </div>
-                    <p class="text-sm text-gray-600">${gap.jobs} iş ilanında gerekli</p>
-                    ${
-                      gap.progress > 0
-                        ? `
-                        <div class="progress mt-2">
-                            <div class="progress-bar" style="width: ${gap.progress}%"></div>
-                        </div>
-                        <p class="text-xs text-gray-500 mt-1">%${gap.progress} tamamlandı</p>
-                    `
-                        : ""
-                    }
-                </div>
-                <a href="../html/learning_path_page.html" class="btn btn-small btn-primary">
-                    ${gap.progress > 0 ? "Devam Et" : "Başla"}
-                </a>
-            </div>
-        `,
-      )
-      .join("")
-  }
-}
-
-// Load Upcoming Tasks
-function loadUpcomingTasks() {
-  const tasks = [
-    { title: "JavaScript ES6+ Quiz", type: "quiz", deadline: "Bugün", difficulty: "Kolay" },
-    { title: "React Project: Todo App", type: "project", deadline: "3 gün", difficulty: "Orta" },
-    { title: "API Integration Senaryosu", type: "scenario", deadline: "1 hafta", difficulty: "Zor" },
-  ]
-
-  const tasksContainer = document.getElementById("upcomingTasks")
-  if (tasksContainer) {
-    tasksContainer.innerHTML = tasks
-      .map(
-        (task) => `
-            <div class="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
-                <div class="flex items-center gap-3">
-                    <div class="task-indicator ${task.type}"></div>
-                    <div>
-                        <h4 class="font-medium">${task.title}</h4>
-                        <p class="text-sm text-gray-600">${task.deadline} • ${task.difficulty}</p>
-                    </div>
-                </div>
-                <button class="btn btn-small">
-                    <i class="fas fa-arrow-right"></i>
-                </button>
-            </div>
-        `,
-      )
-      .join("")
-  }
-}
+// Add this right after DOM loads in dashboard
+console.log("=== Debug Info ===");
+console.log("localStorage data:", localStorage.getItem("kariyerAI_user"));
+console.log("window.KariyerAI:", window.KariyerAI);
+console.log("currentUser:", window.KariyerAI?.currentUser);

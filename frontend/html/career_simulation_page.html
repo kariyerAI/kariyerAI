@@ -6,6 +6,21 @@
     <title>Kariyer Simülasyonu - KariyerAI</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        table.simulation-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table.simulation-table th, table.simulation-table td {
+            padding: 8px;
+            border: 1px solid #ddd;
+            font-size: 14px;
+        }
+        table.simulation-table th {
+            background-color: #f4f4f4;
+            text-align: left;
+        }
+    </style>
 </head>
 <body>
     <!-- Header -->
@@ -25,7 +40,11 @@
                     </div>
                 </div>
 
-                <div class="flex items-center gap-4">
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fas fa-star text-yellow-500"></i>
+                        <span id="totalScore">Toplam Skor: 0</span>
+                    </div>
                     <div class="flex items-center gap-2 text-sm">
                         <i class="fas fa-clock"></i>
                         <span id="simulationTimer">5:00</span>
@@ -38,102 +57,97 @@
         </div>
     </header>
 
-    <div class="container" style="max-width: 1000px; padding: 2rem 20px;">
+    <div class="container" style="max-width: 1100px; padding: 2rem 20px;">
         <!-- Progress Header -->
         <div class="mb-8">
             <div class="flex items-center justify-between mb-4">
                 <h1 class="text-3xl font-bold">Kariyer Simülasyonu</h1>
-                <span class="badge badge-outline">Senaryo 1 / 3</span>
+                <span class="badge badge-outline" id="scenarioStep">Senaryo 1 / 1</span>
             </div>
             <div class="progress">
-                <div class="progress-bar" style="width: 33%"></div>
+                <div class="progress-bar" id="scenarioProgress" style="width: 0%"></div>
             </div>
         </div>
 
         <!-- Scenario Card -->
         <div id="scenarioContainer" class="card mb-8">
+            <p class="text-gray-400">Senaryo yükleniyor...</p>
+        </div>
+
+        <!-- Günlük Program -->
+        <div id="dailyScheduleContainer" class="card mb-8 hidden">
             <div class="card-header">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <h2 class="text-xl font-bold mb-2">Teknik Mülakat: React Hooks</h2>
-                        <div class="flex items-center gap-4">
-                            <span class="badge badge-secondary">Teknik</span>
-                            <span class="badge badge-blue">Orta</span>
-                        </div>
-                    </div>
-                    <div class="text-right">
-                        <div class="flex items-center gap-2 mb-2">
-                            <i class="fas fa-star text-yellow-500"></i>
-                            <span class="text-sm">Mevcut Skor: 0</span>
-                        </div>
-                    </div>
-                </div>
+                <h3 class="flex items-center gap-2">
+                    <i class="fas fa-list text-blue-500"></i>
+                    <span>Günlük Görevler ve Öncelikler</span>
+                </h3>
             </div>
-            
-            <!-- Context -->
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-                <h4 class="font-medium mb-2 flex items-center">
-                    <i class="fas fa-briefcase mr-2"></i>
-                    Senaryo Bağlamı
-                </h4>
-                <p class="text-sm text-blue-800">Şirket: TechCorp | Pozisyon: Senior Frontend Developer | Mülakatçı: Teknik Lead</p>
+            <div class="p-4 overflow-x-auto">
+                <table class="simulation-table">
+                    <thead>
+                        <tr>
+                            <th>Saat</th>
+                            <th>Görev</th>
+                            <th>Öncelik</th>
+                            <th>Departman</th>
+                            <th>Ekip</th>
+                            <th>Araçlar</th>
+                            <th>Süre (dk)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dailyScheduleList">
+                        <!-- JS dolduracak -->
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-            <!-- Situation -->
-            <div class="mb-6">
-                <h4 class="font-medium mb-3 flex items-center">
-                    <i class="fas fa-exclamation-circle mr-2"></i>
-                    Durum
-                </h4>
-                <p class="text-gray-700">Bir React projesinde component'ler arası state paylaşımı için hangi yaklaşımı tercih edersiniz?</p>
+        <!-- Emails -->
+        <div id="emailsContainer" class="card mb-8 hidden">
+            <div class="card-header">
+                <h3 class="flex items-center gap-2">
+                    <i class="fas fa-envelope text-green-500"></i>
+                    <span>Gelen ve Gönderilecek Mailler</span>
+                </h3>
             </div>
-
-            <!-- Question -->
-            <div class="mb-6">
-                <h4 class="font-medium mb-3 flex items-center">
-                    <i class="fas fa-comment mr-2"></i>
-                    Soru
-                </h4>
-                <p class="text-gray-800 font-medium">Büyük bir e-ticaret uygulamasında kullanıcı sepeti bilgisini birden fazla component'te kullanmanız gerekiyor. Bu durumda hangi state yönetim yaklaşımını tercih edersiniz ve neden?</p>
+            <div class="p-4">
+                <table class="simulation-table">
+                    <thead>
+                        <tr>
+                            <th>Gönderen</th>
+                            <th>Konu</th>
+                            <th>Özet</th>
+                        </tr>
+                    </thead>
+                    <tbody id="emailsList">
+                        <!-- JS dolduracak -->
+                    </tbody>
+                </table>
             </div>
+        </div>
 
-            <!-- Options -->
-            <div class="mb-6" id="optionsContainer">
-                <h4 class="font-medium mb-4">Cevabınızı seçin:</h4>
-                <div class="space-y-3">
-                    <div class="option-card" onclick="selectOption('a')">
-                        <input type="radio" name="answer" value="a" id="option_a">
-                        <label for="option_a" class="option-label">Props drilling kullanarak parent component'ten child component'lere veri geçiririm</label>
-                    </div>
-                    
-                    <div class="option-card" onclick="selectOption('b')">
-                        <input type="radio" name="answer" value="b" id="option_b">
-                        <label for="option_b" class="option-label">Context API kullanarak global state oluştururum</label>
-                    </div>
-                    
-                    <div class="option-card" onclick="selectOption('c')">
-                        <input type="radio" name="answer" value="c" id="option_c">
-                        <label for="option_c" class="option-label">Redux kullanarak centralized state management uygularım</label>
-                    </div>
-                    
-                    <div class="option-card" onclick="selectOption('d')">
-                        <input type="radio" name="answer" value="d" id="option_d">
-                        <label for="option_d" class="option-label">Local storage kullanarak veriyi browser'da saklarım</label>
-                    </div>
-                </div>
+        <!-- Meetings -->
+        <div id="meetingsContainer" class="card mb-8 hidden">
+            <div class="card-header">
+                <h3 class="flex items-center gap-2">
+                    <i class="fas fa-handshake text-purple-500"></i>
+                    <span>Toplantılar</span>
+                </h3>
             </div>
-
-            <!-- Action Buttons -->
-            <div class="flex justify-between">
-                <button class="btn btn-outline" disabled>
-                    <i class="fas fa-arrow-left mr-2"></i>Önceki
-                </button>
-
-                <div class="space-x-3">
-                    <button class="btn btn-primary" onclick="submitAnswer()">
-                        Cevabı Gönder
-                    </button>
-                </div>
+            <div class="p-4">
+                <table class="simulation-table">
+                    <thead>
+                        <tr>
+                            <th>Saat</th>
+                            <th>Katılımcılar</th>
+                            <th>Konu</th>
+                            <th>Özet</th>
+                        </tr>
+                    </thead>
+                    <tbody id="meetingsList">
+                        <!-- JS dolduracak -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -146,18 +160,18 @@
                         <span>İpuçları</span>
                     </h3>
                 </div>
-                <ul class="space-y-2 text-sm">
+                <ul class="space-y-2 text-sm p-3">
                     <li class="flex items-start gap-2">
                         <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        <span>Gerçek iş senaryolarını düşünerek cevap verin</span>
+                        <span>Görevlerin önceliklerini doğru belirleyin.</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        <span>Sadece teknik bilgi değil, soft skill'ler de önemli</span>
+                        <span>İletişim ve ekip koordinasyonu teknik bilgi kadar önemlidir.</span>
                     </li>
                     <li class="flex items-start gap-2">
                         <div class="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
-                        <span>Her cevap için detaylı feedback alacaksınız</span>
+                        <span>E-posta ve toplantıları etkin yönetin, zamanınızı planlayın.</span>
                     </li>
                 </ul>
             </div>
@@ -169,28 +183,37 @@
                         <span>Simülasyon Türleri</span>
                     </h3>
                 </div>
-                <div class="space-y-3">
+                <div class="space-y-3 p-3">
                     <div class="flex items-center gap-3">
                         <i class="fas fa-code text-blue-500"></i>
-                        <span class="text-sm">Teknik Mülakat</span>
+                        <span class="text-sm">Teknik Görevler ve Kod İnceleme</span>
                     </div>
                     <div class="flex items-center gap-3">
                         <i class="fas fa-users text-green-500"></i>
-                        <span class="text-sm">Liderlik Senaryoları</span>
+                        <span class="text-sm">Liderlik ve Ekip Yönetimi</span>
                     </div>
                     <div class="flex items-center gap-3">
                         <i class="fas fa-exclamation-circle text-orange-500"></i>
-                        <span class="text-sm">Problem Çözme</span>
+                        <span class="text-sm">Kritik Karar Anları</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <i class="fas fa-comment text-purple-500"></i>
-                        <span class="text-sm">İletişim Becerileri</span>
+                        <i class="fas fa-envelope text-purple-500"></i>
+                        <span class="text-sm">E-posta ve Müşteri İletişimi</span>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="../js/career_simulation_page.js"></script>
+    <script type="module">
+        import { initializeCareerSimulation, selectOption, submitAnswer } from "../js/career_simulation_page.js";
+        window.selectOption = (id) => selectOption(id);
+        window.submitAnswer = () => submitAnswer();
+
+        document.addEventListener("DOMContentLoaded", () => {
+            initializeCareerSimulation();
+        });
+    </script>
+    <script type="module" src="../js/career_simulation_page.js"></script>
 </body>
 </html>
