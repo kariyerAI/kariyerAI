@@ -386,7 +386,21 @@ function validateField(field) {
 async function completeProfile() {
   console.log("Completing profile...");
 
-  // Collect all form data
+  // Skills ve Experiences'i temizle
+  const cleanedSkills = (userSkills && Array.isArray(userSkills))
+    ? userSkills.filter(s => typeof s === "string" && s.trim() !== "")
+    : [];
+
+  const cleanedExperiences = (userExperiences && Array.isArray(userExperiences))
+    ? userExperiences.map(exp => ({
+        company: exp.company || '',
+        position: exp.position || '',
+        duration: exp.duration || '',
+        description: exp.description || ''
+      }))
+    : [];
+
+  // Form verilerini topla
   const profileData = {
     firstName: document.getElementById('firstName')?.value || '',
     lastName: document.getElementById('lastName')?.value || '',
@@ -396,114 +410,74 @@ async function completeProfile() {
     currentTitle: document.getElementById('currentTitle')?.value || '',
     experienceLevel: document.getElementById('experienceLevel')?.value || '',
     summary: document.getElementById('summary')?.value || '',
-    skills: userSkills,
-    experiences: userExperiences,
+    skills: cleanedSkills.length > 0 ? cleanedSkills : [],              // ✅ her zaman array
+    experiences: cleanedExperiences.length > 0 ? cleanedExperiences : [], // ✅ her zaman array
     university: document.getElementById('university')?.value || '',
     degree: document.getElementById('degree')?.value || '',
     graduationYear: document.getElementById('graduationYear')?.value || '',
     gpa: document.getElementById('gpa')?.value || ''
   };
+
+  // LocalStorage güncelle
   localStorage.setItem("kariyerAI_user", JSON.stringify(profileData));
   window.KariyerAI.currentUser = profileData;
-  console.log("✅ User saved with ID:", profileData.id);
-  // Basic validation
-  if (!profileData.firstName || !profileData.lastName || !profileData.email) {
-    alert('Lütfen zorunlu alanları doldurun (Ad, Soyad, E-posta)');
-    return;
-  }
 
-  // Check password fields
-  const password = document.getElementById('loginPassword')?.value || '';
-  const confirmPassword = document.getElementById('confirmPassword')?.value || '';
-
-  if (!password) {
-    alert('Lütfen şifre oluşturun');
-    return;
-  }
-
-  if (password !== confirmPassword) {
-    alert('Şifreler eşleşmiyor');
-    return;
-  }
-
+  // Backend’e gönder
   try {
-    // Show loading
     const button = event.target;
     const originalText = button.textContent;
     button.textContent = 'Kaydediliyor...';
     button.disabled = true;
 
-    // **FIRST**: Save to localStorage immediately
-    window.KariyerAI.currentUser = profileData;
-    window.KariyerAI.saveUserData();
-    console.log("Profile saved to localStorage:", profileData);
+    const response = await fetch(`${window.KariyerAI.BACKEND_URL}/save-profile`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        ...profileData,
+        experiences: Array.isArray(profileData.experiences) ? profileData.experiences : [],
+        skills: Array.isArray(profileData.skills) ? profileData.skills : []
+      })
+    });
 
-    // **THEN**: Try to save to backend (but don't block on it)
-    try {
-      const response = await fetch(`${window.KariyerAI.BACKEND_URL}/save-profile`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(profileData)
-      });
 
-      const result = await response.json();
+    const result = await response.json();
 
-      // --- BURASI YENİ EKLENDİ ---
-      if (response.status === 409) {
-        showNotification(result.message || "Bu e-posta ile zaten bir profil var. Lütfen giriş yapın.", "warning");
-        // Butonu eski haline getir ve işlemi durdur
-        button.textContent = originalText;
-        button.disabled = false;
-        return;
-      }
-      // --- BURASI YENİ EKLENDİ ---
-
-      if (result.success && result.data && result.data.length > 0) {
-          profileData.id = result.data[0].id;  // ✅ ID artık mevcut
-          localStorage.setItem("kariyerAI_user", JSON.stringify(profileData));
-          window.KariyerAI.currentUser = profileData;
-          console.log("✅ User saved with ID:", profileData.id);
-      }
-
-      console.log("Backend save result:", result);
-      
-      if (result.success) {
-        console.log("Profile saved to backend successfully");
-      } else {
-        showNotification(result.message || "Profil kaydedilemedi.", "error");
-        // Butonu eski haline getir ve işlemi durdur
-        button.textContent = originalText;
-        button.disabled = false;
-        return;
-      }
-    } catch (backendError) {
-      showNotification("Sunucuya bağlanılamadı.", "error");
+    if (response.status === 409) {
+      showNotification(result.message || "Bu e-posta ile zaten bir profil var. Lütfen giriş yapın.", "warning");
       button.textContent = originalText;
       button.disabled = false;
       return;
     }
 
-    // Show success message
-    alert('Profil başarıyla oluşturuldu!');
-    
-    setTimeout(() => {
-      window.location.href = '../html/dashboard_page.html?profileCreated=true';
-    }, 500);
+    if (result.success && result.data && result.data.length > 0) {
+      profileData.id = result.data[0].id;  // ✅ Backend ID kaydedildi
+      localStorage.setItem("kariyerAI_user", JSON.stringify(profileData));
+      window.KariyerAI.currentUser = profileData;
+      console.log("✅ User saved with ID:", profileData.id);
+    }
+
+    if (result.success) {
+      alert('Profil başarıyla oluşturuldu!');
+      setTimeout(() => {
+        window.location.href = '../html/dashboard_page.html?profileCreated=true';
+      }, 500);
+    } else {
+      showNotification(result.message || "Profil kaydedilemedi.", "error");
+    }
+
+    button.textContent = originalText;
+    button.disabled = false;
 
   } catch (error) {
     console.error("Profile completion error:", error);
-    alert('Profil oluşturulurken hata oluştu. Lütfen tekrar deneyin.');
-  } finally {
-    // Reset button
-    const button = event.target;
-    if (button) {
-      button.textContent = originalText;
-      button.disabled = false;
-    }
+    showNotification("Profil oluşturulurken hata oluştu.", "error");
   }
+  localStorage.setItem("currentEmail", profileData.email);
+
 }
+
 
 // Save profile to backend
 async function saveProfile(profileData) {

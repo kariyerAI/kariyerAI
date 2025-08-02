@@ -242,7 +242,7 @@ export function selectOption(optionId) {
 export function submitAnswer() {
     const selectedOption = document.querySelector('input[name="answer"]:checked');
     if (!selectedOption) {
-        showNotification("Lütfen bir seçenek seçin.", "warning");
+        showNotification("Lütfen bir seçenek seçin .", "warning");
         return;
     }
 

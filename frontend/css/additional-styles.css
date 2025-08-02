@@ -611,3 +611,52 @@
     display: none;
   }
 }
+/* Kullanıcı Becerileri için Etiket */
+#userSkillsList .badge-blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+  padding: 0.4rem 0.8rem;
+  border-radius: 9999px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  display: inline-block;
+  transition: background 0.3s;
+}
+
+#userSkillsList .badge-blue:hover {
+  background: #bfdbfe;
+}
+
+/* İş Deneyim Kartları */
+#userExperienceList .experience-card {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+#userExperienceList .experience-card:hover {
+  background: #f3f4f6;
+  transform: translateY(-2px);
+}
+
+/* Pozisyon başlığı */
+#userExperienceList .experience-card h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+/* Şirket adı */
+#userExperienceList .experience-card p.company {
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+/* Açıklama */
+#userExperienceList .experience-card p.desc {
+  font-size: 0.9rem;
+  color: #4b5563;
+  margin-top: 0.5rem;
+}
