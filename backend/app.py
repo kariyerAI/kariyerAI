@@ -38,15 +38,22 @@ import traceback
 def home():
     return 'KariyerAI Backend çalışıyor!'
 
-
-
 # Profil verisini Supabase'e kaydetmek için
 @app.route("/save-profile", methods=["POST"])  
 def save_profile():
     try:
         profile_data_raw = request.json
-        print("Gelen profil verisi:", profile_data_raw)
+        print("📌 Gelen profil verisi:", profile_data_raw)
 
+        # 🛠 Skills'i Supabase formatına çevir
+        skills = profile_data_raw.get("skills", [])
+        skills_str = "{" + ",".join([s.replace(",", "") for s in skills]) + "}" if skills else None
+
+        # 🛠 Experiences jsonb formatına çevir
+        experiences = profile_data_raw.get("experiences", [])
+        experiences_json = json.dumps(experiences) if experiences else None
+
+        # Supabase'e gönderilecek veri
         profile_data = {
             "first_name": profile_data_raw.get("firstName"),
             "last_name": profile_data_raw.get("lastName"),
@@ -56,8 +63,12 @@ def save_profile():
             "current_title": profile_data_raw.get("currentTitle"),
             "experience_level": profile_data_raw.get("experienceLevel"),
             "summary": profile_data_raw.get("summary"),
-            "skills": profile_data_raw.get("skills", []),
-            "experiences": profile_data_raw.get("experiences", []),  
+            "skills": skills_str,                  # ✅ text[] format
+            "experiences": (
+                profile_data_raw.get("experiences") 
+                if isinstance(profile_data_raw.get("experiences"), list)
+                else json.loads(profile_data_raw.get("experiences", "[]"))
+                ),
             "university": profile_data_raw.get("university"),
             "degree": profile_data_raw.get("degree"),
             "graduation_year": profile_data_raw.get("graduationYear"),
@@ -68,7 +79,7 @@ def save_profile():
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}",
             "Content-Type": "application/json",
-            "Prefer": "return=representation"  # ID'nin dönmesi için gerekli
+            "Prefer": "return=representation"  # ✅ ID'nin dönmesi için
         }
 
         response = requests.post(
@@ -77,14 +88,14 @@ def save_profile():
             json=profile_data
         )
 
-        print("Supabase response:", response.status_code, response.text)
+        print("📌 Supabase response:", response.status_code, response.text)
 
         if response.status_code in [200, 201]:
             data = response.json()
             return jsonify({
                 "success": True,
                 "message": "Profil başarıyla kaydedildi",
-                "data": data  # id: uuid dönecek
+                "data": data
             })
         else:
             return jsonify({
@@ -93,7 +104,7 @@ def save_profile():
             }), 400
 
     except Exception as e:
-        print("save_profile hatası:", traceback.format_exc())
+        print("❌ save_profile hatası:", traceback.format_exc())
         return jsonify({
             "success": False,
             "message": f"Server hatası: {str(e)}"

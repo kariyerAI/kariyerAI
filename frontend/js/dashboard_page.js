@@ -20,13 +20,14 @@ function initializeDashboard() {
 // Load user profile information
 function loadUserProfile() {
   let user = null;
-  const activeEmail = localStorage.getItem("currentEmail"); // 🔹 Login sonrası kaydedilen email
+  const activeEmail = localStorage.getItem("currentEmail"); // olabilir ama zorunlu değil
 
   // Method 1: From window.KariyerAI global object
-  if (window.KariyerAI?.currentUser && window.KariyerAI.currentUser.email === activeEmail) {
-    user = window.KariyerAI.currentUser;
-    console.log("User loaded from KariyerAI global:", user);
+  if (window.KariyerAI?.currentUser) {
+      user = window.KariyerAI.currentUser;
+      console.log("User loaded from KariyerAI global:", user);
   }
+
   
   // Method 2: Direct from localStorage
   if (!user) {
@@ -65,9 +66,6 @@ function loadUserProfile() {
     return;
   }
 
-  // --- (Alttaki kodların tamamı aynı kalır) ---
-
-
 
   // Update user display elements
   updateElement('userDisplayName', user.firstName || user.first_name || 'Kullanıcı');
@@ -88,13 +86,58 @@ function loadUserProfile() {
     const firstLetter = (user.firstName || user.first_name || 'U').charAt(0).toUpperCase();
     avatar.textContent = firstLetter;
   }
+    // Update welcome section with user's first name
+  const welcomeName = document.getElementById('welcomeUserName');
+  if (welcomeName) {
+      welcomeName.textContent = user.firstName || user.first_name || 'Kullanıcı';
+  }
+
   
   console.log("User profile loaded successfully:", {
     name: fullName,
     title: user.currentTitle || user.current_title,
     skills: skillCount
   });
+
+  renderUserSkills(user.skills);
+  renderUserExperiences(user.experiences);
+
 }
+
+// Beceriler
+function renderUserSkills(skills) {
+    const container = document.getElementById('userSkillsList');
+    if (!container) return;
+
+    if (!skills || skills.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">Beceri eklenmemiş</p>';
+        return;
+    }
+
+    container.innerHTML = skills.map(skill => `
+        <span class="badge-blue">${skill}</span>
+    `).join('');
+}
+
+// İş deneyimleri
+function renderUserExperiences(experiences) {
+    const container = document.getElementById('userExperienceList');
+    if (!container) return;
+
+    if (!experiences || experiences.length === 0) {
+        container.innerHTML = '<p class="text-gray-500">İş deneyimi eklenmemiş</p>';
+        return;
+    }
+
+    container.innerHTML = experiences.map(exp => `
+        <div class="experience-card">
+            <h4>${exp.position} <span class="text-sm text-gray-500">(${exp.duration})</span></h4>
+            <p class="company">${exp.company}</p>
+            <p class="desc">${exp.description}</p>
+        </div>
+    `).join('');
+}
+
 
 // Show message when no user data is found
 function showNoUserDataMessage() {
