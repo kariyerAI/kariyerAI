@@ -449,6 +449,17 @@ async function completeProfile() {
       });
 
       const result = await response.json();
+
+      // --- BURASI YENİ EKLENDİ ---
+      if (response.status === 409) {
+        showNotification(result.message || "Bu e-posta ile zaten bir profil var. Lütfen giriş yapın.", "warning");
+        // Butonu eski haline getir ve işlemi durdur
+        button.textContent = originalText;
+        button.disabled = false;
+        return;
+      }
+      // --- BURASI YENİ EKLENDİ ---
+
       if (result.success && result.data && result.data.length > 0) {
           profileData.id = result.data[0].id;  // ✅ ID artık mevcut
           localStorage.setItem("kariyerAI_user", JSON.stringify(profileData));
@@ -461,18 +472,23 @@ async function completeProfile() {
       if (result.success) {
         console.log("Profile saved to backend successfully");
       } else {
-        console.warn("Backend save failed, but continuing with localStorage data:", result.message);
+        showNotification(result.message || "Profil kaydedilemedi.", "error");
+        // Butonu eski haline getir ve işlemi durdur
+        button.textContent = originalText;
+        button.disabled = false;
+        return;
       }
     } catch (backendError) {
-      console.warn("Backend not available, but profile is saved locally:", backendError);
+      showNotification("Sunucuya bağlanılamadı.", "error");
+      button.textContent = originalText;
+      button.disabled = false;
+      return;
     }
 
     // Show success message
     alert('Profil başarıyla oluşturuldu!');
     
-    // **IMPORTANT**: Add delay before redirect to ensure data is saved
     setTimeout(() => {
-      // Redirect to dashboard with success parameter
       window.location.href = '../html/dashboard_page.html?profileCreated=true';
     }, 500);
 
@@ -487,6 +503,39 @@ async function completeProfile() {
       button.disabled = false;
     }
   }
+}
+
+// Save profile to backend
+async function saveProfile(profileData) {
+    try {
+        const res = await fetch("http://127.0.0.1:5000/save-profile", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(profileData)
+        });
+
+        // Hata olsa bile JSON'u oku
+        const result = await res.json();
+
+        if (res.status === 409) {
+            showNotification(result.message || "Bu e-posta ile zaten bir profil var. Lütfen giriş yapın.", "warning");
+            return;
+        }
+
+        if (result.success) {
+            showNotification("Profil başarıyla kaydedildi!", "success");
+            // Devam et...
+        } else {
+            showNotification(result.message || "Profil kaydedilemedi.", "error");
+        }
+    } catch (err) {
+        showNotification("Sunucuya bağlanılamadı.", "error");
+    }
+}
+
+// Basit bildirim fonksiyonu
+function showNotification(message, type = "info") {
+    alert(message);
 }
 
 // Make functions available globally

@@ -406,9 +406,101 @@ def career_simulation(user_id):
         print("❌ career_simulation genel hata:", traceback.format_exc())
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
+@app.route("/task-simulation", methods=["POST"])
+def task_simulation():
+    data = request.json
+    task = data.get("task")
+    user = data.get("user", {})
+
+    prompt = f"""
+Aşağıda detayları verilen iş günü görevi için, görevin ve kullanıcının mesleğinin doğasına uygun, gerçekçi ve etkileşimli bir mini simülasyon üret.
+
+- Eğer görev "e-posta kontrolü" ise, örnek e-postalar ve önemli bir karar anı üret.
+- Eğer görev "teknik geliştirme" veya "API entegrasyonu" ise, kod snippet'i, hata mesajı, müşteri isteği, test sonucu ve karar anı üret.
+- Eğer görev "toplantı" ise, toplantı özeti, alınan kararlar, kısa bir olay ve karar anı üret.
+- Eğer görev "gözlem" veya "raporlama" ise, gözlem raporu, beklenmedik olay ve karar anı üret.
+- Eğer görev "müşteri görüşmesi" ise, müşteriyle ilgili bir durum, iletişim örneği ve karar anı üret.
+- Eğer görev "sosyal etkinlik" veya "kahve molası" ise, sosyal bir olay veya sürpriz üret.
+- Eğer görev başka bir türdeyse, o görevin mesleğe uygun tipik çıktısını, yaşanabilecek bir olay ve karar anı üret.
+- Her görevde sadece o göreve ve mesleğe uygun içerik üret, gereksiz bilgi ekleme.
+
+Yanıtı sadece geçerli bir JSON olarak ver.
+
+Kullanıcı Bilgileri:
+- Meslek: {user.get('current_title', '')}
+- Departman: {user.get('department', '')}
+- Sektör: {user.get('sector', '')}
+- Beceriler: {', '.join(user.get('skills', []))}
+
+Görev Bilgileri:
+- Saat: {task.get('time')}
+- Görev: {task.get('task')}
+- Öncelik: {task.get('priority')}
+- Ekip: {task.get('team_size')}
+- Araçlar: {', '.join(task.get('tools', []))}
+- Süre: {task.get('duration_min')} dk
+
+JSON formatı:
+{{
+  // Sadece göreve ve mesleğe uygun alanlar!
+  // Teknik görev için:
+  "code_snippet": "public class PaymentAPI {{ ... }}",
+  "error_message": "HTTP 500 Internal Server Error",
+  "customer_request": "API'nin döviz desteği eklemesini istiyoruz.",
+  "test_result": "Tüm testler geçti, ancak ödeme entegrasyonu başarısız.",
+  "emails": [
+    {{"from": "pm@company.com", "subject": "API Feedback", "summary": "Müşteri yeni özellik istedi."}}
+  ],
+  "meeting_summary": "Sprint planlama toplantısında yeni görevler dağıtıldı.",
+  "observation_report": "Makine A'da sıcaklık dalgalanması gözlendi.",
+  "mini_event": "Takım arkadaşı acil bir hata bildirdi.",
+  "decision": {{
+    "question": "API endpoint'inde hata oluştu. Ne yaparsın?",
+    "options": [
+      {{"id": "a", "text": "Logları incele", "feedback": "Sorunun kaynağını bulabilirsin.", "score": 3}},
+      {{"id": "b", "text": "Rollback yap", "feedback": "Acele karar riskli olabilir.", "score": 2}}
+    ]
+  }}
+}}
+"""
+    # Gemini API çağrısı ve JSON parse işlemleri aynı kalabilir
+
+    gemini_payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 1500}
+    }
+    response = requests.post(
+        f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+        headers={"Content-Type": "application/json"},
+        json=gemini_payload
+    )
+
+    if response.status_code == 200:
+        result = response.json()
+        ai_response = result['candidates'][0]['content']['parts'][0]['text']
+
+        # JSON temizle ve parse et
+        cleaned_response = ai_response.replace('```json\n', '').replace('\n```', '').strip()
+
+        try:
+            parsed_data = json.loads(cleaned_response)
+            return jsonify({
+                "success": True,
+                "data": parsed_data
+            })
+        except json.JSONDecodeError as e:
+            return jsonify({
+                "success": False,
+                "message": f"AI yanıtı parse edilemedi: {str(e)}"
+            }), 400
+    else:
+        return jsonify({
+            "success": False,
+            "message": f"Gemini API hatası: {response.text}"
+        }), 400
+
 if __name__ == "__main__":
     print("🚀 KariyerAI Backend başlatılıyor...")
     print(f"📋 Supabase URL: {SUPABASE_API_URL if SUPABASE_API_URL else '❌ Tanımlanmadı'}")
     print(f"🤖 Gemini API: {'✅ Yapılandırıldı' if GEMINI_API_KEY else '❌ Yapılandırılmadı'}")
     app.run(debug=True, port=5000)
-
