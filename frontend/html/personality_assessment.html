@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kişilik ve Öğrenme Stili Testi - KariyerAI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/additional-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .assessment-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .question-card {
+            background: white;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-left: 4px solid #3b82f6;
+        }
+        
+        .question-number {
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        .question-text {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+        }
+        
+        .answer-options {
+            display: grid;
+            gap: 1rem;
+        }
+        
+        .answer-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .answer-option:hover {
+            border-color: #3b82f6;
+            background-color: #f0f9ff;
+        }
+        
+        .answer-option.selected {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .answer-option input[type="radio"] {
+            margin-right: 1rem;
+            transform: scale(1.2);
+        }
+        
+        .answer-text {
+            flex: 1;
+            font-weight: 500;
+            color: #374151;
+        }
+        
+        .progress-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            background: linear-gradient(90deg, #3b82f6, #1d4ed8);
+            height: 100%;
+            transition: width 0.3s ease;
+            border-radius: 4px;
+        }
+        
+        .progress-text {
+            text-align: center;
+            color: #6b7280;
+            font-size: 0.875rem;
+            margin-bottom: 1rem;
+        }
+        
+        .navigation-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+        }
+        
+        .btn-secondary:disabled {
+            background: #d1d5db;
+            cursor: not-allowed;
+        }
+        
+        .assessment-intro {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .intro-icon {
+            font-size: 3rem;
+            color: #3b82f6;
+            margin-bottom: 1rem;
+        }
+        
+        .intro-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1f2937;
+            margin-bottom: 1rem;
+        }
+        
+        .intro-description {
+            font-size: 1.125rem;
+            color: #6b7280;
+            max-width: 600px;
+            margin: 0 auto 2rem;
+            line-height: 1.6;
+        }
+        
+        .assessment-benefits {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .benefit-card {
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .benefit-icon {
+            font-size: 2rem;
+            color: #3b82f6;
+            margin-bottom: 1rem;
+        }
+        
+        .benefit-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .benefit-description {
+            color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        .results-container {
+            display: none;
+            text-align: center;
+        }
+        
+        .personality-type {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+        
+        .personality-title {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .personality-description {
+            font-size: 1.125rem;
+            opacity: 0.9;
+        }
+        
+        .trait-scores {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .trait-card {
+            background: white;
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .trait-name {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .trait-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 0.5rem;
+        }
+        
+        .trait-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+        
+        .trait-percentage {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+        
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="flex items-center gap-4">
+                    <a href="../html/dashboard_page.html" class="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <span class="logo-text">KariyerAI</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="assessment-container">
+        <!-- Intro Section -->
+        <div id="assessmentIntro" class="assessment-intro">
+            <div class="intro-icon">
+                <i class="fas fa-brain"></i>
+            </div>
+            <h1 class="intro-title">Kişilik ve Öğrenme Stili Değerlendirmesi</h1>
+            <p class="intro-description">
+                Bu değerlendirme, sizin için en uygun simülasyon türlerini ve öğrenme yaklaşımlarını 
+                belirlememize yardımcı olacak. Yaklaşık 5-7 dakika sürecek.
+            </p>
+            
+            <div class="assessment-benefits">
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <div class="benefit-title">Kişiye Özel Deneyim</div>
+                    <div class="benefit-description">Size özel simülasyon senaryoları ve zorluk seviyeleri</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-graduation-cap"></i>
+                    </div>
+                    <div class="benefit-title">Optimize Öğrenme</div>
+                    <div class="benefit-description">Öğrenme stilinize uygun içerik ve metodoloji</div>
+                </div>
+                <div class="benefit-card">
+                    <div class="benefit-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="benefit-title">Hızlı Gelişim</div>
+                    <div class="benefit-description">Güçlü yönlerinizi geliştirme odaklı yaklaşım</div>
+                </div>
+            </div>
+            
+            <button class="btn btn-primary btn-large" onclick="startAssessment()">
+                <i class="fas fa-play"></i>
+                Değerlendirmeye Başla
+            </button>
+        </div>
+
+        <!-- Assessment Section -->
+        <div id="assessmentSection" class="hidden">
+            <!-- Progress Bar -->
+            <div class="progress-text">
+                <span id="progressText">Soru 1 / 20</span>
+            </div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 5%"></div>
+            </div>
+
+            <!-- Question Container -->
+            <div id="questionContainer"></div>
+
+            <!-- Navigation -->
+            <div class="navigation-buttons">
+                <button class="btn-secondary" id="prevBtn" onclick="previousQuestion()" disabled>
+                    <i class="fas fa-arrow-left"></i>
+                    Önceki
+                </button>
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()" disabled>
+                    Sonraki
+                    <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div id="resultsSection" class="results-container">
+            <div class="personality-type" id="personalityType">
+                <div class="personality-title" id="personalityTitle">Analiz Ediliyor...</div>
+                <div class="personality-description" id="personalityDescription"></div>
+            </div>
+
+            <div class="trait-scores" id="traitScores"></div>
+
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn btn-primary btn-large" onclick="goToPersonalizedDashboard()">
+                    <i class="fas fa-play"></i>
+                    Kişiselleştirilmiş Simülasyonu Başlat
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/personality_assessment.js"></script>
+</body>
+</html>

@@ -15,7 +15,23 @@ let currentTimer = null;
 document.addEventListener('DOMContentLoaded', function() {
     initializeUser();
     setupEventListeners();
+    checkAutoStart();
 });
+
+function checkAutoStart() {
+    // URL parametrelerini kontrol et
+    const urlParams = new URLSearchParams(window.location.search);
+    const isPersonalized = urlParams.get('personalized');
+    
+    if (isPersonalized === 'true') {
+        // Kişilik testi tamamlandığından otomatik başlat
+        setTimeout(() => {
+            if (currentUser) {
+                startSimulation();
+            }
+        }, 1000);
+    }
+}
 
 function initializeUser() {
     // Kullanıcı bilgilerini al
@@ -35,11 +51,25 @@ function initializeUser() {
         }
     }
 
+    // Eğer kullanıcı yoksa geçici kullanıcı oluştur
     if (!currentUser) {
-        showNotification("Kullanıcı bulunamadı. Dashboard'a yönlendiriliyorsunuz...", "warning");
-        setTimeout(() => {
-            window.location.href = '../html/dashboard_page.html';
-        }, 2000);
+        console.log("User not found, creating temporary user for simulation");
+        currentUser = {
+            id: 'temp_' + Date.now(),
+            temp_user: true,
+            current_title: 'Simulation User',
+            experience_level: 'intermediate'
+        };
+        
+        // Kişilik testi sonuçları varsa ekle
+        const personalityData = localStorage.getItem('personality_assessment_temp');
+        if (personalityData) {
+            try {
+                currentUser.personality_assessment = JSON.parse(personalityData);
+            } catch (error) {
+                console.error("Personality data parse error:", error);
+            }
+        }
     }
 }
 
@@ -74,7 +104,16 @@ function setupEventListeners() {
 window.startSimulation = async function() {
     if (!currentUser) return;
 
-    showLoading("Simülasyon yükleniyor...");
+    // Kişilik testi kontrolü
+    const hasPersonalityAssessment = currentUser.personality_assessment && 
+                                   currentUser.personality_assessment.personality_type;
+    
+    if (!hasPersonalityAssessment) {
+        showPersonalityTestWarning();
+        return;
+    }
+
+    showLoading("Kişilik test sonuçlarınıza göre simülasyon hazırlanıyor...");
     
     try {
         const response = await fetch(`http://127.0.0.1:5000/career-simulation/${currentUser.id}`);
@@ -85,7 +124,7 @@ window.startSimulation = async function() {
             loadTasks();
             hideElement('welcomeScreen');
             startTimer();
-            showNotification("Simülasyon başladı! İlk görevinizi seçin.", "success");
+            showNotification(`${currentUser.personality_assessment.personality_type} kişiliğinize özel simülasyon başladı!`, "success");
         } else {
             showNotification(data.message || "Simülasyon yüklenemedi", "error");
         }
@@ -95,6 +134,64 @@ window.startSimulation = async function() {
     } finally {
         hideLoading();
     }
+}
+
+// Kişilik testi uyarısı göster
+function showPersonalityTestWarning() {
+    const warningHtml = `
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; text-align: center; margin: 2rem; max-width: 600px; margin: 2rem auto;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🧠</div>
+            <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Kişilik Testi Gerekli!</h3>
+            <p style="margin-bottom: 1.5rem; font-size: 1.1rem; opacity: 0.9;">
+                Size özel simülasyon hazırlayabilmek için önce kişilik testinizi tamamlamanız gerekiyor. 
+                Bu sayede zorlik seviyesi, öğrenme stili ve senaryolar size göre ayarlanacak.
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <button onclick="goToPersonalityTest()" style="background: white; color: #667eea; border: none; padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-brain" style="margin-right: 0.5rem;"></i>
+                    Kişilik Testini Çöz
+                </button>
+                <button onclick="hidePersonalityTestWarning()" style="background: transparent; color: white; border: 2px solid rgba(255,255,255,0.3); padding: 0.75rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer;">
+                    <i class="fas fa-times" style="margin-right: 0.5rem;"></i>
+                    Şimdilik Geç
+                </button>
+            </div>
+        </div>
+    `;
+    
+    // Mevcut içeriği gizle ve uyarıyı göster
+    document.getElementById('welcomeScreen').innerHTML = warningHtml;
+    showElement('welcomeScreen');
+}
+
+window.goToPersonalityTest = function() {
+    window.location.href = '../html/personality_assessment.html';
+}
+
+window.hidePersonalityTestWarning = function() {
+    // Uyarıyı gizle ve normal simülasyonu başlat
+    showLoading("Genel simülasyon yükleniyor...");
+    setTimeout(async () => {
+        try {
+            const response = await fetch(`http://127.0.0.1:5000/career-simulation/${currentUser.id}`);
+            const data = await response.json();
+
+            if (data.success && data.data) {
+                currentScenario = data.data;
+                loadTasks();
+                hideElement('welcomeScreen');
+                startTimer();
+                showNotification("Genel simülasyon başladı! Daha kişisel deneyim için kişilik testini çözebilirsiniz.", "info");
+            } else {
+                showNotification(data.message || "Simülasyon yüklenemedi", "error");
+            }
+        } catch (error) {
+            console.error("Simülasyon yükleme hatası:", error);
+            showNotification("Sunucu bağlantı hatası", "error");
+        } finally {
+            hideLoading();
+        }
+    }, 1000);
 }
 
 function loadTasks() {
@@ -473,6 +570,14 @@ function displayCodeEvaluation(evaluation) {
 function showMeetingInterface(taskData) {
     showElement('meetingInterface');
     
+    // Meeting chat system'i başlat
+    window.meetingChatSystem.initializeParticipants(taskData.participants || [
+        { name: 'Proje Yöneticisi', role: 'PM', personality: 'Zaman odaklı, koordinatör' },
+        { name: 'Senior Developer', role: 'Tech Lead', personality: 'Teknik detayları seven' },
+        { name: 'UX Designer', role: 'Designer', personality: 'Kullanıcı deneyimi odaklı' },
+        { name: 'QA Engineer', role: 'QA', personality: 'Kalite güvencesi odaklı' }
+    ]);
+    
     document.getElementById('meetingScenario').textContent = taskData.scenario;
     
     // Agenda
@@ -480,18 +585,25 @@ function showMeetingInterface(taskData) {
     agendaDiv.innerHTML = `
         <h4>📋 Gündem</h4>
         <ul>
-            ${taskData.agenda.map(item => `<li>${item}</li>`).join('')}
+            ${(taskData.agenda || ['Sprint planning', 'Öncelik belirleme', 'Kaynak tahsisi']).map(item => `<li>${item}</li>`).join('')}
         </ul>
     `;
     
     // Participants
     const participantsDiv = document.getElementById('meetingParticipants');
+    const participants = taskData.participants || [
+        { name: 'Proje Yöneticisi', role: 'PM', personality: 'Zaman odaklı, koordinatör' },
+        { name: 'Senior Developer', role: 'Tech Lead', personality: 'Teknik detayları seven' },
+        { name: 'UX Designer', role: 'Designer', personality: 'Kullanıcı deneyimi odaklı' },
+        { name: 'QA Engineer', role: 'QA', personality: 'Kalite güvencesi odaklı' }
+    ];
+    
     participantsDiv.innerHTML = `
         <h4>👥 Katılımcılar</h4>
-        ${taskData.participants.map(p => `
-            <div class="participant">
-                <strong>${p.name}</strong> - ${p.role}
-                <br><small style="color: #6b7280;">${p.personality}</small>
+        ${participants.map(p => `
+            <div class="participant" style="background: #f9fafb; padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 6px; border-left: 3px solid #3b82f6;">
+                <strong style="color: #1f2937;">${p.name}</strong> - <span style="color: #6b7280;">${p.role}</span>
+                <br><small style="color: #9ca3af; font-style: italic;">${p.personality}</small>
             </div>
         `).join('')}
     `;
@@ -499,14 +611,25 @@ function showMeetingInterface(taskData) {
     // Discussion başlat
     const discussionDiv = document.getElementById('meetingDiscussion');
     discussionDiv.innerHTML = `
-        <div style="text-align: center; color: #6b7280; padding: 2rem;">
-            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem;"></i>
-            <p>Toplantı başladı. İlk yorumunuzu yapın!</p>
+        <div style="text-align: center; color: #6b7280; padding: 2rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
+            <i class="fas fa-users" style="font-size: 2rem; margin-bottom: 1rem; color: #3b82f6;"></i>
+            <p><strong>Toplantı başladı!</strong></p>
+            <p>Sprint planning toplantımıza hoş geldiniz. İlk görüşünüzü paylaşın.</p>
         </div>
     `;
+    
+    // İlk AI mesajı
+    setTimeout(() => {
+        addEnhancedMeetingMessage(
+            "Merhaba ekip! Bugün sprint planning toplantımızdayız. Bu sprint'te hangi feature'ları önceliklendirmeli ve nasıl bir yaklaşım izlemeliyiz?",
+            'Proje Yöneticisi',
+            'ai',
+            { emotion: 'neutral', action_item: 'Sprint önceliklerini belirlemek' }
+        );
+    }, 1000);
 }
 
-window.speakInMeeting = function() {
+window.speakInMeeting = async function() {
     const input = document.getElementById('meetingInput');
     const message = input.value.trim();
     
@@ -516,25 +639,241 @@ window.speakInMeeting = function() {
     }
     
     // Kullanıcının mesajını ekle
-    addMeetingMessage(message, 'Siz', 'user');
+    addEnhancedMeetingMessage(message, 'Siz', 'user');
     input.value = '';
     
-    // AI yanıtı simüle et (basit)
-    setTimeout(() => {
-        const responses = [
-            "İyi bir öneri, bu konuyu daha detaylı değerlendirelim.",
-            "Bu yaklaşımın risk analizini yapmamız gerekiyor.",
-            "Maliyet açısından da değerlendirmemiz lazım.",
-            "Müşteri geri bildirimlerini de göz önünde bulundurmalıyız.",
-            "Zaman çizelgesi açısından uygulanabilir mi?"
+    // Typing indicator göster
+    showTypingIndicator();
+    
+    try {
+        // Akıllı katılımcı seçimi
+        const nextSpeaker = window.meetingChatSystem.getNextSpeaker(message);
+        
+        // AI yanıtı al
+        const responseData = await window.meetingChatSystem.generateResponse(
+            message, 
+            nextSpeaker, 
+            {
+                topic: currentScenario?.title || 'Sprint Planning',
+                goals: ['Sprint önceliklerini belirlemek', 'Kaynak tahsisi yapmak', 'Zaman çizelgesi oluşturmak']
+            }
+        );
+        
+        // Typing indicator'ı kaldır
+        hideTypingIndicator();
+        
+        // AI yanıtını ekle
+        addEnhancedMeetingMessage(
+            responseData.response, 
+            nextSpeaker, 
+            'ai', 
+            responseData
+        );
+        
+        // Meeting system'e mesajları kaydet
+        window.meetingChatSystem.addMessage('Siz', message);
+        window.meetingChatSystem.addMessage(nextSpeaker, responseData.response, responseData);
+        
+        // Skor güncelle (daha akıllı skorlama)
+        const score = calculateMeetingScore(message, responseData);
+        updateScore(score);
+        
+        // Bazen ikinci bir kişi de konuşur (daha dinamik)
+        if (Math.random() < 0.3 && window.meetingChatSystem.conversationHistory.length > 3) {
+            setTimeout(() => {
+                addFollowUpComment(message, nextSpeaker);
+            }, 2000 + Math.random() * 3000);
+        }
+        
+    } catch (error) {
+        hideTypingIndicator();
+        console.error('Meeting chat error:', error);
+        
+        // Fallback yanıt
+        const fallbackResponses = [
+            "İlginç bir bakış açısı. Bu konuyu daha detaylı ele alalım.",
+            "Bu önerinizin implementation sürecini konuşmalıyız.",
+            "Risk analizi açısından nasıl değerlendiriyoruz?",
+            "Müşteri feedback'i bu konuda nasıl?",
+            "Timeline açısından uygulanabilir mi?"
         ];
         
-        const randomResponse = responses[Math.floor(Math.random() * responses.length)];
-        addMeetingMessage(randomResponse, 'Proje Yöneticisi', 'ai');
+        setTimeout(() => {
+            addEnhancedMeetingMessage(
+                fallbackResponses[Math.floor(Math.random() * fallbackResponses.length)],
+                'Proje Yöneticisi',
+                'ai',
+                { emotion: 'neutral' }
+            );
+            updateScore(15);
+        }, 1500);
+    }
+}
+
+// Gelişmiş mesaj ekleme fonksiyonu
+function addEnhancedMeetingMessage(message, speaker, type, extraData = {}) {
+    const discussionDiv = document.getElementById('meetingDiscussion');
+    const messageDiv = document.createElement('div');
+    
+    const timestamp = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
+    
+    // Emoji ve renk seçimi
+    const speakerEmojis = {
+        'Siz': '👤',
+        'Proje Yöneticisi': '👨‍💼',
+        'Senior Developer': '👨‍💻',
+        'UX Designer': '🎨',
+        'QA Engineer': '🔍'
+    };
+    
+    const emotionColors = {
+        'positive': '#10b981',
+        'concerned': '#f59e0b',
+        'excited': '#8b5cf6',
+        'skeptical': '#ef4444',
+        'neutral': '#6b7280'
+    };
+    
+    const borderColor = type === 'user' ? '#3b82f6' : emotionColors[extraData.emotion] || '#8b5cf6';
+    const bgColor = type === 'user' ? '#dbeafe' : '#f3e8ff';
+    
+    let messageContent = `
+        <div style="background: ${bgColor}; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; border-left: 4px solid ${borderColor}; position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <div style="display: flex; align-items: center; gap: 0.5rem;">
+                    <span style="font-size: 1.2rem;">${speakerEmojis[speaker] || '👤'}</span>
+                    <strong style="color: #1f2937;">${speaker}</strong>
+                    ${extraData.emotion && extraData.emotion !== 'neutral' ? 
+                        `<span style="background: ${emotionColors[extraData.emotion]}; color: white; padding: 0.2rem 0.5rem; border-radius: 12px; font-size: 0.75rem;">${extraData.emotion}</span>` : ''}
+                </div>
+                <span style="color: #6b7280; font-size: 0.875rem;">${timestamp}</span>
+            </div>
+            <p style="margin-bottom: ${extraData.follow_up_question || extraData.action_item ? '0.5rem' : '0'}; line-height: 1.5;">${message}</p>`;
+    
+    // Takip sorusu varsa ekle
+    if (extraData.follow_up_question) {
+        messageContent += `
+            <div style="background: rgba(59, 130, 246, 0.1); padding: 0.5rem; border-radius: 6px; margin-top: 0.5rem; border-left: 3px solid #3b82f6;">
+                <small style="color: #3b82f6; font-weight: 500;">❓ ${extraData.follow_up_question}</small>
+            </div>`;
+    }
+    
+    // Aksiyon önerisi varsa ekle
+    if (extraData.action_item) {
+        messageContent += `
+            <div style="background: rgba(16, 185, 129, 0.1); padding: 0.5rem; border-radius: 6px; margin-top: 0.5rem; border-left: 3px solid #10b981;">
+                <small style="color: #10b981; font-weight: 500;">✅ ${extraData.action_item}</small>
+            </div>`;
+    }
+    
+    messageContent += '</div>';
+    messageDiv.innerHTML = messageContent;
+    
+    discussionDiv.appendChild(messageDiv);
+    discussionDiv.scrollTop = discussionDiv.scrollHeight;
+    
+    // Mesaj sesİ (optional)
+    if (type === 'ai') {
+        // Subtle notification sound can be added here
+    }
+}
+
+// Typing indicator
+function showTypingIndicator() {
+    const discussionDiv = document.getElementById('meetingDiscussion');
+    const typingDiv = document.createElement('div');
+    typingDiv.id = 'typingIndicator';
+    typingDiv.innerHTML = `
+        <div style="background: #f9fafb; padding: 1rem; margin-bottom: 1rem; border-radius: 8px; border-left: 4px solid #6b7280;">
+            <div style="display: flex; align-items: center; gap: 0.5rem; color: #6b7280;">
+                <div class="typing-animation">
+                    <span></span><span></span><span></span>
+                </div>
+                <em>Birisi yazıyor...</em>
+            </div>
+        </div>
+        <style>
+        .typing-animation span {
+            display: inline-block;
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #6b7280;
+            margin: 0 1px;
+            animation: typing 1.4s infinite ease-in-out;
+        }
+        .typing-animation span:nth-child(2) { animation-delay: 0.2s; }
+        .typing-animation span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); }
+            40% { opacity: 1; transform: scale(1); }
+        }
+        </style>
+    `;
+    discussionDiv.appendChild(typingDiv);
+    discussionDiv.scrollTop = discussionDiv.scrollHeight;
+}
+
+function hideTypingIndicator() {
+    const typingIndicator = document.getElementById('typingIndicator');
+    if (typingIndicator) {
+        typingIndicator.remove();
+    }
+}
+
+// Akıllı skorlama sistemi
+function calculateMeetingScore(userMessage, aiResponse) {
+    let score = 10; // Base score
+    
+    const message = userMessage.toLowerCase();
+    
+    // Keyword bazlı skorlama
+    if (message.includes('öneri') || message.includes('öner')) score += 5;
+    if (message.includes('risk') || message.includes('problem')) score += 8;
+    if (message.includes('çözüm') || message.includes('alternatif')) score += 10;
+    if (message.includes('zaman') || message.includes('deadline')) score += 6;
+    if (message.includes('müşteri') || message.includes('kullanıcı')) score += 7;
+    if (message.includes('test') || message.includes('kalite')) score += 6;
+    
+    // Mesaj uzunluğu (detaylı açıklama bonus)
+    if (message.length > 50) score += 5;
+    if (message.length > 100) score += 5;
+    
+    // AI'ın emotion'ına göre bonus
+    if (aiResponse.emotion === 'positive') score += 5;
+    if (aiResponse.emotion === 'excited') score += 8;
+    
+    return Math.min(score, 25); // Max 25 puan
+}
+
+// Takip yorumu ekleme
+async function addFollowUpComment(originalMessage, previousSpeaker) {
+    const otherParticipants = ['Proje Yöneticisi', 'Senior Developer', 'UX Designer', 'QA Engineer']
+        .filter(p => p !== previousSpeaker);
+    
+    const speaker = otherParticipants[Math.floor(Math.random() * otherParticipants.length)];
+    
+    const followUpPrompts = [
+        `${previousSpeaker} iyi bir nokta belirtti. Ben de eklemek istiyorum ki`,
+        `Bu konuda ${speaker} olarak farklı bir açıdan bakarsak`,
+        `Önceki yoruma ek olarak, bizim departman açısından`,
+        `Bu önerinin yan etkileri de olabilir. Örneğin`
+    ];
+    
+    const prompt = followUpPrompts[Math.floor(Math.random() * followUpPrompts.length)];
+    
+    try {
+        const responseData = await window.meetingChatSystem.generateResponse(
+            prompt + " " + originalMessage,
+            speaker,
+            { topic: 'Sprint Planning Devam', goals: ['Ek görüş bildirmek'] }
+        );
         
-        // Skor güncelle
-        updateScore(Math.floor(Math.random() * 20) + 10);
-    }, 1500);
+        addEnhancedMeetingMessage(responseData.response, speaker, 'ai', responseData);
+        updateScore(5); // Bonus dinamik konuşma
+    } catch (error) {
+        console.error('Follow-up comment error:', error);
+    }
 }
 
 function addMeetingMessage(message, speaker, type) {
