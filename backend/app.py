@@ -4,6 +4,9 @@ import os
 import requests
 import json
 from dotenv import load_dotenv
+from bs4 import BeautifulSoup
+import time
+import traceback
 
 
 load_dotenv()
@@ -32,13 +35,12 @@ SUPABASE_API_KEY = os.getenv("SUPABASE_API_KEY")
 SUPABASE_API_URL = os.getenv("SUPABASE_API_URL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 GEMINI_API_URL = os.getenv("GEMINI_API_URL", 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent')
-import traceback
+SERPAPI_KEY = os.getenv("SERPAPI_KEY")
+
 
 @app.route('/')
 def home():
     return 'KariyerAI Backend çalışıyor!'
-
-
 
 # Profil verisini Supabase'e kaydetmek için
 @app.route("/save-profile", methods=["POST"])  
@@ -68,29 +70,41 @@ def save_profile():
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}",
             "Content-Type": "application/json",
-            "Prefer": "return=representation"  # ID'nin dönmesi için gerekli
+            "Prefer": "return=representation"
         }
 
+        # 1️⃣ Profili kaydet
         response = requests.post(
             f"{SUPABASE_API_URL}/rest/v1/profiles",
             headers=headers,
             json=profile_data
         )
 
-        print("Supabase response:", response.status_code, response.text)
+        if response.status_code not in [200, 201]:
+            return jsonify({"success": False, "message": response.text}), 400
 
-        if response.status_code in [200, 201]:
-            data = response.json()
-            return jsonify({
-                "success": True,
-                "message": "Profil başarıyla kaydedildi",
-                "data": data  # id: uuid dönecek
-            })
-        else:
-            return jsonify({
-                "success": False,
-                "message": f"Supabase hatası: {response.text}"
-            }), 400
+        data = response.json()
+        user_id = data[0]["id"] if isinstance(data, list) else data.get("id")
+
+        # 2️⃣ Skill levels tablosuna otomatik 50% ekle
+        skills = profile_data_raw.get("skills", [])
+        for skill in skills:
+            skill_payload = {
+                "user_id": user_id,
+                "skill": skill,
+                "level": 50
+            }
+            requests.post(
+                f"{SUPABASE_API_URL}/rest/v1/skill_levels",
+                headers=headers,
+                json=skill_payload
+            )
+
+        return jsonify({
+            "success": True,
+            "message": "Profil başarıyla kaydedildi ve skill seviyeleri eklendi",
+            "data": data
+        })
 
     except Exception as e:
         print("save_profile hatası:", traceback.format_exc())
@@ -1698,8 +1712,6 @@ def generate_default_simulation():
         "message": f"Dinamik simülasyon: {selected_scenario['category']}"
     })
 
-
-
 # İş ilanlarını SerpAPI ile bulmak ve AI ile analiz etmek için KULLANILIYOR
 @app.route("/api/jobs", methods=["GET"])
 def get_real_jobs_with_ai():
@@ -1886,9 +1898,10 @@ JSON yanıt formatı (dikkatlice doldur):
             return jsonify({"success": False, "message": "AI yanıtı geçersiz", "jobs": []}), 500
 
     except Exception as e:
-        print(f"❌ Genel hata: {str(e)}")
-        return jsonify({"success": False, "message": f"Hata: {str(e)}", "jobs": []}), 500
-    
+        import traceback
+        print("❌ FULL TRACEBACK:\n", traceback.format_exc())
+        return jsonify({"success": False, "message": f"Python hata: {str(e)}", "jobs": []}), 500
+
 @app.route("/api/missing_skills", methods=["POST"])
 def save_missing_skills():
     try:
@@ -2398,371 +2411,10 @@ def complete_skill():
             "message": f"Server hatası: {str(e)}"
         }), 500
     
-# YEDEK KOD SİLME SU AN KULLANILMIYOR   
-@app.route("/api/jobs3", methods=["GET"])
-def get_real_jobs_with_ai3():
-    try:
-        print("DEBUG API params →", request.args)
-        print("DEBUG RAW URL →", request.url)
 
-        title = request.args.get("title")
-        location = request.args.get("location")
-
-        print(f"📌 İş arama: {title} - {location}")
-
-        # 1️⃣ SerpAPI ile TEK İŞ İLANI linklerini bul
-        serp_url = "https://serpapi.com/search"
-        params = {
-            "engine": "google",
-            "q": f'"{title}" job opening {location} -"jobs" -"search" site:kariyer.net OR site:secretcv.com OR site:yenibiris.com OR site:indeed.com OR site:glassdoor.com OR site:linkedin.com/jobs',
-            "num": 15,
-            "api_key": SERPAPI_KEY
-        }
-
-        resp = requests.get(serp_url, params=params, timeout=10)
-        data = resp.json()
-
-        if "organic_results" not in data:
-            return jsonify({"success": False, "message": "Arama sonucu bulunamadı", "jobs": []}), 200
-
-        # 2️⃣ Tek iş ilanı linklerini filtrele (arama sayfası değil)
-        job_links = []
-        for result in data.get("organic_results", [])[:8]:
-            link = result.get("link", "")
-            title_text = result.get("title", "").lower()
-
-            # Arama sayfalarını filtrele
-            bad_keywords = ["search", "jobs", "listing", "browse", "filter"]
-
-            if link and not any(bad in link.lower() for bad in bad_keywords):
-                # Tek iş ilanı olma olasılığı yüksek
-                if any(site in link for site in ["kariyer.net/is-ilani/", "secretcv.com/ilan/", "yenibiris.com/is-ilani/"]):
-                    job_links.append({
-                        "url": link,
-                        "title": result.get("title", ""),
-                        "snippet": result.get("snippet", "")
-                    })
-
-        if not job_links:
-            print("❌ Tek iş ilanı linki bulunamadı, geniş arama yapılıyor...")
-            # Fallback: Daha geniş arama
-            params["q"] = f'"{title}" {location} site:kariyer.net OR site:secretcv.com'
-            resp = requests.get(serp_url, params=params, timeout=10)
-            data = resp.json()
-
-            for result in data.get("organic_results", [])[:6]:
-                link = result.get("link", "")
-                if link:
-                    job_links.append({
-                        "url": link,
-                        "title": result.get("title", ""),
-                        "snippet": result.get("snippet", "")
-                    })
-
-        if not job_links:
-            return jsonify({"success": False, "message": "İş ilanı linki bulunamadı", "jobs": []}), 200
-
-        print(f"📌 Bulunan linkler:")
-        for i, link in enumerate(job_links):
-            print(f"  {i+1}. {link['url']}")
-            print(f"     Title: {link['title'][:100]}...")
-            print()
-
-        # 3️⃣ Basit scraping + AI analizi
-        job_data_for_ai = []
-
-        headers = {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
-        }
-
-        for job_link in job_links:
-            try:
-                print(f"📌 Hızlı scraping: {job_link['url']}")
-
-                response = requests.get(job_link['url'], headers=headers, timeout=8)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.content, "html.parser")
-
-                    # Sadece title ve h1, h2, h3 taglarını al (ana bilgiler)
-                    title_tag = soup.find('title')
-                    headings = soup.find_all(['h1', 'h2', 'h3'])
-
-                    title_text = title_tag.get_text() if title_tag else ""
-                    headings_text = " ".join([h.get_text() for h in headings])
-
-                    # İlk 1000 karakter body text
-                    body = soup.find('body')
-                    body_text = body.get_text()[:1000] if body else ""
-
-                    job_data_for_ai.append({
-                        "url": job_link['url'],
-                        "title_tag": title_text,
-                        "headings": headings_text,
-                        "body_snippet": body_text,
-                        "search_title": job_link['title'],
-                        "search_snippet": job_link['snippet']
-                    })
-                    print(f"   ✅ Sayfa bilgileri alındı")
-                else:
-                    # Scraping başarısızsa sadece search bilgilerini kullan
-                    job_data_for_ai.append({
-                        "url": job_link['url'],
-                        "title_tag": "",
-                        "headings": "",
-                        "body_snippet": "",
-                        "search_title": job_link['title'],
-                        "search_snippet": job_link['snippet']
-                    })
-                    print(f"   ⚠️ Scraping başarısız, search bilgilerini kullanacak")
-
-                time.sleep(1)
-
-            except Exception as e:
-                print(f"❌ Hata: {e}")
-                continue
-
-        # 4️⃣ AI'ya analiz ettir
-        prompt = f"""
-Aşağıdaki web sitesi verilerinden "{title}" pozisyonu için iş ilanı bilgilerini çıkar.
-Web sitesi verileri:
-{json.dumps(job_data_for_ai, ensure_ascii=False, indent=2)}
-GÖREV:
-1. title_tag, headings, body_snippet'ten şirket adını bul
-2. İş pozisyonu adını bul
-3. İş açıklaması oluştur
-4. Gereksinimler/beceriler çıkar
-JSON formatında döndür:
-{{
-  "jobs": [
-    {{
-      "title": "İş pozisyonu (verilerden çıkarılan)",
-      "company": {{"name": "Şirket adı (verilerden çıkarılan)"}},
-      "description": "İş açıklaması (min 100 karakter)",
-      "url": "URL",
-      "requirements": ["Teknik", "Beceriler"],
-      "location_city": "{location}",
-      "salary_range": "Bilgi varsa",
-      "experience_level": "Bilgi varsa"
-    }}
-  ]
-}}
-KURAL: Şirket adı mutlaka bulunmalı, site adı değil gerçek şirket adı!"""
-
-        # 4️⃣ Gemini API çağrısı
-        gemini_payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.3,
-                "maxOutputTokens": 2048
-            }
-        }
-
-        ai_response = requests.post(
-            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
-            headers={"Content-Type": "application/json"},
-            json=gemini_payload,
-            timeout=20
-        )
-
-        if ai_response.status_code != 200:
-            print(f"❌ Gemini API hatası: {ai_response.text}")
-            return jsonify({"success": False, "message": "AI analizi başarısız", "jobs": []}), 500
-
-        # 5️⃣ Yanıtı parse et
-        result = ai_response.json()
-        ai_text = result['candidates'][0]['content']['parts'][0]['text']
-
-        print(f"📌 AI yanıtı: {ai_text[:300]}...")
-
-        # JSON çıkar
-        import re
-        json_match = re.search(r'\{.*\}', ai_text, re.DOTALL)
-        if not json_match:
-            return jsonify({"success": False, "message": "AI yanıtı parse edilemedi", "jobs": []}), 500
-
-        try:
-            ai_data = json.loads(json_match.group(0))
-            jobs = ai_data.get("jobs", [])
-
-            # Basit doğrulama
-            final_jobs = []
-            for job in jobs:
-                if (job.get("title") and 
-                    job.get("company", {}).get("name") and
-                    job.get("description") and 
-                    job.get("url") and
-                    job.get("requirements")):
-                    final_jobs.append(job)
-
-            print(f"✅ İş ilanları oluşturuldu: {len(final_jobs)} ilan")
-
-            return jsonify({
-                "success": True,
-                "jobs": final_jobs,
-                "message": f"{len(final_jobs)} iş ilanı bulundu"
-            })
-
-        except json.JSONDecodeError as e:
-            print(f"❌ JSON parse hatası: {e}")
-            return jsonify({"success": False, "message": "AI yanıtı geçersiz", "jobs": []}), 500
-
-    except Exception as e:
-        print(f"❌ Genel hata: {str(e)}")
-        return jsonify({
-            "success": False,
-            "message": f"İş ilanları alınamadı: {str(e)}",
-            "jobs": []
-        }), 500
-
-# YEDEK KOD SİLME SU AN KULLANILMIYOR   
-@app.route("/api/jobs2", methods=["GET"])
-def get_real_jobs_with_ai2():
-    try:
-        print("DEBUG API params →", request.args)
-        print("DEBUG RAW URL →", request.url)
-
-        title = request.args.get("title")
-        location = request.args.get("location")
-
-        print(f"📌 İş arama: {title} - {location}")
-
-        # 1️⃣ SerpAPI ile gerçek iş ilanı linklerini bul
-        serp_url = "https://serpapi.com/search"
-        params = {
-            "engine": "google",
-            "q": f'"{title}" jobs {location} site:kariyer.net OR site:secretcv.com OR site:yenibiris.com OR site:indeed.com OR site:glassdoor.com',
-            "num": 8,
-            "api_key": SERPAPI_KEY
-        }
-
-        resp = requests.get(serp_url, params=params, timeout=10)
-        data = resp.json()
-
-        if "organic_results" not in data:
-            return jsonify({"success": False, "message": "Arama sonucu bulunamadı", "jobs": []}), 200
-
-        # 2️⃣ İş sitesi linklerini topla
-        job_links = []
-        for result in data.get("organic_results", [])[:6]:
-            link = result.get("link", "")
-            if link:
-                job_links.append({
-                    "url": link,
-                    "title": result.get("title", ""),
-                    "snippet": result.get("snippet", "")
-                })
-
-        if not job_links:
-            return jsonify({"success": False, "message": "İş sitesi linki bulunamadı", "jobs": []}), 200
-
-        print(f"📌 Toplam {len(job_links)} link bulundu")
-
-        # 3️⃣ Gemini'ye linkleri ver, o iş ilanı bulsun
-        prompt = f"""
-Sen bir iş ilanı uzmanısın. Aşağıdaki linklerde "{title}" pozisyonu için iş ilanları var.
-Bu linklerden her biri için iş ilanı bilgilerini çıkar:
-Linkler:
-{json.dumps(job_links, ensure_ascii=False, indent=2)}
-GÖREV:
-1. Her link için iş ilanı bilgilerini tahmin et/analiz et
-2. URL'den şirket adını çıkar
-3. Title'dan pozisyon adını çıkar  
-4. Snippet'ten açıklama oluştur
-5. "{title}" pozisyonuna uygun beceriler ekle
-JSON formatında döndür:
-{{
-  "jobs": [
-    {{
-      "title": "Pozisyon adı (title'dan çıkar)",
-      "company": {{"name": "Şirket adı (URL'den çıkar)"}},
-      "description": "İş açıklaması (snippet'i genişlet)",
-      "url": "Orijinal link",
-      "requirements": ["Beceri1", "Beceri2", "Beceri3"],
-      "location_city": "{location}",
-      "salary_range": "Competitive",
-      "experience_level": "Mid-level"
-    }}
-  ]
-}}
-KURALLAR:
-- Her link için ayrı iş ilanı oluştur
-- Title boş olmasın
-- Company.name boş olmasın  
-- Description en az 50 karakter
-- Requirements en az 3 beceri
-- Gerçekçi bilgiler oluştur
-SADECE TAM BİLGİLİ İLANLARI DÖNDÜR!"""
-
-        # 4️⃣ Gemini API çağrısı
-        gemini_payload = {
-            "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {
-                "temperature": 0.3,
-                "maxOutputTokens": 2048
-            }
-        }
-
-        ai_response = requests.post(
-            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
-            headers={"Content-Type": "application/json"},
-            json=gemini_payload,
-            timeout=20
-        )
-
-        if ai_response.status_code != 200:
-            print(f"❌ Gemini API hatası: {ai_response.text}")
-            return jsonify({"success": False, "message": "AI analizi başarısız", "jobs": []}), 500
-
-        # 5️⃣ Yanıtı parse et
-        result = ai_response.json()
-        ai_text = result['candidates'][0]['content']['parts'][0]['text']
-
-        print(f"📌 AI yanıtı: {ai_text[:300]}...")
-
-        # JSON çıkar
-        import re
-        json_match = re.search(r'\{.*\}', ai_text, re.DOTALL)
-        if not json_match:
-            return jsonify({"success": False, "message": "AI yanıtı parse edilemedi", "jobs": []}), 500
-
-        try:
-            ai_data = json.loads(json_match.group(0))
-            jobs = ai_data.get("jobs", [])
-
-            # Basit doğrulama
-            final_jobs = []
-            for job in jobs:
-                if (job.get("title") and 
-                    job.get("company", {}).get("name") and
-                    job.get("description") and 
-                    job.get("url") and
-                    job.get("requirements")):
-                    final_jobs.append(job)
-
-            print(f"✅ İş ilanları oluşturuldu: {len(final_jobs)} ilan")
-
-            return jsonify({
-                "success": True,
-                "jobs": final_jobs,
-                "message": f"{len(final_jobs)} iş ilanı bulundu"
-            })
-
-        except json.JSONDecodeError as e:
-            print(f"❌ JSON parse hatası: {e}")
-            return jsonify({"success": False, "message": "AI yanıtı geçersiz", "jobs": []}), 500
-
-    except Exception as e:
-        print(f"❌ Genel hata: {str(e)}")
-        return jsonify({
-            "success": False,
-            "message": f"İş ilanları alınamadı: {str(e)}",
-            "jobs": []
-        }), 500
-    
 if __name__ == "__main__":
     print("🚀 KariyerAI Backend başlatılıyor...")
     print(f"📋 Supabase URL: {SUPABASE_API_URL if SUPABASE_API_URL else '❌ Tanımlanmadı'}")
     print(f"🤖 Gemini API: {'✅ Yapılandırıldı' if GEMINI_API_KEY else '❌ Yapılandırılmadı'}")
     app.run(debug=True, port=5000)
-
 
