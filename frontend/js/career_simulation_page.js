@@ -40,25 +40,11 @@ export async function initializeCareerSimulation() {
 }
 
 async function loadSimulationScenario(email) {
-    try {
-        const res = await fetch(`http://127.0.0.1:5000/career-simulation/${email}`);
-        const data = await res.json();
-
-        if (data.success && data.data) {
-            currentScenario = data.data;
-            // displayScenario(currentScenario); // Bunu yoruma al
-            // displayDailySchedule(currentScenario.daily_schedule || []);
-            // displayEmails(currentScenario.emails || []);
-            // displayMeetings(currentScenario.meetings || []);
-            startTaskFlow(); // Görev adımlarını başlat
-        } else {
-            // Backend'den gelen hata mesajını kullanıcıya göster
-            showNotification(data.message || "Simülasyon yüklenemedi.", "warning");
-        }
-    } catch (err) {
-        console.error("Simülasyon hatası:", err);
-        showNotification("Sunucudan veri alınamadı.", "error");
-    }
+    // Yeni interaktif simülasyon sayfasına yönlendir
+    showNotification("Yeni interaktif simülasyon deneyimi yükleniyor...", "info");
+    setTimeout(() => {
+        window.location.href = '../html/interactive_simulation.html';
+    }, 1500);
 }
 
 
