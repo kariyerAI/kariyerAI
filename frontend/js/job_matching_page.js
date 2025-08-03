@@ -1,105 +1,141 @@
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener('DOMContentLoaded', () => {
+    console.log("Job Matching Page Loaded");
     loadJobListings();
 });
 
 async function loadJobListings() {
     const container = document.getElementById('jobListings');
-    if (!container) return;
+    const countElement = document.getElementById('jobCount');
+    container.innerHTML = `<p class="text-center text-gray-500">İş ilanları yükleniyor...</p>`;
 
-    container.innerHTML = `
-        <div class="text-center py-6">
-            <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
-            <p class="text-gray-500">İş ilanları yükleniyor...</p>
-        </div>
-    `;
+    // Kullanıcı bilgilerini al
+    let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+    let userSkills = (user.skills || []).map(s => s.toLowerCase());
+    let userTitle = (user.current_title || user.currentTitle || user.title || "").trim();
+    let userLocation = (user.location || "Turkey").toLowerCase();
 
-    const url = 'https://active-jobs-db.p.rapidapi.com/active-ats-7d?limit=3&offset=0&location_filter=%22Turkey%22%20OR%20%22T%C3%BCrkiye%22&description_type=text';
-    const options = {
-        method: 'GET',
-        headers: {
-            'x-rapidapi-key': 'b84e009c49msh26a908b66f0cb05p173c7djsnf5c4852650bc',
-            'x-rapidapi-host': 'active-jobs-db.p.rapidapi.com'
-        }
-    };
+    console.log("DEBUG → Title:", userTitle);
+    console.log("DEBUG → Location:", userLocation);
+
 
     try {
-        const response = await fetch(url, options);
-        const textData = await response.text();
-        console.log("Raw Response:", textData);
+        // API çağrısı
+        const params = new URLSearchParams({
+            title: userTitle,
+            location: userLocation
+        });
+        const response = await fetch(`http://127.0.0.1:5000/api/jobs?${params.toString()}`);
 
-        let data;
-        try {
-            data = JSON.parse(textData);
-        } catch (e) {
-            container.innerHTML = `<p class="text-red-500 text-center">API'den geçersiz veri geldi.</p>`;
+        if (!response.ok) throw new Error(`API isteği başarısız: ${response.status}`);
+
+        const data = await response.json();
+        console.log("Job API response:", data);
+
+        if (!data.jobs || data.jobs.length === 0) {
+            container.innerHTML = `<p class="text-center text-gray-500">Hiç iş ilanı bulunamadı.</p>`;
+            countElement.textContent = "0";
             return;
         }
 
-        const jobs = data.jobs || [];
-        if (jobs.length === 0) {
-            container.innerHTML = `<p class="text-gray-500 text-center">Hiç iş ilanı bulunamadı.</p>`;
-            return;
-        }
+        container.innerHTML = "";
 
-        const userData = JSON.parse(localStorage.getItem("kariyerAI_user") || "{}");
-        const userSkills = userData.skills || [];
+        data.jobs.forEach(job => {
+            const title = job.title || "İlan Başlığı Yok";
+            const company = job.company?.name || "Şirket Bilgisi Yok";
+            const description = (job.description || "Açıklama bulunamadı.").substring(0, 200) + "...";
+            const location = job.location_city || job.location_country || "Konum Belirtilmemiş";
+            const url = job.url || "#";
 
-        container.innerHTML = jobs.map(job => {
-            const matchScore = calculateMatchScore(job, userSkills);
+            // ✅ Anahtar kelimeler
+            let keywords = [];
+            const words = (title + " " + description).toLowerCase().split(/[\s,.;]+/);
+            userSkills.forEach(skill => {
+                if (words.includes(skill)) keywords.push(skill);
+            });
+            keywords = [...new Set(keywords)];
 
-            return `
-                <div class="p-5 mb-4 border rounded-lg bg-white shadow hover:bg-gray-50 transition">
-                    <div class="flex justify-between items-center mb-2">
-                        <h3 class="text-lg font-semibold">${job.title || 'Başlık Yok'}</h3>
-                        <span class="px-3 py-1 text-white text-sm rounded-full ${matchScore >= 60 ? 'bg-green-500' : 'bg-yellow-500'}">
-                            Eşleşme: ${matchScore}%
-                        </span>
+            // ✅ Eşleşme skoru
+            let score = 0;
+            let wordsInTitle = title.toLowerCase().split(" ");
+            if (userTitle && wordsInTitle.some(word => userTitle.includes(word))) {
+                score += 30;
+            }
+            if (userSkills.length > 0) {
+                let matched = userSkills.filter(skill => textContainsWord(title + " " + description, skill)).length;
+                score += Math.min((matched / userSkills.length) * 70, 70);
+            }
+            score = Math.min(Math.round(score), 100);
+
+            // ✅ Kullanıcı becerileri karşılaştırma
+            let jobText = (title + " " + description).toLowerCase().replace(/[^\w\s]/g, ' ');
+
+            // ✅ Daha güvenilir eşleşme (regex word boundary)
+            // Kullanıcı becerileri karşılaştırma
+            let jobRequirements = (job.requirements || []).map(r => r.toLowerCase().trim());
+            let userSkillSet = new Set(userSkills.map(s => s.toLowerCase().trim()));
+
+            let matchedSkills = jobRequirements.filter(skill => userSkillSet.has(skill));
+            let missingSkills = jobRequirements.filter(skill => !userSkillSet.has(skill));
+
+            let skillsHTML = `
+                <div class="skills-container mt-2">
+                    <strong>✅ Eşleşen Yetenekler:</strong>
+                    <div class="skills-list">
+                        ${matchedSkills.length > 0
+                            ? matchedSkills.map(skill => `<span class="skill-badge skill-have">${skill}</span>`).join('')
+                            : '<span class="skill-badge skill-none">Yok</span>'}
                     </div>
-                    <p class="text-blue-600 mb-1"><strong>Şirket:</strong> ${job.company?.name || 'Bilinmiyor'}</p>
-                    <p class="text-sm text-gray-700 mb-1"><strong>Konum:</strong> ${job.location_city || 'Belirtilmemiş'}, ${job.location_country || ''}</p>
-                    <p class="text-sm text-gray-700 mb-1"><strong>Çalışma Türü:</strong> ${(job.employment_type || []).join(', ') || 'Belirtilmemiş'}</p>
-                    <p class="text-sm text-gray-700 mb-2"><strong>Kategori:</strong> ${(job.categories || []).map(c => c.name).join(', ') || 'Yok'}</p>
-                    <div class="text-sm text-gray-700 job-desc">${job.description || 'Açıklama Yok'}</div>
-                    <a href="${job.url}" target="_blank" 
-                        class="text-sm text-blue-500 underline mt-3 inline-block">
+                    <strong class="mt-2 block">❌ Eksik Yetenekler:</strong>
+                    <div class="skills-list">
+                        ${missingSkills.length > 0
+                            ? missingSkills.map(skill => `<span class="skill-badge skill-missing">${skill}</span>`).join('')
+                            : '<span class="skill-badge skill-none">Yok</span>'}
+                    </div>
+                </div>
+            `;
+
+
+            // ✅ HTML kart tasarımı
+            const card = document.createElement("div");
+            card.classList.add("job-card");
+            card.innerHTML = `
+                <div class="company-logo">
+                    <i class="fas fa-building"></i>
+                </div>
+                <div class="flex-1">
+                    <div class="flex justify-between items-center">
+                        <h3 class="job-title text-lg font-bold text-gray-800">${title}</h3>
+                        <span class="match-score">${score}% Eşleşme</span>
+                    </div>
+                    <p class="company-name text-blue-600 font-medium mt-1">${company}</p>
+                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt"></i> ${location}</p>
+                    <p class="text-gray-700 mt-3">${description}</p>
+                    <div class="keywords mt-2">${keywords.map(k => `<span class="keyword-badge">${k}</span>`).join(" ")}</div>
+                    <div class="skills-section mt-3">
+                        ${skillsHTML}
+                    </div>
+                    <a href="${url}" target="_blank" class="btn-view mt-3 inline-block">
                         İlanı Görüntüle
                     </a>
                 </div>
             `;
-        }).join('');
+            container.appendChild(card);
+        });
+
+        countElement.textContent = data.jobs.length;
 
     } catch (error) {
         console.error("Job API error:", error);
-        container.innerHTML = `<p class="text-red-500 text-center">İş ilanları alınırken hata oluştu.</p>`;
+        container.innerHTML = `<p class="text-center text-red-500">İş ilanları alınırken hata oluştu.</p>`;
     }
 }
-
-function calculateMatchScore(job, userSkills) {
-    if (!userSkills || userSkills.length === 0) return 0;
-    const text = ((job.description || '') + ' ' + (job.title || '')).toLowerCase();
-    let matchCount = 0;
-
-    userSkills.forEach(skill => {
-        if (text.includes(skill.toLowerCase())) {
-            matchCount++;
-        }
-    });
-
-    return Math.round((matchCount / userSkills.length) * 100);
+function normalizeText(text) {
+    return (text || "").toLowerCase().trim();
 }
 
-function calculateMatchScore(job, userSkills) {
-    if (!userSkills || userSkills.length === 0) return 0;
-
-    const text = ((job.description_text || '') + ' ' + (job.title || '')).toLowerCase();
-    let matchCount = 0;
-
-    userSkills.forEach(skill => {
-        if (text.includes(skill.toLowerCase())) {
-            matchCount++;
-        }
-    });
-
-    const score = Math.round((matchCount / userSkills.length) * 100);
-    return score;
+function textContainsWord(text, word) {
+    let normalizedText = normalizeText(text);
+    let normalizedWord = normalizeText(word);
+    let words = normalizedText.split(/\s+/); // kelimelere ayır
+    return words.includes(normalizedWord);
 }

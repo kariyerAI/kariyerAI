@@ -6,9 +6,74 @@
     <title>İş Eşleştirme - KariyerAI</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .job-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .job-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .job-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+        .company-name {
+            font-weight: 500;
+            color: #2563eb;
+        }
+        .match-score {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .job-skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .skill-badge {
+            padding: 4px 8px;
+            border-radius: 5px;
+            font-size: 0.8rem;
+            max-width: 130px;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .skill-have {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .skill-missing {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+        .compare-text {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+    </style>
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="container">
             <div class="header-content flex items-center justify-between">
@@ -16,27 +81,24 @@
                     <i class="fas fa-arrow-left"></i>
                     <span>Dashboard</span>
                 </a>
-                <div class="logo flex items-center gap-2">
-                    <i class="fas fa-bullseye text-blue-600 text-xl"></i>
-                    <span class="logo-text text-lg font-semibold">KariyerAI</span>
-                </div>
-                <div class="user-avatar">
-                    <i class="fas fa-user"></i>
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-bullseye"></i>
+                    </div>
+                    <span class="logo-text">KariyerAI</span>
                 </div>
             </div>
         </div>
     </header>
 
-    <!-- Job Listings Section -->
     <div class="container" style="padding: 2rem 20px;">
         <div class="mb-8">
             <h1 class="text-3xl font-bold mb-2">İş Eşleştirme</h1>
             <p class="text-gray-600">Profilinize uygun <span id="jobCount">0</span> iş ilanı bulundu</p>
         </div>
 
-        <!-- Job Listings -->
         <div id="jobListings" class="space-y-6">
-            <!-- Jobs dynamically added here -->
+            <!-- Dinamik iş ilanları buraya gelecek -->
         </div>
     </div>
 
