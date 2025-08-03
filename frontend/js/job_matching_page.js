@@ -1,172 +1,235 @@
-export function initializeJobMatching() {
-  loadJobListings()
-  setupJobFilters()
-}
+let savedMissingSkills = new Set();
+let userSkillsSet = new Set();
 
-export function loadJobListings() {
-  const jobs = [
-    {
-      id: 1,
-      title: "Senior Frontend Developer",
-      company: "TechCorp",
-      location: "İstanbul, Türkiye",
-      salary: "15.000 - 25.000 TL",
-      type: "Tam Zamanlı",
-      posted: "2 gün önce",
-      matchScore: 95,
-      requiredSkills: ["React", "TypeScript", "Node.js", "GraphQL"],
-      missingSkills: ["GraphQL"],
-      description:
-        "Deneyimli frontend developer arayışımızda. Modern web teknolojileri ile çalışacak, kullanıcı deneyimini ön planda tutan projeler geliştireceksiniz.",
-      benefits: ["Esnek çalışma", "Sağlık sigortası", "Eğitim desteği"],
-      applicants: 45,
-    },
-    {
-      id: 2,
-      title: "Full Stack Developer",
-      company: "StartupXYZ",
-      location: "Ankara, Türkiye",
-      salary: "12.000 - 18.000 TL",
-      type: "Tam Zamanlı",
-      posted: "1 gün önce",
-      matchScore: 88,
-      requiredSkills: ["React", "Node.js", "MongoDB", "Docker"],
-      missingSkills: ["MongoDB", "Docker"],
-      description:
-        "Hızla büyüyen startup'ımızda full stack developer olarak çalışacak, hem frontend hem backend geliştirme süreçlerinde yer alacaksınız.",
-      benefits: ["Hisse senedi opsiyonu", "Uzaktan çalışma", "Genç ekip"],
-      applicants: 23,
-    },
-  ]
+// ✅ Sayfa yüklendiğinde çalışır (tek sefer)
+if (!window.jobPageLoaded) {
+    window.jobPageLoaded = true;
+    document.addEventListener('DOMContentLoaded', async () => {
+        console.log("Job Matching Page Loaded");
 
-  const jobsContainer = document.getElementById("jobListings")
-  if (jobsContainer) {
-    jobsContainer.innerHTML = jobs.map((job) => createJobCard(job)).join("")
-  }
-}
+        let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+        let userId = user.id || "guest";
 
-export function createJobCard(job) {
-  const matchColor = job.matchScore >= 90 ? "green" : job.matchScore >= 80 ? "yellow" : "red"
-  const matchText = job.matchScore >= 90 ? "Mükemmel Eşleşme" : job.matchScore >= 80 ? "İyi Eşleşme" : "Orta Eşleşme"
+        // Kullanıcının mevcut becerilerini al
+        userSkillsSet = new Set((user.skills || []).map(s => s.toLowerCase()));
 
-  return `
-        <div class="card job-card">
-            <div class="flex items-start justify-between mb-4">
-                <div class="flex items-start gap-4">
-                    <div class="company-logo">
-                        <i class="fas fa-building"></i>
-                    </div>
-                    <div>
-                        <h3 class="text-xl font-semibold mb-1">${job.title}</h3>
-                        <div class="flex items-center gap-4 text-gray-600">
-                            <span><i class="fas fa-building mr-1"></i>${job.company}</span>
-                            <span><i class="fas fa-map-marker-alt mr-1"></i>${job.location}</span>
-                            <span><i class="fas fa-clock mr-1"></i>${job.posted}</span>
-                        </div>
-                    </div>
-                </div>
-                <div class="text-right">
-                    <div class="flex items-center gap-2 mb-2">
-                        <div class="match-indicator ${matchColor}"></div>
-                        <span class="text-sm font-medium">%${job.matchScore} Eşleşme</span>
-                    </div>
-                    <span class="badge badge-${matchColor}">${matchText}</span>
-                </div>
-            </div>
-            
-            <p class="text-gray-700 mb-4">${job.description}</p>
-            
-            <div class="grid md:grid-cols-2 gap-4 mb-4">
-                <div>
-                    <h4 class="font-medium mb-2">Gerekli Beceriler</h4>
-                    <div class="flex flex-wrap gap-2">
-                        ${job.requiredSkills
-                          .map(
-                            (skill) => `
-                            <span class="skill-badge ${job.missingSkills.includes(skill) ? "missing" : "have"}">
-                                ${skill} ${job.missingSkills.includes(skill) ? "❌" : ""}
-                            </span>
-                        `,
-                          )
-                          .join("")}
-                    </div>
-                </div>
-                <div>
-                    <h4 class="font-medium mb-2">Yan Haklar</h4>
-                    <div class="flex flex-wrap gap-2">
-                        ${job.benefits.map((benefit) => `<span class="benefit-badge">${benefit}</span>`).join("")}
-                    </div>
-                </div>
-            </div>
-            
-            <div class="flex items-center justify-between pt-4 border-t">
-                <div class="flex items-center gap-6 text-sm text-gray-600">
-                    <span><i class="fas fa-dollar-sign mr-1"></i>${job.salary}</span>
-                    <span><i class="fas fa-users mr-1"></i>${job.applicants} başvuru</span>
-                    <span class="badge badge-outline">${job.type}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button class="btn btn-outline btn-small">
-                        <i class="fas fa-heart mr-2"></i>Kaydet
-                    </button>
-                    ${
-                      job.missingSkills.length > 0
-                        ? `
-                        <a href="../html/learning_path.html" class="btn btn-outline btn-small">
-                            <i class="fas fa-trending-up mr-2"></i>Eksikleri Gider
-                        </a>
-                    `
-                        : ""
-                    }
-                    <button class="btn btn-primary btn-small">
-                        <i class="fas fa-external-link-alt mr-2"></i>Başvur
-                    </button>
-                </div>
-            </div>
-            
-            ${
-              job.missingSkills.length > 0
-                ? `
-                <div class="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                    <p class="text-sm text-orange-800">
-                        <strong>Eksik Beceriler:</strong> ${job.missingSkills.join(", ")} becerilerini öğrenerek bu pozisyon için daha uygun hale gelebilirsiniz.
-                    </p>
-                </div>
-            `
-                : ""
+        // Eksik becerileri DB'den çek
+        try {
+            const resp = await fetch(`http://127.0.0.1:5000/api/missing_skills/${userId}`);
+            const data = await resp.json();
+            if (data.success && data.data.length > 0) {
+                savedMissingSkills = new Set(data.data.map(item => item.skill.toLowerCase()));
             }
-        </div>
-    `
+        } catch (err) {
+            console.error("Eksik beceriler alınamadı:", err);
+        }
+
+        // İş ilanlarını yükle
+        loadJobListings();
+    });
 }
 
-export function setupJobFilters() {
-  const searchInput = document.getElementById("jobSearch")
-  const locationFilter = document.getElementById("locationFilter")
-  const experienceFilter = document.getElementById("experienceFilter")
-  const filterBtn = document.getElementById("filterBtn")
+// ✅ İş ilanlarını yükle
+async function loadJobListings() {
+    const container = document.getElementById('jobListings');
+    const countElement = document.getElementById('jobCount');
+    container.innerHTML = `<p class="text-center text-gray-500">İş ilanları yükleniyor...</p>`;
 
-  if (filterBtn) {
-    filterBtn.addEventListener("click", applyJobFilters)
-  }
+    let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+    let userSkills = (user.skills || []).map(s => s.toLowerCase());
+    let userTitle = (user.current_title || user.currentTitle || user.title || "").trim();
+    let userLocation = (user.location || "Turkey").toLowerCase();
 
-  if (searchInput) {
-    searchInput.addEventListener("keypress", (e) => {
-      if (e.key === "Enter") {
-        applyJobFilters()
+    try {
+        const params = new URLSearchParams({ title: userTitle, location: userLocation });
+        const response = await fetch(`http://127.0.0.1:5000/api/jobs?${params.toString()}`);
+        if (!response.ok) throw new Error(`API isteği başarısız: ${response.status}`);
+
+        const data = await response.json();
+        if (!data.jobs || data.jobs.length === 0) {
+            container.innerHTML = `<p class="text-center text-gray-500">Hiç iş ilanı bulunamadı.</p>`;
+            countElement.textContent = "0";
+            return;
+        }
+
+        container.innerHTML = "";
+        data.jobs.forEach(job => {
+            const title = job.title || "İlan Başlığı Yok";
+            const company = job.company?.name || "Şirket Bilgisi Yok";
+            const description = (job.description || "Açıklama bulunamadı.").substring(0, 200) + "...";
+            const location = job.location_city || job.location_country || "Konum Belirtilmemiş";
+            const url = job.url || "#";
+
+            let jobRequirements = (job.requirements || []).map(r => r.toLowerCase().trim());
+            let matchedSkills = jobRequirements.filter(skill => userSkillsSet.has(skill));
+            let missingSkills = jobRequirements.filter(skill => !userSkillsSet.has(skill));
+            // ✅ Eşleşme oranını hesapla
+            let totalSkills = jobRequirements.length;
+            let matchPercentage = totalSkills > 0 ? Math.round((matchedSkills.length / totalSkills) * 100) : 0;
+
+
+            let skillsHTML = `
+                <div class="skills-container mt-2">
+                    <strong>✅ Eşleşen Yetenekler:</strong>
+                    <div class="skills-list">
+                    ${matchedSkills.length > 0
+                        ? matchedSkills.map(skill => `<span class="skill-badge skill-have">${capitalizeWords(skill)}</span>`).join('')
+                        : '<span class="skill-badge skill-none">Yok</span>'}
+                    </div>
+                    <strong class="mt-2 block">❌ Eksik Yetenekler:</strong>
+                    <div class="skills-list">
+                    ${missingSkills.length > 0
+                      ?missingSkills.map(skill => {
+                      const isAlreadySaved = savedMissingSkills.has(skill);
+                      return `
+                          <div class="skill-badge skill-missing">
+                              <span>
+                                  ${capitalizeWords(skill)}
+                                  ${isAlreadySaved ? `
+                                      <span class="tooltip-icon" data-tooltip="Bu beceri zaten Eksik Bilgiler tablonuzda kayıtlı">
+                                          <i class="fas fa-exclamation-circle"></i>
+                                      </span>` : ''}
+                              </span>
+                              <div class="action-buttons">
+                                  <button class="action-btn learn-btn save-missing-btn" data-skill="${skill}">
+                                      <i class="fas fa-book-open"></i> Öğrenmek İstiyorum
+                                  </button>
+                                  <button class="action-btn know-btn know-skill-btn" data-skill="${skill}">
+                                      <i class="fas fa-check-circle"></i> Biliyorum
+                                  </button>
+                              </div>
+                          </div>
+                      `;
+                  }).join('')
+
+                      : '<span class="skill-badge skill-none">Yok</span>'}
+
+                    </div>
+                </div>
+            `;
+
+            const card = document.createElement("div");
+            card.classList.add("job-card");
+            card.innerHTML = `
+                <div class="company-logo"><i class="fas fa-building"></i></div>
+                <div class="flex-1">
+                <div class="flex justify-between items-center">
+                    <h3 class="job-title text-lg font-bold text-gray-800">${title}</h3>
+                    <span class="match-score">${matchPercentage}% Eşleşme</span>
+                </div>
+
+                    <p class="company-name text-blue-600 font-medium mt-1">${company}</p>
+                    <p class="text-sm text-gray-600 mt-1"><i class="fas fa-map-marker-alt"></i> ${location}</p>
+                    <p class="text-gray-700 mt-3">${description}</p>
+                    <div class="skills-section mt-3">${skillsHTML}</div>
+                    <a href="${url}" target="_blank" class="btn-view mt-3 inline-block">İlanı Görüntüle</a>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+
+        countElement.textContent = data.jobs.length;
+
+    } catch (error) {
+        console.error("Job API error:", error);
+        container.innerHTML = `<p class="text-center text-red-500">İş ilanları alınırken hata oluştu.</p>`;
+    }
+}
+
+function capitalizeWords(str) {
+    if (!str) return '';
+    return str.toLowerCase().split(/\s+/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+}
+
+// ✅ Butonlar için click event
+document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button");
+    if (!btn) return;
+    const skill = btn.getAttribute("data-skill");
+    if (!skill) return;
+
+    let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+    let userId = user.id || "guest";
+
+    // 📌 Eksik beceriye ekleme
+    if (btn.classList.contains("save-missing-btn")) {
+        if (savedMissingSkills.has(skill)) {
+            alert(`"${capitalizeWords(skill)}" zaten eksik bilgilerde.`);
+            return;
+        }
+        const confirmSave = confirm(`"${capitalizeWords(skill)}" becerisini eksik bilgiler listesine eklemek ister misiniz?`);
+        if (confirmSave) {
+            try {
+                const response = await fetch("http://127.0.0.1:5000/api/missing_skills", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ user_id: userId, skill: skill })
+                });
+                if (response.ok) {
+                    savedMissingSkills.add(skill);
+                    btn.innerHTML = '<i class="fas fa-check"></i>';
+                    btn.classList.add("saved-btn");
+                    alert(`"${capitalizeWords(skill)}" eksik bilgiler tablosuna eklendi.`);
+                }
+            } catch (err) { console.error("Kaydetme hatası:", err); }
+        }
+    }
+
+  // 📌 Beceriyi biliyorum → profile.skills'e ekleme
+  if (btn.classList.contains("know-skill-btn")) {
+      if (userSkillsSet.has(skill)) {
+          alert(`"${capitalizeWords(skill)}" zaten profilinizde mevcut.`);
+          return;
       }
-    })
+      const confirmAdd = confirm(`"${capitalizeWords(skill)}" becerisini bildiğinizden emin misiniz? Profilinize eklensin mi?`);
+      if (confirmAdd) {
+          try {
+              let updatedSkills = [...userSkillsSet, skill];
+
+              // 1️⃣ Profili güncelle
+              const response = await fetch(`http://127.0.0.1:5000/update-skills/${userId}`, {
+                  method: "PUT",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ skills: updatedSkills })
+              });
+
+              if (response.ok) {
+                  // ✅ LocalStorage güncelle
+                  userSkillsSet.add(skill);
+                  user.skills = updatedSkills;
+                  localStorage.setItem("kariyerAI_user", JSON.stringify(user));
+
+                  // 2️⃣ skill_levels tablosuna varsayılan %50 olarak ekle
+                  await fetch(`http://127.0.0.1:5000/save-skill-level`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                          user_id: userId,
+                          skill: skill,
+                          level: 50
+                      })
+                  });
+
+                  alert(`"${capitalizeWords(skill)}" profilinize eklendi.`);
+                  loadJobListings(); // ✅ Sayfayı yeniden render et
+              }
+          } catch (err) {
+              console.error("Profil beceri ekleme hatası:", err);
+          }
+      }
   }
 }
+);
+function showToast(message, type = "info") {
+    const toast = document.createElement("div");
+    toast.className = `toast-message toast-${type}`;
+    toast.textContent = message;
 
-export function applyJobFilters() {
-  const searchTerm = document.getElementById("jobSearch")?.value || ""
-  const location = document.getElementById("locationFilter")?.value || ""
-  const experience = document.getElementById("experienceFilter")?.value || ""
+    document.body.appendChild(toast);
 
-  //showNotification("Filtreler uygulanıyor...", "info")
-
-  setTimeout(() => {
-   // showNotification("Filtreler uygulandı!", "success")
-    loadJobListings()
-  }, 1000)
+    setTimeout(() => toast.classList.add("show"), 100);
+    setTimeout(() => {
+        toast.classList.remove("show");
+        setTimeout(() => toast.remove(), 400);
+    }, 3000);
 }

@@ -115,12 +115,26 @@
   padding: 1.5rem;
 }
 
+#userSkillsAnalysis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+/* ✅ Beceri Eksiklikleri Kartları */
 .skill-gap-card {
-  border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  padding: 1rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    padding: 10px;
+    font-size: 0.85rem;
 }
 
+.skill-gap-card h4 {
+    font-size: 14px;
+}
+.skill-analysis-card {
+    width: calc(25% - 10px); /* 4 kart yan yana */
+}
 /* Insight Cards */
 .insight-card {
   padding: 1rem;
@@ -659,4 +673,34 @@
   font-size: 0.9rem;
   color: #4b5563;
   margin-top: 0.5rem;
+}
+.match-score {
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    min-width: 80px;
+    text-align: center;
+}
+.skill-analysis-card {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+    padding: 10px;
+    width: calc(33.33% - 10px); /* 3 kart yan yana */
+    display: inline-block;
+    margin: 5px;
+    vertical-align: top;
+    font-size: 0.9rem; /* Daha küçük yazı */
+}
+
+.skill-analysis-card h4 {
+    font-size: 14px;
+    text-transform: capitalize;
+}
+
+.skill-slider {
+    height: 4px;
 }
