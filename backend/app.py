@@ -274,9 +274,174 @@ def health_check():
         "version": "1.0.0"
     })
 import re
+# from personalization_engine import PersonalizationEngine  # Geçici olarak devre dışı
+
+# Kişiselleştirme motoru instance - şimdilik None
+# personalization_engine = PersonalizationEngine()
+personalization_engine = None
+
+# Kullanıcı profil analizi fonksiyonu
+def analyze_user_profile(profile):
+    """Kullanıcı profilini analiz edip kişiselleştirme parametreleri üret"""
+    try:
+        # Temel bilgiler
+        current_title = profile.get("current_title", "").lower()
+        skills = profile.get("skills", [])
+        experience_level = profile.get("experience_level", "").lower()
+        degree = profile.get("degree", "").lower()
+        university = profile.get("university", "")
+        
+        # Kişilik testi sonuçları (localStorage'dan gelecek)
+        personality_data = profile.get("personality_assessment", {})
+        
+        # Sektör analizi - bölüm bilgisini de dikkate al
+        industry_focus = "technology"  # Varsayılan
+        if any(keyword in current_title for keyword in ["developer", "engineer", "programmer", "software"]):
+            industry_focus = "technology"
+        elif any(keyword in current_title for keyword in ["designer", "ux", "ui"]):
+            industry_focus = "design"
+        # Bölüm bilgisine göre sektör belirleme
+        elif any(keyword in degree for keyword in ["endüstri mühendisliği", "industrial engineering"]):
+            industry_focus = "industrial_engineering"
+        elif any(keyword in degree for keyword in ["bilgisayar", "computer", "yazılım", "software"]):
+            industry_focus = "technology"
+        elif any(keyword in degree for keyword in ["makine", "mechanical"]):
+            industry_focus = "mechanical_engineering"
+        elif any(keyword in degree for keyword in ["elektrik", "electrical", "elektronik"]):
+            industry_focus = "electrical_engineering"
+        elif any(keyword in current_title for keyword in ["manager", "lead", "director"]):
+            industry_focus = "management"
+        elif any(keyword in current_title for keyword in ["analyst", "data", "research"]):
+            industry_focus = "analytics"
+        
+        # Rol tipi belirleme - bölüm ve deneyim seviyesini dikkate al
+        role_type = "individual_contributor"
+        if any(keyword in current_title for keyword in ["senior", "lead", "principal"]):
+            role_type = "senior_individual_contributor"
+        elif any(keyword in current_title for keyword in ["manager", "director", "head"]):
+            role_type = "management"
+        elif any(keyword in current_title for keyword in ["junior", "intern", "entry"]) or experience_level in ["junior", "entry"]:
+            role_type = "junior"
+        elif "endüstri mühendisliği" in degree and experience_level in ["junior", "entry"]:
+            role_type = "junior_engineer"
+        
+        # Teknik beceri kategorileri - bölüm bilgisine göre varsayılan beceriler ekle
+        technical_skills = {}
+        programming_langs = []
+        frameworks = []
+        tools = []
+        
+        for skill in skills:
+            skill_lower = skill.lower()
+            if skill_lower in ["python", "javascript", "java", "c++", "c#", "go", "rust"]:
+                programming_langs.append(skill)
+            elif skill_lower in ["react", "vue", "angular", "django", "flask", "spring"]:
+                frameworks.append(skill)
+            elif skill_lower in ["git", "docker", "kubernetes", "aws", "azure"]:
+                tools.append(skill)
+        
+        # Bölüm bilgisine göre varsayılan beceriler ekle
+        if "endüstri mühendisliği" in degree:
+            # Endüstri mühendisliği için tipik beceriler
+            tools.extend(["Excel", "SAP", "AutoCAD", "MATLAB", "Minitab", "Process Analysis"])
+            if not programming_langs:
+                programming_langs.extend(["Python", "SQL"])  # Endüstri mühendislerinin sık kullandığı diller
+        
+        technical_skills = {
+            "programming_languages": programming_langs,
+            "frameworks": frameworks,
+            "tools": tools
+        }
+        
+        # Soft skill'ler (kişilik testinden gelecek)
+        soft_skills = []
+        if personality_data.get("personality_type"):
+            personality_type = personality_data.get("personality_type", "")
+            if "E" in personality_type:
+                soft_skills.extend(["iletişim", "takım çalışması", "liderlik"])
+            if "I" in personality_type:
+                soft_skills.extend(["analitik düşünce", "detay odaklılık", "bağımsız çalışma"])
+            if "T" in personality_type:
+                soft_skills.extend(["problem çözme", "mantıklı karar verme"])
+            if "F" in personality_type:
+                soft_skills.extend(["empati", "müşteri odaklılık"])
+        
+        # Beceri açıkları belirleme
+        skill_gaps = []
+        if role_type in ["senior_individual_contributor", "management"] and not programming_langs:
+            skill_gaps.append("teknik_liderlik")
+        if industry_focus == "technology" and not frameworks:
+            skill_gaps.append("modern_frameworks")
+        if role_type == "management" and "liderlik" not in soft_skills:
+            skill_gaps.append("liderlik_becerileri")
+        
+        # Kariyer yörüngesi
+        career_trajectory = "stable"
+        if experience_level in ["junior", "entry"]:
+            career_trajectory = "growing"
+        elif experience_level in ["senior", "lead"]:
+            career_trajectory = "expert"
+        elif "manager" in current_title:
+            career_trajectory = "management_track"
+        
+        # Kişiselleştirme parametreleri - bölüm ve kişilik tipine göre ayarla
+        personalization_params = {
+            "difficulty_preference": "medium",
+            "learning_style": personality_data.get("learning_style", "mixed"),
+            "simulation_types": ["problem_solving", "communication", "process_optimization"],
+            "feedback_style": "detailed",
+            "collaboration_preference": "team" if "E" in personality_data.get("personality_type", "") else "individual"
+        }
+        
+        # Bölüm bilgisine göre simülasyon türlerini ayarla
+        if "endüstri mühendisliği" in degree:
+            personalization_params["simulation_types"] = ["process_optimization", "project_management", "data_analysis", "quality_control"]
+        elif any(keyword in degree for keyword in ["bilgisayar", "yazılım"]):
+            personalization_params["simulation_types"] = ["coding", "system_design", "debugging"]
+        elif any(keyword in degree for keyword in ["makine", "elektrik"]):
+            personalization_params["simulation_types"] = ["technical_problem_solving", "design_review", "testing"]
+        
+        # Deneyim seviyesine göre zorluk ayarı
+        if experience_level in ["junior", "entry"]:
+            personalization_params["difficulty_preference"] = "easy"
+            if "endüstri mühendisliği" in degree:
+                personalization_params["simulation_types"] = ["basic_process_analysis", "entry_level_projects", "learning_orientation"]
+        elif experience_level in ["senior", "lead"]:
+            personalization_params["difficulty_preference"] = "hard"
+            personalization_params["simulation_types"].extend(["leadership", "strategic_thinking"])
+        
+        return {
+            'industry_focus': industry_focus,
+            'role_type': role_type,
+            'technical_skills': technical_skills,
+            'soft_skills': soft_skills,
+            'skill_gaps': skill_gaps,
+            'career_trajectory': career_trajectory,
+            'personalization_params': personalization_params,
+            'degree': degree,
+            'university': university
+        }
+        
+    except Exception as e:
+        print(f"Kullanıcı analizi hatası: {str(e)}")
+        # Fallback analiz
+        return {
+            'industry_focus': 'technology',
+            'role_type': 'general',
+            'technical_skills': {},
+            'soft_skills': [],
+            'skill_gaps': [],
+            'career_trajectory': 'stable',
+            'personalization_params': {
+                "difficulty_preference": "medium",
+                "learning_style": "mixed",
+                "simulation_types": ["coding", "communication"],
+                "feedback_style": "detailed"
+            }
+        }
 
 # Kullanıcı profilinden detaylı kariyer simülasyonu senaryosu oluşturmak için
-@app.route("/career-simulation/<uuid:user_id>", methods=["GET", "OPTIONS"])
+@app.route("/career-simulation/<user_id>", methods=["GET", "OPTIONS"])
 def career_simulation(user_id):
     if request.method == "OPTIONS":
         return jsonify({"message": "CORS preflight OK"}), 200
@@ -284,6 +449,11 @@ def career_simulation(user_id):
     print("📌 [career_simulation] İstek alındı | user_id:", user_id)
 
     try:
+        # Geçici kullanıcı kontrolü
+        if str(user_id).startswith('temp_'):
+            print(f"📌 Geçici kullanıcı {user_id} için varsayılan simülasyon oluşturuluyor")
+            return generate_default_simulation()
+        
         headers = {
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}"
@@ -296,72 +466,107 @@ def career_simulation(user_id):
         print("📌 Supabase response:", profile_resp.text[:300], "...")
 
         if profile_resp.status_code != 200 or not profile_resp.json():
-            print("❌ Profil bulunamadı")
-            return jsonify({"success": False, "message": "Profil bulunamadı"}), 404
+            print("❌ Profil bulunamadı, varsayılan simülasyon döndürülüyor")
+            return generate_default_simulation()
 
         profile = profile_resp.json()[0]
         current_title = profile.get("current_title", "Bilinmeyen Pozisyon")
         skills = ", ".join(profile.get("skills", [])) or "Belirtilmemiş"
         print(f"📌 Profil verisi: title={current_title}, skills={skills}")
 
-        prompt = f"""
-        Sen bir kariyer simülasyonu üreticisisin. Amacın, kullanıcıya bir iş gününü
-        mümkün olan en gerçekçi şekilde yaşatmaktır. 
-        Kullanıcının mesleği: {current_title}
-        Kullanıcının becerileri: {skills}
+        # ŞİMDİLİK: Kişilik testi verileri localStorage'da olduğu için varsayılan analiz kullan
+        # TODO: Veritabanından kişilik testi verilerini çek
+        user_analysis = analyze_user_profile(profile)
+        print(f"📌 Kullanıcı analizi: {user_analysis.get('personalization_params', {})}")
 
-        Aşağıdaki kurallara göre detaylı bir JSON senaryosu üret:
-        1. Günün başlangıcından (08:30) bitişine (18:00) kadar tüm olayları kapsa.
-        2. En az 6-8 farklı görev yaz ve her birinin:
-            - Kısa açıklaması
-            - Önemi (Kritik, Yüksek, Orta, Düşük)
-            - Departman ve ekip bilgisi (ekipte kaç kişi var, kimlerle çalışılıyor)
-            - Kullanılan platform ve araçlar (ör: Jira, Slack, Zoom, GitHub, Figma, Postman, Outlook)
-            - Tahmini süre (dakika)
-        3. Gün içinde gelen ve gönderilmesi gereken e-postaları yaz (konu başlıkları ve içeriği kısa özetle).
-        4. Gün boyunca yapılan toplantıları belirt (katılımcılar, konular, kararlar).
-        5. Karar verilmesi gereken 1 ana kritik senaryo seç ve bunun için 3-4 seçenek ver:
-            - id (a, b, c, d)
-            - text (seçenek açıklaması)
-            - feedback (detaylı geri bildirim, artı-eksi yönler)
-            - score (0-5 arası puan)
-        6. Olayları mümkün olduğunca gerçekçi ve detaylı yaz, iş hayatındaki küçük ayrıntıları da ekle
-           (örneğin: kahve molası (bunu sadece dinlenmek için bir süre olarak tut simülasyon görevi gibi olmasın), Slack üzerinden acil mesaj, müşteri talebi değişiklik bildirimi vb.)
-        7. Cevabı aşağıdaki JSON formatında ve sadece JSON olarak döndür:
+        # Not: Kişilik testi verileri şu anda localStorage'da tutuluyor
+        # Frontend'den bu veriler alınarak simülasyon kişiselleştirilebilir
+
+        base_prompt = f"""
+        Sen bir kariyer simülasyonu üreticisisin. MUTLAKA kullanıcının gerçek profiline uygun simülasyon üret.
+        
+        KULLANICI PROFİLİ (DİKKATLE OKU):
+        Üniversite: {profile.get("university", "Belirtilmemiş")}
+        Bölüm: {profile.get("degree", "Belirtilmemiş")}
+        Mezuniyet Yılı: {profile.get("graduation_year", "Belirtilmemiş")}
+        Mevcut Pozisyon: {current_title}
+        Beceriler: {skills}
+        Deneyim Seviyesi: {profile.get("experience_level", "Belirtilmemiş")}
+        Sektör Odağı: {user_analysis.get('industry_focus', 'Genel')}
+        Rol Tipi: {user_analysis.get('role_type', 'Genel')}
+        Teknik Beceriler: {user_analysis.get('technical_skills', {})}
+        Soft Beceriler: {user_analysis.get('soft_skills', [])}
+        Eksik Beceriler: {user_analysis.get('skill_gaps', [])}
+        Kariyer Yörüngesi: {user_analysis.get('career_trajectory', 'Belirtilmemiş')}
+
+        ❗❗ KRİTİK KURALLAR ❗❗
+        1. Kullanıcının bölümü "{profile.get("degree", "")}" - SİMÜLASYON MUTLAKA BU ALANDA OLMALI!
+        2. Industry focus: "{user_analysis.get('industry_focus', 'Genel')}" - Buna göre senaryo yaz!
+        3. Role type: "{user_analysis.get('role_type', 'Genel')}" - Pozisyon seviyesine uygun olsun!
+        
+        BÖLÜME GÖRE ZORUNLU REHBERLİK:
+        
+        → Eğer "Endüstri Mühendisliği" mezunuysa:
+        - ✅ Üretim planlama, kalite kontrol, süreç iyileştirme, verimlilik analizi görevleri
+        - ✅ SAP, Excel, Minitab, AutoCAD, MATLAB araçları
+        - ✅ Fabrika/üretim ortamında, manufacturing şirketinde
+        - ✅ Maliyet optimizasyonu, lean manufacturing, 6 sigma konuları
+        - ❌ Kod yazma, web development, mobil app geliştirme YOK!
+        
+        → Eğer "Bilgisayar/Yazılım Mühendisliği" mezunuysa:
+        - ✅ Kod yazma, sistem tasarımı, debugging, code review görevleri
+        - ✅ GitHub, VS Code, Jira, Docker, AWS araçları
+        - ✅ Teknoloji şirketinde, startup'ta veya yazılım departmanında
+        - ✅ API geliştirme, database yönetimi, DevOps konuları
+        - ❌ Fabrika üretimi, kalite kontrol, makine mühendisliği görevleri YOK!
+        
+        → Eğer "Makine Mühendisliği" mezunuysa:
+        - ✅ Tasarım, CAD çalışmaları, prototip geliştirme, test görevleri
+        - ✅ SolidWorks, AutoCAD, ANSYS, MATLAB araçları
+        - ✅ İmalat şirketinde, ar-ge departmanında
+        - ✅ Mekanik sistemler, termodinamik, malzeme mühendisliği
+        
+        → Eğer diğer bölümler varsa ona göre uyarla!
+        
+        YANIT FORMATI (SADECE JSON):
         {{
-          "title": "Simülasyon Başlığı",
-          "category": "Teknik | Liderlik | Problem Çözme",
-          "difficulty": "Kolay | Orta | Zor",
-          "context": "Şirket, pozisyon, ekip bilgisi, genel ortam",
+          "title": "Kullanıcının bölümüne uygun başlık",
+          "category": "Bölümün ana kategorisi", 
+          "difficulty": "Deneyim seviyesine göre",
+          "context": "Bölüme uygun şirket ve ortam tanımı",
           "daily_schedule": [
             {{
               "time": "09:00",
-              "task": "Kod incelemesi",
+              "task": "Bölüme özel görev",
+              "description": "Detaylı açıklama",
               "priority": "Yüksek",
-              "department": "Backend",
-              "team_size": 6,
-              "tools": ["GitHub", "Slack"],
-              "duration_min": 45
+              "department": "İlgili departman",
+              "team_size": 3,
+              "tools": ["Bölüme uygun araçlar"],
+              "duration_min": 60
             }}
           ],
           "emails": [
-            {{"from": "pm@company.com", "subject": "Feature Update", "summary": "Müşteri ek özellik istiyor."}}
+            {{"from": "email@company.com", "subject": "Bölüme uygun konu", "summary": "Özet"}}
           ],
           "meetings": [
-            {{"time": "11:00", "participants": ["PM", "Lead Dev"], "topic": "Sprint Planning", "summary": "Görevlerin önceliklendirilmesi."}}
+            {{"time": "11:00", "participants": ["İlgili roller"], "topic": "Bölüme uygun konu", "summary": "Özet"}}
           ],
-          "situation": "Günün kritik anı ve sorun açıklaması",
-          "question": "Hangi strateji izlenmeli?",
+          "situation": "Bölüme özel gerçekçi problem",
+          "question": "Bu durumda ne yaparsınız?",
           "options": [
-            {{"id":"a","text":"Seçenek1","feedback":"Detaylı analiz","score":5}},
-            {{"id":"b","text":"Seçenek2","feedback":"Riskli yönleri açıklanmış","score":2}}
+            {{"id":"a","text":"Seçenek1","feedback":"Analiz","score":5}},
+            {{"id":"b","text":"Seçenek2","feedback":"Analiz","score":3}}
           ]
         }}
-        ❗ Çok önemli: Yanıtını yalnızca geçerli bir JSON olarak ver,
-        JSON dışında hiçbir açıklama, not veya yazı ekleme.Yanıt çok uzunsa, JSON'u kesmeden tamamla.
-        Cevabın geçerli bir JSON olmalı, eksik veya yarım bırakma.
-
+        
+        ❗ UYARI: Yalnızca geçerli JSON döndür, başka hiçbir metin ekleme!
+        ❗ KONTROL: Simülasyon kullanıcının bölümüne uygun mu? Eğer değilse baştan yaz!
         """
+
+        # Kişiselleştirilmiş prompt oluştur
+        # Şimdilik basit olarak base_prompt'u kullan
+        prompt = base_prompt
 
         gemini_payload = {
             "contents": [{"parts": [{"text": prompt}]}],
@@ -394,13 +599,51 @@ def career_simulation(user_id):
 
         try:
             scenario = json.loads(cleaned)
+            
+            # ✅ BÖLÜM UYGUNLUK KONTROLÜ
+            user_degree = profile.get("degree", "").lower()
+            scenario_title = scenario.get("title", "").lower()
+            scenario_category = scenario.get("category", "").lower()
+            scenario_context = scenario.get("context", "").lower()
+            
+            print(f"🔍 Uygunluk kontrolü: Bölüm='{user_degree}' | Senaryo='{scenario_title}'")
+            
+            # Bölüm-senaryo uyumu kontrol et
+            degree_mismatch = False
+            mismatch_reason = ""
+            
+            if "endüstri mühendisliği" in user_degree:
+                if any(keyword in scenario_title + scenario_category + scenario_context for keyword in 
+                       ["backend", "frontend", "developer", "yazılım", "kod", "programming", "react", "javascript", "python", "api"]):
+                    degree_mismatch = True
+                    mismatch_reason = "Endüstri Mühendisi için yazılım geliştirme simülasyonu üretildi"
+                    
+            elif any(keyword in user_degree for keyword in ["bilgisayar", "yazılım", "computer", "software"]):
+                if any(keyword in scenario_title + scenario_category + scenario_context for keyword in 
+                       ["üretim", "fabrika", "kalite kontrol", "süreç", "manufacturing", "sap", "lean"]):
+                    degree_mismatch = True
+                    mismatch_reason = "Yazılım Mühendisi için üretim simülasyonu üretildi"
+                    
+            elif any(keyword in user_degree for keyword in ["makine", "mechanical"]):
+                if any(keyword in scenario_title + scenario_category + scenario_context for keyword in 
+                       ["yazılım", "kod", "programming", "web", "frontend", "backend"]):
+                    degree_mismatch = True
+                    mismatch_reason = "Makine Mühendisi için yazılım simülasyonu üretildi"
+            
+            # Eğer uyumsuzluk varsa, bölüme özel simülasyon oluştur
+            if degree_mismatch:
+                print(f"❌ UYUMSUZLUK: {mismatch_reason}")
+                print("🔄 Bölüme özel simülasyon oluşturuluyor...")
+                return generate_degree_specific_simulation(profile)
+            
+            # ✅ Senaryo uygunsa kabul et
+            print("✅ Senaryo bölüme uygun - kabul ediliyor")
+            return jsonify({"success": True, "data": scenario})
+            
         except Exception as e:
             print("❌ JSON parse hatası:", str(e))
             print("📌 Ham yanıt:", ai_response)
-            return jsonify({"success": False, "message": "Gemini yanıtı geçersiz JSON"}), 500
-
-        print("✅ Senaryo başarıyla oluşturuldu")
-        return jsonify({"success": True, "data": scenario})
+            return generate_degree_specific_simulation(profile)
 
     except Exception as e:
         print("❌ career_simulation genel hata:", traceback.format_exc())
@@ -428,7 +671,7 @@ def task_simulation():
             Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
             Bu görev için gerçekçi bir email simülasyonu oluştur.
             
-            JSON formatında döndür:
+            SADECE JSON formatında yanıt ver, başka hiçbir açıklama veya metin ekleme:
             {{
                 "type": "email",
                 "scenario": "Email senaryosu açıklaması",
@@ -448,7 +691,7 @@ def task_simulation():
             Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
             Bu görev için gerçekçi bir kod yazma simülasyonu oluştur.
             
-            JSON formatında döndür:
+            SADECE JSON formatında yanıt ver, başka hiçbir açıklama veya metin ekleme:
             {{
                 "type": "coding",
                 "scenario": "Kod yazma senaryosu",
@@ -466,7 +709,7 @@ def task_simulation():
             Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
             Bu görev için gerçekçi bir toplantı simülasyonu oluştur.
             
-            JSON formatında döndür:
+            SADECE JSON formatında yanıt ver, başka hiçbir açıklama veya metin ekleme:
             {{
                 "type": "meeting",
                 "scenario": "Toplantı senaryosu",
@@ -485,7 +728,7 @@ def task_simulation():
             Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
             Bu görev için genel bir simülasyon oluştur.
             
-            JSON formatında döndür:
+            SADECE JSON formatında yanıt ver, başka hiçbir açıklama veya metin ekleme:
             {{
                 "type": "general",
                 "scenario": "Görev senaryosu",
@@ -506,7 +749,12 @@ def task_simulation():
         # Gemini API çağrısı
         gemini_payload = {
             "contents": [{"parts": [{"text": prompt}]}],
-            "generationConfig": {"temperature": 0.6, "maxOutputTokens": 2000}
+            "generationConfig": {
+                "temperature": 0.3,
+                "maxOutputTokens": 2000,
+                "topP": 0.8,
+                "topK": 10
+            }
         }
         
         response = requests.post(
@@ -519,12 +767,38 @@ def task_simulation():
             result = response.json()
             ai_response = result['candidates'][0]['content']['parts'][0]['text']
             
-            # JSON parse et
-            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
-            if json_match:
-                simulation_data = json.loads(json_match.group(0))
-                return jsonify({"success": True, "data": simulation_data})
+            print(f"📌 Ham Gemini yanıt (task-simulation): {ai_response[:500]}...")
+            
+            # JSON'u çıkarmak için çeşitli yöntemler dene
+            json_content = None
+            
+            # 1. Markdown kod bloğu kontrolü
+            markdown_match = re.search(r'```json\s*(\{.*?\})\s*```', ai_response, re.DOTALL)
+            if markdown_match:
+                json_content = markdown_match.group(1)
+                print("📌 Markdown kod bloğundan JSON çıkarıldı")
+            else:
+                # 2. Sadece süslü parantez kontrolü
+                json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+                if json_match:
+                    json_content = json_match.group(0)
+                    print("📌 Regex ile JSON çıkarıldı")
+            
+            if json_content:
+                print(f"📌 Çıkarılan JSON içeriği: {json_content[:300]}...")
+                
+                try:
+                    simulation_data = json.loads(json_content)
+                    return jsonify({"success": True, "data": simulation_data})
+                except json.JSONDecodeError as je:
+                    print(f"📌 JSON parse hatası: {str(je)}")
+                    print(f"📌 Hatalı JSON: {json_content}")
+                    return jsonify({"success": False, "message": f"JSON parse hatası: {str(je)}"}), 400
+            else:
+                print(f"📌 JSON formatı bulunamadı. Ham yanıt: {ai_response}")
+                return jsonify({"success": False, "message": "JSON formatı bulunamadı"}), 400
         
+        print(f"📌 Gemini API hatası: {response.status_code} - {response.text}")
         return jsonify({"success": False, "message": "Görev simülasyonu oluşturulamadı"}), 400
         
     except Exception as e:
@@ -736,6 +1010,693 @@ def get_hint():
     except Exception as e:
         print(f"Hint generation error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
+
+# Gelişmiş toplantı chat sistemi
+@app.route("/meeting-chat", methods=["POST"])
+def meeting_chat():
+    """Toplantıda gerçekçi AI katılımcı yanıtları"""
+    try:
+        data = request.json
+        user_message = data.get('message', '')
+        participant = data.get('participant', 'Proje Yöneticisi')
+        context = data.get('context', {})
+        conversation_history = data.get('conversation_history', [])
+        base_prompt = data.get('prompt', '')
+        
+        if not user_message:
+            return jsonify({"success": False, "message": "Mesaj boş olamaz"}), 400
+
+        # Daha detaylı prompt oluştur
+        conversation_context = ""
+        if conversation_history:
+            conversation_context = "Önceki konuşma:\n" + "\n".join([
+                f"{msg.get('speaker', 'Bilinmeyen')}: {msg.get('message', '')}" 
+                for msg in conversation_history[-3:]  # Son 3 mesaj
+            ])
+
+        enhanced_prompt = f"""
+        {base_prompt}
+        
+        {conversation_context}
+        
+        ÇOK ÖNEMLİ: Yanıtın gerçek bir iş toplantısındaki gibi olsun:
+        - Kısa ve net olsun (1-2 cümle max)
+        - Kişiliğe uygun olsun
+        - Yapıcı eleştiri veya öneriler içerebilir
+        - Bazen karşı görüş bildirebilir
+        - Somut örnekler verebilir
+        - Takip soruları sorabilir
+        
+        Yanıtını SADECE JSON formatında ver, başka hiçbir şey ekleme:
+        """
+
+        gemini_payload = {
+            "contents": [{"parts": [{"text": enhanced_prompt}]}],
+            "generationConfig": {
+                "temperature": 0.8,  # Daha yaratıcı yanıtlar için
+                "maxOutputTokens": 500,
+                "topP": 0.9
+            }
+        }
+        
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json=gemini_payload,
+            timeout=10
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            ai_response = result['candidates'][0]['content']['parts'][0]['text']
+            
+            # JSON parse et
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                try:
+                    response_data = json.loads(json_match.group(0))
+                    
+                    # Yanıt kalitesini artır
+                    if not response_data.get('response'):
+                        response_data['response'] = "İlginç bir bakış açısı. Bu konuyu daha detaylı konuşabilir miyiz?"
+                    
+                    return jsonify({"success": True, "data": response_data})
+                except json.JSONDecodeError:
+                    # Fallback yanıt
+                    fallback_responses = {
+                        'Proje Yöneticisi': "Bu konuda deadline'ımızı nasıl etkiler? Kaynak planlaması yapmamız gerekiyor.",
+                        'Senior Developer': "Teknik implementasyon açısından hangi approach'u öneriyorsun?",
+                        'UX Designer': "Kullanıcı deneyimi açısından bu değişiklik nasıl bir etki yaratır?",
+                        'QA Engineer': "Bu feature için test senaryolarımızı nasıl genişletmeliyiz?"
+                    }
+                    
+                    return jsonify({
+                        "success": True, 
+                        "data": {
+                            "response": fallback_responses.get(participant, "İyi bir öneri, detaylarını konuşalım."),
+                            "emotion": "neutral",
+                            "follow_up_question": None,
+                            "action_item": None
+                        }
+                    })
+        
+        return jsonify({"success": False, "message": "AI yanıtı oluşturulamadı"}), 400
+        
+    except Exception as e:
+        print(f"Meeting chat error: {str(e)}")
+        return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
+
+# Kişilik testi sonuçlarını kaydetme
+@app.route("/save-personality-assessment", methods=["POST"])
+def save_personality_assessment():
+    """Kullanıcının kişilik testi sonuçlarını kaydet"""
+    try:
+        data = request.json
+        print(f"Received personality assessment data: {data}")
+        
+        user_id = data.get('user_id')
+        assessment_results = data.get('assessment_results', {})
+        
+        if not user_id:
+            print("Error: Missing user_id")
+            return jsonify({"success": False, "message": "Kullanıcı ID eksik"}), 400
+            
+        if not assessment_results:
+            print("Error: Missing assessment_results")
+            return jsonify({"success": False, "message": "Test sonuçları eksik"}), 400
+        
+        # Geçici kullanıcılar için sadece localStorage'a kaydet
+        if str(user_id).startswith('temp_'):
+            print(f"Temporary user {user_id}, skipping database save")
+            return jsonify({
+                "success": True,
+                "message": "Geçici kullanıcı - sonuçlar yerel olarak kaydedildi"
+            })
+        
+        # ŞİMDİLİK: Veritabanı kolonu eksik olduğu için sadece localStorage'a kaydediyoruz
+        print(f"Database column missing, only saving to localStorage for user {user_id}")
+        return jsonify({
+            "success": True,
+            "message": "Kişilik testi sonuçları yerel olarak kaydedildi (veritabanı desteği yakında)"
+        })
+        
+        # TODO: Supabase'de personality_assessment kolonu eklendikten sonra aşağıdaki kodu aktif et
+        """
+        # Supabase'e kişilik testi sonuçlarını kaydet
+        headers = {
+            "apikey": SUPABASE_API_KEY,
+            "Authorization": f"Bearer {SUPABASE_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        # Önce mevcut profili güncelle
+        personality_data = {
+            "personality_assessment": assessment_results
+        }
+        
+        print(f"Updating user {user_id} with personality data")
+        response = requests.patch(
+            f"{SUPABASE_API_URL}/rest/v1/profiles?id=eq.{user_id}",
+            headers=headers,
+            json=personality_data
+        )
+        
+        print(f"Supabase response status: {response.status_code}")
+        print(f"Supabase response: {response.text}")
+        
+        if response.status_code == 200:
+            return jsonify({
+                "success": True,
+                "message": "Kişilik testi sonuçları kaydedildi"
+            })
+        else:
+            return jsonify({
+                "success": False,
+                "message": f"Kayıt hatası: {response.text}"
+            }), 400
+        """
+            
+    except Exception as e:
+        print(f"Personality assessment save error: {str(e)}")
+        return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
+
+# Kullanıcı kişiselleştirme verilerini getir
+@app.route("/get-user-analysis/<uuid:user_id>", methods=["GET"])
+def get_user_analysis(user_id):
+    """Kullanıcının analiz edilmiş profilini getir"""
+    try:
+        headers = {
+            "apikey": SUPABASE_API_KEY,
+            "Authorization": f"Bearer {SUPABASE_API_KEY}"
+        }
+        
+        response = requests.get(
+            f"{SUPABASE_API_URL}/rest/v1/profiles?id=eq.{user_id}",
+            headers=headers
+        )
+        
+        if response.status_code == 200:
+            profiles = response.json()
+            if profiles:
+                profile = profiles[0]
+                user_analysis = analyze_user_profile(profile)
+                
+                return jsonify({
+                    "success": True,
+                    "data": {
+                        "profile": profile,
+                        "analysis": user_analysis
+                    }
+                })
+            return jsonify({"success": False, "message": "Profil bulunamadı"}), 404
+        return jsonify({"success": False, "message": "Veri alınamadı"}), 400
+        
+    except Exception as e:
+        print(f"User analysis error: {str(e)}")
+        return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
+
+def generate_degree_specific_simulation(profile):
+    """Kullanıcının bölümüne özel garantili simülasyon oluştur"""
+    
+    degree = profile.get("degree", "").lower()
+    experience_level = profile.get("experience_level", "junior")
+    university = profile.get("university", "")
+    first_name = profile.get("first_name", "Kullanıcı")
+    
+    print(f"🎯 Bölüme özel simülasyon oluşturuluyor: {degree}")
+    
+    if "endüstri mühendisliği" in degree:
+        return jsonify({
+            "success": True,
+            "data": {
+                "title": "Endüstri Mühendisi - Üretim Süreç Analizi",
+                "company": "ProduTech Manufacturing A.Ş.",
+                "role": f"{'Senior' if experience_level == 'senior' else 'Junior'} Endüstri Mühendisi",
+                "category": "Üretim & Süreç Optimizasyonu",
+                "difficulty": "Orta" if experience_level == "junior" else "Zor",
+                "context": f"{university} {degree} mezunu {first_name} olarak, 250 çalışanlı otomotiv yan sanayi üretim tesisinde çalışıyorsunuz. Şirket ISO 9001 ve IATF 16949 sertifikalarına sahip, lean manufacturing prensiplerine göre çalışıyor.",
+                "daily_schedule": [
+                    {
+                        "time": "08:00",
+                        "task": "Vardiya Devir Raporu İncelemesi",
+                        "description": "Gece vardiyasından gelen üretim ve kalite raporlarını analiz etme",
+                        "department": "Üretim Planlama",
+                        "priority": "Yüksek",
+                        "duration_min": 30,
+                        "team_size": 1,
+                        "tools": ["SAP", "Excel", "Üretim Raporları"]
+                    },
+                    {
+                        "time": "08:30",
+                        "task": "Hat Başı Toplantısı",
+                        "description": "Vardiya liderleri ile günlük hedefleri ve sorunları değerlendirme",
+                        "department": "Üretim",
+                        "priority": "Kritik",
+                        "duration_min": 45,
+                        "team_size": 8,
+                        "tools": ["Tableau", "KPI Dashboard"]
+                    },
+                    {
+                        "time": "09:30",
+                        "task": "Zaman Etüdü ve İş Ölçümü",
+                        "description": "Yeni ürün hattında cycle time analizi yapma",
+                        "department": "Süreç Mühendisliği",
+                        "priority": "Yüksek",
+                        "duration_min": 120,
+                        "team_size": 2,
+                        "tools": ["Kronometre", "Video Analiz", "MTM Tabloları"]
+                    },
+                    {
+                        "time": "12:00",
+                        "task": "Kaizen Projesi Geliştirme",
+                        "description": "Atık azaltma için 5S implementasyonu planlama",
+                        "department": "Sürekli İyileştirme",
+                        "priority": "Orta",
+                        "duration_min": 90,
+                        "team_size": 4,
+                        "tools": ["Fishbone Diagram", "5 Why Analysis", "PDCA"]
+                    },
+                    {
+                        "time": "14:00",
+                        "task": "Kalite Kontrol Analizi",
+                        "description": "SPC charts inceleme ve süreç kapasitesi hesaplama",
+                        "department": "Kalite Güvence",
+                        "priority": "Yüksek",
+                        "duration_min": 75,
+                        "team_size": 3,
+                        "tools": ["Minitab", "Control Charts", "Cp/Cpk Analizi"]
+                    },
+                    {
+                        "time": "15:30",
+                        "task": "Tedarikçi Performans Değerlendirmesi",
+                        "description": "Hammadde kalitesi ve teslimat performansı analizi",
+                        "department": "Tedarik Zinciri",
+                        "priority": "Orta",
+                        "duration_min": 60,
+                        "team_size": 2,
+                        "tools": ["Supplier Scorecard", "SAP MM", "Excel Pivot"]
+                    }
+                ],
+                "emails": [
+                    {"from": "production.manager@produtech.com", "subject": "Üretim Hedefi Revizyonu", "summary": "Bu hafta %3 artırılmış üretim hedefi ve kaynak planlaması"},
+                    {"from": "quality@produtech.com", "subject": "Müşteri Şikayeti - Acil", "summary": "BMW'den gelen part reject raporu ve düzeltici faaliyet talebi"},
+                    {"from": "maintenance@produtech.com", "subject": "Planlı Bakım Programı", "summary": "Önümüzdeki hafta için ekipman bakım takvimi"}
+                ],
+                "meetings": [
+                    {"time": "08:30", "participants": ["Vardiya Liderleri", "Kalite Sorumlusu"], "topic": "Günlük Üretim Planlama", "summary": "Kapasite, kalite ve teslimat hedefleri"},
+                    {"time": "16:00", "participants": ["Plant Manager", "Mühendislik Ekibi"], "topic": "Haftalık İyileştirme Review", "summary": "Kaizen projelerinin ilerleme durumu"}
+                ],
+                "situation": "Ana üretim hattında beklenmedik bir şekilde %15 verimlilik düşüşü yaşanıyor. Müşteri siparişlerinde gecikme riski var ve üst yönetim acil çözüm bekliyor. İlk analiz sonuçlarına göre sorun ekipman, operatör performansı veya süreç akışından kaynaklanıyor olabilir.",
+                "question": "Bu kritik durumda hangi yaklaşımı benimsersiniz?",
+                "options": [
+                    {"id":"a","text":"Immediate root cause analysis ile 8D metodolojisi uygulayarak sistematik problem çözme","feedback":"Mükemmel yaklaşım. 8D (8 Disciplines) endüstride standart problem solving metodudur. Kök nedeni bulup kalıcı çözüm sağlar. Takım çalışmasını da destekler.","score":5},
+                    {"id":"b","text":"Hemen yedek ekipman devreye alıp üretimi sürdürme, sonra analiz yapma","feedback":"Pragmatik yaklaşım, üretim sürekliliğini sağlar ama kök neden çözülmezse tekrar edebilir. Kısa vadeli çözüm.","score":3},
+                    {"id":"c","text":"En deneyimli operatörleri bu hatta görevlendirip performansı izleme","feedback":"İnsan faktörüne odaklanmış çözüm. Faydalı olabilir ama ekipman veya süreç sorunuysa çözmez. Diğer hatları etkileyebilir.","score":3},
+                    {"id":"d","text":"Tüm üretim parametrelerini fabrika ayarlarına resetleyip sıfırdan başlama","feedback":"Riskli yaklaşım. Daha fazla problem yaratabilir ve standardizasyon ilkelerine aykırı. Sorunun kaynağını anlamadan müdahale tehlikelidir.","score":2}
+                ]
+            },
+            "message": "Endüstri Mühendisliği'ne özel simülasyon oluşturuldu"
+        })
+        
+    elif any(keyword in degree for keyword in ["bilgisayar", "yazılım", "computer", "software"]):
+        return jsonify({
+            "success": True,
+            "data": {
+                "title": "Software Engineer - Microservices Geliştirme",
+                "company": "DevTech Solutions",
+                "role": f"{'Senior' if experience_level == 'senior' else 'Junior'} Software Engineer",
+                "category": "Yazılım Geliştirme",
+                "difficulty": "Orta" if experience_level == "junior" else "Zor",
+                "context": f"{university} {degree} mezunu {first_name} olarak, 50+ developer'lı bir teknoloji şirketinde cloud-native uygulamalar geliştiriyorsunuz. Microservices architecture, Docker, Kubernetes teknolojileri kullanılıyor.",
+                "daily_schedule": [
+                    {
+                        "time": "09:00",
+                        "task": "Daily Standup Toplantısı",
+                        "description": "Scrum ekibi ile günlük planlama ve impediment'ların konuşulması",
+                        "department": "Backend Development",
+                        "priority": "Yüksek",
+                        "duration_min": 30,
+                        "team_size": 8,
+                        "tools": ["Jira", "Slack", "Zoom"]
+                    },
+                    {
+                        "time": "09:30",
+                        "task": "API Endpoint Development",
+                        "description": "User service için yeni REST API endpoints yazma",
+                        "department": "Backend",
+                        "priority": "Kritik",
+                        "duration_min": 120,
+                        "team_size": 1,
+                        "tools": ["VS Code", "Node.js", "Express", "MongoDB"]
+                    },
+                    {
+                        "time": "12:00",
+                        "task": "Code Review Session",
+                        "description": "Team lead ile pull request'leri review etme",
+                        "department": "Development",
+                        "priority": "Yüksek",
+                        "duration_min": 60,
+                        "team_size": 3,
+                        "tools": ["GitHub", "SonarQube", "ESLint"]
+                    },
+                    {
+                        "time": "14:00",
+                        "task": "Unit Test Writing",
+                        "description": "Yeni API endpoints için comprehensive test coverage",
+                        "department": "Quality Assurance",
+                        "priority": "Yüksek",
+                        "duration_min": 90,
+                        "team_size": 1,
+                        "tools": ["Jest", "Supertest", "Istanbul"]
+                    },
+                    {
+                        "time": "15:30",
+                        "task": "DevOps Pipeline Optimization",
+                        "description": "CI/CD pipeline'ında build time iyileştirme",
+                        "department": "DevOps",
+                        "priority": "Orta",
+                        "duration_min": 75,
+                        "team_size": 2,
+                        "tools": ["Jenkins", "Docker", "Kubernetes", "AWS"]
+                    }
+                ],
+                "emails": [
+                    {"from": "product.manager@devtech.com", "subject": "Sprint Planning - New Features", "summary": "Gelecek sprint için kullanıcı hikayelerinin teknik analizi"},
+                    {"from": "devops@devtech.com", "subject": "Production Issue Alert", "summary": "API response time'larda artış tespit edildi, investigation gerekli"},
+                    {"from": "security@devtech.com", "subject": "Vulnerability Scan Results", "summary": "Dependency'lerde güvenlik açığı tespit edildi, update gerekli"}
+                ],
+                "meetings": [
+                    {"time": "09:00", "participants": ["Scrum Team", "Product Owner"], "topic": "Daily Standup", "summary": "Sprint progress ve impediment'lar"},
+                    {"time": "16:00", "participants": ["Tech Lead", "Senior Developers"], "topic": "Architecture Review", "summary": "Microservices communication patterns"}
+                ],
+                "situation": "Production'da kritik bir API endpoint'te unexpected error rate artışı var (%0.1'den %2.5'e çıktı). Monitoring sistemleri alarm veriyor ve müşteri deneyimi etkileniyor. Database connection pool, memory usage ve network latency metriklerini inceleme gerekiyor.",
+                "question": "Bu production issue'yu nasıl handle edersiniz?",
+                "options": [
+                    {"id":"a","text":"Incident response procedure başlatıp, monitoring dashboard'larını deep dive analysis yapma","feedback":"Mükemmel yaklaşım. Önce impact assessment, sonra systematic debugging. Industry best practice olan incident management sürecini takip ediyor.","score":5},
+                    {"id":"b","text":"Hemen rollback yapıp previous stable version'a dönme","feedback":"Safe approach ama root cause'u çözmez. Eğer issue yeni deploy'dan kaynaklıysa mantıklı, ama investigation eksik kalır.","score":4},
+                    {"id":"c","text":"Load balancer'dan problematic instance'ları çıkarıp scale up yapma","feedback":"Pragmatik immediate action ama underlying problem persist edebilir. Temporary fix, permanent solution değil.","score":3},
+                    {"id":"d","text":"Database cache'ini clear edip application server'ları restart etme","feedback":"Risky approach. Data loss riski var ve root cause analysis yapmadan shotgun debugging yaklaşımı. Professional ortamda önerilmez.","score":2}
+                ]
+            },
+            "message": "Yazılım Mühendisliği'ne özel simülasyon oluşturuldu"
+        })
+        
+    else:
+        # Diğer bölümler için generic approach
+        return jsonify({
+            "success": True,
+            "data": {
+                "title": f"{degree.title()} - Profesyonel Gelişim Simülasyonu",
+                "company": "MultiFlex Corp.",
+                "role": f"{'Senior' if experience_level == 'senior' else 'Junior'} Specialist",
+                "category": "Genel İş Deneyimi",
+                "difficulty": "Orta",
+                "context": f"{university} {degree} mezunu {first_name} olarak, çok disiplinli bir şirkette uzmanlık alanınızda projeler yürütüyorsunuz.",
+                "daily_schedule": [
+                    {
+                        "time": "09:00",
+                        "task": "Ekip Koordinasyonu",
+                        "description": "Günlük hedefler ve proje durumu değerlendirmesi",
+                        "department": "Proje Yönetimi",
+                        "priority": "Yüksek",
+                        "duration_min": 45,
+                        "team_size": 6,
+                        "tools": ["Teams", "Project Management Tool"]
+                    },
+                    {
+                        "time": "10:00",
+                        "task": "Analiz ve Araştırma",
+                        "description": "Alan uzmanlığınız kapsamında detaylı inceleme",
+                        "department": "Araştırma",
+                        "priority": "Yüksek",
+                        "duration_min": 120,
+                        "team_size": 1,
+                        "tools": ["Excel", "Analiz Araçları"]
+                    },
+                    {
+                        "time": "14:00",
+                        "task": "Rapor Hazırlama",
+                        "description": "Bulgularınızı dokumentasyona dökme",
+                        "department": "Dokümantasyon",
+                        "priority": "Orta",
+                        "duration_min": 90,
+                        "team_size": 1,
+                        "tools": ["Word", "PowerPoint"]
+                    }
+                ],
+                "emails": [
+                    {"from": "manager@multiflex.com", "subject": "Proje Güncelleme Talebi", "summary": "İlerleme raporu ve önümüzdeki adımlar"}
+                ],
+                "meetings": [
+                    {"time": "09:00", "participants": ["Proje Ekibi"], "topic": "Günlük Değerlendirme", "summary": "Hedefler ve sorunlar"}
+                ],
+                "situation": "Projenizde beklenmedik bir zorlukla karşılaştınız ve alternatif yaklaşımlar değerlendirmeniz gerekiyor.",
+                "question": "Bu durumda nasıl hareket edersiniz?",
+                "options": [
+                    {"id":"a","text":"Sistematik analiz yapıp alternatif çözümler geliştirmek","feedback":"Methodical approach, sürdürülebilir sonuçlar verir","score":5},
+                    {"id":"b","text":"Ekiple brainstorm yapıp yaratıcı çözümler bulmak","feedback":"Collaborative approach, iyi fikirler çıkabilir","score":4},
+                    {"id":"c","text":"Benzer projelerden referans alıp adapte etmek","feedback":"Practical approach ama unique challenge'ları kaçırabilir","score":3},
+                    {"id":"d","text":"Hızlı karar verip deneme yanılma ile ilerlemek","feedback":"Risky approach, resources waste edebilir","score":2}
+                ]
+            },
+            "message": f"{degree} alanına uygun genel simülasyon oluşturuldu"
+        })
+
+def generate_default_simulation():
+    """Dinamik varsayılan simülasyon - localStorage'dan kullanıcı bilgilerini al"""
+    
+    # Not: Bu fonksiyon frontend'den localStorage'da bulunan kullanıcı bilgilerini kullanmalı
+    # Şimdilik farklı senaryolar arasından rastgele seçim yapacak
+    
+    import random
+    
+    # Farklı simülasyon senaryoları havuzu
+    scenarios = [
+        {
+            "title": "Frontend Developer - React Projesi",
+            "company": "TechStart A.Ş.",
+            "role": "Junior Frontend Developer", 
+            "category": "Yazılım Geliştirme",
+            "difficulty": "Orta",
+            "context": "Startup teknoloji şirketinde frontend developer olarak çalışıyorsunuz. 8 kişilik geliştirme ekibinde React ve TypeScript kullanıyorsunuz.",
+            "daily_schedule": [
+                {
+                    "time": "09:00",
+                    "task": "Daily Standup Toplantısı", 
+                    "description": "Ekip ile günlük planlama",
+                    "department": "Geliştirme",
+                    "priority": "Yüksek",
+                    "duration_min": 30,
+                    "team_size": 8,
+                    "tools": ["Slack", "Jira"]
+                },
+                {
+                    "time": "09:30", 
+                    "task": "Component Geliştirme",
+                    "description": "Yeni kullanıcı arayüzü componentleri",
+                    "department": "Frontend",
+                    "priority": "Yüksek", 
+                    "duration_min": 120,
+                    "team_size": 1,
+                    "tools": ["VS Code", "React", "TypeScript"]
+                },
+                {
+                    "time": "12:00",
+                    "task": "Code Review",
+                    "description": "Ekip arkadaşlarının kodlarını inceleme",
+                    "department": "Geliştirme",
+                    "priority": "Orta",
+                    "duration_min": 60,
+                    "team_size": 3,
+                    "tools": ["GitHub", "Pull Requests"]
+                },
+                {
+                    "time": "14:00",
+                    "task": "Bug Fix",
+                    "description": "Müşteri raporlarından gelen hataları düzeltme",
+                    "department": "Geliştirme", 
+                    "priority": "Kritik",
+                    "duration_min": 90,
+                    "team_size": 1,
+                    "tools": ["DevTools", "GitHub"]
+                },
+                {
+                    "time": "16:00",
+                    "task": "API Entegrasyonu",
+                    "description": "Backend API'leri ile frontend bağlantısı",
+                    "department": "Full Stack",
+                    "priority": "Yüksek",
+                    "duration_min": 90,
+                    "team_size": 2,
+                    "tools": ["Postman", "Axios", "Redux"]
+                }
+            ],
+            "situation": "Müşteri acil bir feature değişikliği istedi ve deadline yaklaşıyor.",
+            "question": "Bu durumda nasıl hareket edersiniz?",
+            "options": [
+                {"id":"a","text":"Hızlı geliştirip sonra refactor yapmak","feedback":"Hızlı çözüm ama teknik borç oluşturur","score":3},
+                {"id":"b","text":"Temiz kod yazmaya odaklanmak","feedback":"Kaliteli ama deadline riski var","score":4},
+                {"id":"c","text":"Ekip ile scope'u yeniden değerlendirmek","feedback":"Mantıklı yaklaşım, beklentileri yönetir","score":5},
+                {"id":"d","text":"Ekstra mesai yapıp her şeyi tamamlamak","feedback":"Burnout riski, sürdürülebilir değil","score":2}
+            ]
+        },
+        {
+            "title": "Endüstri Mühendisi - Üretim Planlama", 
+            "company": "ManufactureTech A.Ş.",
+            "role": "Junior Endüstri Mühendisi",
+            "category": "Üretim & Süreç Optimizasyonu", 
+            "difficulty": "Orta",
+            "context": "Orta ölçekli üretim şirketinde endüstri mühendisi olarak çalışıyorsunuz. Otomotiv yan sanayi alanında faaliyet gösteriyor.",
+            "daily_schedule": [
+                {
+                    "time": "08:30",
+                    "task": "Üretim Raporu İncelemesi",
+                    "description": "Günlük üretim verilerini analiz etme",
+                    "department": "Üretim Planlama", 
+                    "priority": "Yüksek",
+                    "duration_min": 30,
+                    "team_size": 1,
+                    "tools": ["Excel", "SAP"]
+                },
+                {
+                    "time": "09:00",
+                    "task": "Süreç İyileştirme Toplantısı",
+                    "description": "Haftalık verimlilik değerlendirmesi",
+                    "department": "Mühendislik",
+                    "priority": "Yüksek", 
+                    "duration_min": 60,
+                    "team_size": 6,
+                    "tools": ["Teams", "PowerPoint"]
+                },
+                {
+                    "time": "11:00",
+                    "task": "Fabrika Hat Analizi",
+                    "description": "Üretim hattında zaman etüdü yapma",
+                    "department": "Üretim",
+                    "priority": "Yüksek",
+                    "duration_min": 120,
+                    "team_size": 2,
+                    "tools": ["Kronometre", "Analiz Formu"]
+                },
+                {
+                    "time": "14:00",
+                    "task": "Kalite Kontrol İncelemesi", 
+                    "description": "Hata oranlarını azaltma stratejileri",
+                    "department": "Kalite",
+                    "priority": "Yüksek",
+                    "duration_min": 90,
+                    "team_size": 3,
+                    "tools": ["Minitab", "Kalite Formları"]
+                },
+                {
+                    "time": "16:00",
+                    "task": "Envanter Optimizasyonu",
+                    "description": "Stok seviyelerini optimize etme",
+                    "department": "Lojistik",
+                    "priority": "Orta",
+                    "duration_min": 60,
+                    "team_size": 2,
+                    "tools": ["SAP", "Excel"]
+                }
+            ],
+            "situation": "Üretim hattında beklenmedik verimlilik düşüşü tespit edildi.",
+            "question": "İlk olarak ne yaparsınız?",
+            "options": [
+                {"id":"a","text":"Detaylı kök neden analizi yapmak","feedback":"Sistematik yaklaşım, sürdürülebilir çözüm","score":5},
+                {"id":"b","text":"Hemen ekipman değiştirmek","feedback":"Pahalı ve aceleye gelmiş karar","score":2},
+                {"id":"c","text":"Operatörlerle konuşmak","feedback":"İyi başlangıç ama veri eksik","score":3},
+                {"id":"d","text":"Geçmiş verileri incelemek","feedback":"Faydalı ama anında aksiyon eksik","score":4}
+            ]
+        },
+        {
+            "title": "Pazarlama Uzmanı - Dijital Kampanya",
+            "company": "BrandForce Ajans",
+            "role": "Junior Pazarlama Uzmanı",
+            "category": "Pazarlama & Satış",
+            "difficulty": "Orta", 
+            "context": "Dijital pazarlama ajansında çalışıyorsunuz. Müşterilerin online görünürlüğünü artırmak için kampanyalar yönetiyorsunuz.",
+            "daily_schedule": [
+                {
+                    "time": "09:00",
+                    "task": "Kampanya Performans Analizi",
+                    "description": "Önceki günün reklam verilerini inceleme",
+                    "department": "Pazarlama",
+                    "priority": "Yüksek",
+                    "duration_min": 45,
+                    "team_size": 1,
+                    "tools": ["Google Analytics", "Facebook Ads Manager"]
+                },
+                {
+                    "time": "10:00",
+                    "task": "Müşteri Brifingi",
+                    "description": "Yeni proje için müşteriyle görüşme",
+                    "department": "Account Management",
+                    "priority": "Kritik",
+                    "duration_min": 60,
+                    "team_size": 4,
+                    "tools": ["Zoom", "Presentation"]
+                },
+                {
+                    "time": "11:30",
+                    "task": "Kreatif Çalışma",
+                    "description": "Sosyal medya içeriklerini hazırlama",
+                    "department": "Kreatif",
+                    "priority": "Yüksek",
+                    "duration_min": 90,
+                    "team_size": 2,
+                    "tools": ["Canva", "Photoshop"]
+                },
+                {
+                    "time": "14:00",
+                    "task": "A/B Test Kurulumu",
+                    "description": "Farklı reklam varyasyonlarını test etme",
+                    "department": "Performance",
+                    "priority": "Orta",
+                    "duration_min": 75,
+                    "team_size": 1,
+                    "tools": ["Google Ads", "Facebook Business"]
+                },
+                {
+                    "time": "16:00",
+                    "task": "Rapor Hazırlama",
+                    "description": "Müşteriye sunulacak aylık rapor",
+                    "department": "Pazarlama",
+                    "priority": "Yüksek", 
+                    "duration_min": 90,
+                    "team_size": 1,
+                    "tools": ["Excel", "PowerPoint", "Data Studio"]
+                }
+            ],
+            "situation": "Müşterinin kampanya bütçesi yarı yarıya azaltıldı ama hedefler aynı kaldı.",
+            "question": "Bu durumda stratejiyi nasıl ayarlarsınız?",
+            "options": [
+                {"id":"a","text":"Hedefleri yeniden müzakere etmek","feedback":"Gerçekçi yaklaşım, sürdürülebilir","score":5},
+                {"id":"b","text":"Daha ucuz kanallara odaklanmak","feedback":"Mantıklı ama kalite riski var","score":4},
+                {"id":"c","text":"Aynı hedeflerle devam etmek","feedback":"İmkansız, müşteriyi hayal kırıklığına uğratır","score":1},
+                {"id":"d","text":"Organik stratejilere yönelmek","feedback":"Uzun vadeli iyi ama anında sonuç beklenirse risk","score":3}
+            ]
+        }
+    ]
+    
+    # Rastgele bir senaryo seç
+    selected_scenario = random.choice(scenarios)
+    
+    # Email ve meeting bilgilerini ekle
+    selected_scenario["emails"] = [
+        {"from": "manager@company.com", "subject": "Günlük Hedefler", "summary": "Bugünkü öncelikli görevler"},
+        {"from": "team@company.com", "subject": "Proje Güncellemesi", "summary": "Ekip çalışması durumu"}
+    ]
+    
+    selected_scenario["meetings"] = [
+        {"time": "09:00", "participants": ["Takım Lideri", "Ekip"], "topic": "Günlük Planlama", "summary": "Günün hedefleri"},
+        {"time": "15:00", "participants": ["Müdür"], "topic": "İlerleme Değerlendirmesi", "summary": "Haftalık durum raporu"}
+    ]
+    
+    return jsonify({
+        "success": True,
+        "data": selected_scenario,
+        "message": f"Dinamik simülasyon: {selected_scenario['category']}"
+    })
 
 if __name__ == "__main__":
     print("🚀 KariyerAI Backend başlatılıyor...")
