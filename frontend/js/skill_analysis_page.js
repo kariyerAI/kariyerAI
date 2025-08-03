@@ -1,123 +1,216 @@
-export function initializeSkillAnalysis() {
+function initializeSkillAnalysis() {
   loadUserSkills()
+  loadMissingSkills();
   loadSkillGapsAnalysis()
-  loadIndustryInsights()
+  loadLLMIndustryInsights()
 }
 
-export function loadUserSkills() {
-  const userSkills = [
-    {
-      name: "JavaScript",
-      level: 85,
-      category: "Frontend",
-      trend: "up",
-      marketDemand: 95,
-      jobCount: 1250,
-      avgSalary: "18.000 TL",
-      status: "strong",
-    },
-    {
-      name: "React",
-      level: 90,
-      category: "Frontend",
-      trend: "up",
-      marketDemand: 92,
-      jobCount: 980,
-      avgSalary: "20.000 TL",
-      status: "strong",
-    },
-    {
-      name: "SQL",
-      level: 30,
-      category: "Database",
-      trend: "stable",
-      marketDemand: 90,
-      jobCount: 1100,
-      avgSalary: "17.000 TL",
-      status: "critical",
-    },
-  ]
+async function loadUserSkills() {
+    let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+    let userId = user.id || null;
 
-  const skillsContainer = document.getElementById("userSkillsAnalysis")
-  if (skillsContainer) {
-    skillsContainer.innerHTML = userSkills.map((skill) => createSkillAnalysisCard(skill)).join("")
-  }
-}
+    if (!userId) return;
 
-export function createSkillAnalysisCard(skill) {
-  const statusColors = {
-    strong: "green",
-    developing: "blue",
-    needs_improvement: "orange",
-    critical: "red",
-  }
+    try {
+        // 1️⃣ Kullanıcı becerilerini getir
+        const response = await fetch(`http://127.0.0.1:5000/get-profile/${userId}`);
+        const data = await response.json();
 
-  const statusTexts = {
-    strong: "Güçlü",
-    developing: "Gelişiyor",
-    needs_improvement: "Geliştirilmeli",
-    critical: "Kritik",
-  }
+        // 2️⃣ Kaydedilmiş skill seviyelerini getir
+        const response2 = await fetch(`http://127.0.0.1:5000/api/get-skill-levels/${userId}`);
+        const skillLevelsData = await response2.json();
+        const savedLevels = skillLevelsData.success ? skillLevelsData.data : [];
 
-  return `
-        <div class="card skill-analysis-card">
-            <div class="flex items-center justify-between mb-3">
-                <div class="flex items-center gap-3">
-                    <h4 class="font-semibold text-lg">${skill.name}</h4>
-                    <span class="badge badge-outline">${skill.category}</span>
-                    <span class="badge badge-${statusColors[skill.status]}">${statusTexts[skill.status]}</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <i class="fas fa-trending-${skill.trend === "up" ? "up text-green-500" : skill.trend === "down" ? "down text-red-500" : "right text-gray-500"}"></i>
-                    <span class="text-sm text-gray-600">${skill.jobCount} iş ilanı</span>
-                </div>
-            </div>
-            
-            <div class="grid md:grid-cols-3 gap-4 mb-4">
-                <div>
-                    <p class="text-sm text-gray-600 mb-1">Seviyeniz</p>
-                    <div class="flex items-center gap-2">
-                        <div class="progress flex-1">
-                            <div class="progress-bar" style="width: ${skill.level}%"></div>
+        if (data.success && data.data.skills) {
+            const userSkills = data.data.skills;
+
+            document.getElementById("userSkillsAnalysis").innerHTML = userSkills.map(skill => {
+                // Daha önce kaydedilen seviye varsa onu kullan, yoksa 50
+                let saved = savedLevels.find(s => s.skill.toLowerCase() === skill.toLowerCase());
+                let level = saved ? saved.level : 50;
+
+                return `
+                    <div class="card skill-analysis-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold text-lg">${capitalizeWords(skill)}</h4>
+                            <span id="skillValue-${skill}" class="text-sm font-medium">${level}%</span>
                         </div>
-                        <span class="text-sm font-medium">%${skill.level}</span>
+                        <input type="range" min="0" max="100" value="${level}"
+                            class="w-full skill-slider"
+                            data-skill="${skill}"
+                            oninput="document.getElementById('skillValue-${skill}').textContent=this.value+'%'"
+                        />
                     </div>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600 mb-1">Pazar Talebi</p>
-                    <div class="flex items-center gap-2">
-                        <div class="progress flex-1">
-                            <div class="progress-bar" style="width: ${skill.marketDemand}%"></div>
-                        </div>
-                        <span class="text-sm font-medium">%${skill.marketDemand}</span>
-                    </div>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600 mb-1">Ortalama Maaş</p>
-                    <p class="font-medium">${skill.avgSalary}</p>
-                </div>
-            </div>
-            
-            ${
-              skill.status === "critical"
-                ? `
-                <div class="bg-red-50 border border-red-200 rounded p-3">
-                    <p class="text-sm text-red-800">
-                        <i class="fas fa-exclamation-circle mr-1"></i>
-                        Bu beceri kritik seviyede. Hemen geliştirmeye başlamanızı öneriyoruz.
-                    </p>
-                </div>
-            `
-                : ""
-            }
-        </div>
-    `
+                `;
+            }).join('');
+        }
+
+    } catch (error) {
+        console.error("Beceriler yüklenemedi:", error);
+    }
 }
 
-export function loadSkillGapsAnalysis() {
+
+
+
+function loadSkillGapsAnalysis() {
   console.log("Detaylı beceri eksikliği analizi yüklendi.")
 }
 
-export function loadIndustryInsights() {
-  console.log("Sektör içgörüleri yüklendi.")
+document.addEventListener('DOMContentLoaded', async () => {
+    let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+    let userId = user.id || null;
+
+    if (!userId) {
+        document.getElementById('missingSkillsList').innerHTML = `<p>Kullanıcı bulunamadı.</p>`;
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/api/missing_skills/${userId}`);
+        const data = await response.json();
+
+        if (data.success && data.data.length > 0) {
+            document.getElementById('missingSkillsList').innerHTML = data.data.map(item => `
+                <div class="skill-gap-card">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-3">
+                            <h4 class="font-semibold">${capitalizeWords(item.skill)}</h4>
+                            <span class="badge badge-red">Eksik</span>
+                        </div>
+                        <a href="../html/learning_path_page.html" class="btn btn-primary btn-small">
+                            <i class="fas fa-book-open mr-2"></i> Öğrenmeye Başla
+                        </a>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <p class="text-gray-600">Kaydedildi</p>
+                            <p class="font-medium">${new Date(item.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div>
+                            <p class="text-gray-600">Durum</p>
+                            <p class="font-medium">Geliştirilmeli</p>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            document.getElementById('missingSkillsList').innerHTML = `<p>Eksik beceri kaydı bulunamadı.</p>`;
+        }
+    } catch (error) {
+        console.error("Eksik beceriler alınamadı:", error);
+    }
+});
+function capitalizeWords(str) {
+    if (!str) return '';
+    return str
+        .toLowerCase()
+        .split(/\s+/) // birden fazla boşluğu da yakalar
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
 }
+
+async function loadMissingSkills() {
+    let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+    let userId = user.id || null;
+
+    if (!userId) {
+        document.getElementById('missingSkillsList').innerHTML = `<p>Kullanıcı bulunamadı.</p>`;
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/api/missing_skills/${userId}`);
+        const data = await response.json();
+
+        if (data.success && data.data.length > 0) {
+            document.getElementById('missingSkillsList').innerHTML = data.data.map(item => {
+                let skillName = capitalizeWords(item.skill.trim());
+                return `
+                    <div class="skill-gap-card">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center gap-3">
+                                <h4 class="font-semibold">${skillName}</h4>
+                                <span class="badge badge-red">Eksik</span>
+                            </div>
+                            <a href="../html/learning_path_page.html" class="btn btn-primary btn-small">
+                                <i class="fas fa-book-open mr-2"></i> Öğrenmeye Başla
+                            </a>
+                        </div>
+                        <div class="grid md:grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <p class="text-gray-600">Kaydedildi</p>
+                                <p class="font-medium">${new Date(item.created_at).toLocaleDateString()}</p>
+                            </div>
+                            <div>
+                                <p class="text-gray-600">Durum</p>
+                                <p class="font-medium">Geliştirilmeli</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        } else {
+            document.getElementById('missingSkillsList').innerHTML = `<p>Eksik beceri kaydı bulunamadı.</p>`;
+        }
+    } catch (error) {
+        console.error("Eksik beceriler alınamadı:", error);
+        document.getElementById('missingSkillsList').innerHTML = `<p>Sunucu hatası.</p>`;
+    }
+}
+// Slider değiştikçe değeri kaydet
+document.addEventListener("input", async (e) => {
+    if (e.target.classList.contains("skill-slider")) {
+        let skill = e.target.dataset.skill;
+        let level = e.target.value;
+
+        let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+        let userId = user.id;
+
+        await fetch("http://127.0.0.1:5000/api/save-skill-level", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ user_id: userId, skill: skill, level: level })
+        });
+    }
+});
+async function loadLLMIndustryInsights() {
+    let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
+    let userId = user.id || null;
+
+    if (!userId) {
+        document.getElementById("llmIndustryInsights").innerHTML = `<p>Kullanıcı bulunamadı.</p>`;
+        return;
+    }
+
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/generate-industry-insights/${userId}`);
+        const data = await response.json();
+
+        if (data.success && data.insights) {
+            const formatted = data.insights
+                .replace(/##/g, "<h3>")
+                .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
+                .replace(/(?:\r\n|\r|\n)/g, "<br>")
+                .replace(/(\d+\.\s)/g, "<br>👉 $1");
+
+            document.getElementById("llmIndustryInsights").innerHTML = `
+                <div class="industry-insight-box">
+                    ${formatted}
+                </div>
+            `;
+        } else {
+            document.getElementById("llmIndustryInsights").innerHTML = `<p>İçgörü bulunamadı.</p>`;
+        }
+    } catch (error) {
+        console.error("LLM içgörü hatası:", error);
+        document.getElementById("llmIndustryInsights").innerHTML = `<p>Veri alınamadı.</p>`;
+    }
+}
+
+
+
+document.addEventListener("DOMContentLoaded", () => {
+    loadLLMIndustryInsights();
+});
+

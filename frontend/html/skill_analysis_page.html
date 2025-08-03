@@ -6,7 +6,130 @@
     <title>Beceri Analizi - KariyerAI</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+    /* ==========================
+    Beceri Analizi Kartları (Optimize)
+    ========================== */
+
+    /* Ortak Konteyner */
+    #userSkillsAnalysis,
+    #missingSkillsList {
+        display: grid !important;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 15px;
+        width: 100%;
+    }
+
+    /* ✅ Beceri Durumu Kartları */
+    .skill-analysis-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+        padding: 12px;
+        width: calc(25% - 5px);   /* 🔹 Kartları biraz genişlettik */
+        min-width: 220px;         /* 🔹 Daha küçük ekranda minimum genişlik */
+        max-width: 280px;         /* 🔹 Maksimum genişlik arttı */
+        display: inline-block;
+        margin: 5px;
+        vertical-align: top;
+        font-size: 1rem;       /* 🔹 Yazı boyutu biraz büyüdü */
+    }
+
+
+    .skill-analysis-card h4 {
+        font-size: 14px;
+        text-transform: capitalize;
+        margin-bottom: 6px;
+    }
+
+    .skill-slider {
+        width: 100%;
+        height: 4px;
+        background: #ddd;
+        border-radius: 5px;
+        outline: none;
+        -webkit-appearance: none;
+        appearance: none;
+    }
+
+    .skill-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #2563eb;
+        cursor: pointer;
+    }
+
+    /* ✅ Eksik Beceriler Kartları */
+    .skill-gap-card {
+        background: #fff;
+        border: 1px solid #f87171;
+        border-left: 4px solid #ef4444;
+        border-radius: 6px;
+        padding: 10px;
+        font-size: 1rem;
+        width: calc(25% - 10px); /* 4 kart yan yana */
+        min-width: 180px;
+        max-width: 220px;
+        display: inline-block;
+        margin: 5px;
+        vertical-align: top;
+        transition: box-shadow 0.2s ease-in-out;
+    }
+    .skill-gap-card {
+    width: 100% !important;
+    margin: 0;
+    }
+
+    .skill-gap-card:hover {
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    .skill-gap-card h4 {
+        font-size: 14px;
+        margin-bottom: 4px;
+        color: #991b1b;
+    }
+    .industry-insight-box {
+        background: #f9fafb;
+        border-left: 5px solid #3b82f6;
+        border-radius: 8px;
+        padding: 15px 18px;
+        margin-top: 10px;
+        line-height: 1.6;
+        font-size: 0.95rem;
+        color: #374151;
+        animation: fadeIn 0.5s ease-in-out;
+    }
+
+    .industry-insight-box h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #1e40af;
+        margin-bottom: 6px;
+    }
+
+    .industry-insight-box ul {
+        padding-left: 20px;
+        margin: 8px 0;
+    }
+
+    .industry-insight-box li {
+        margin-bottom: 6px;
+        list-style-type: "💡 ";
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+</style>
+
 </head>
+
 <body>
     <!-- Header -->
     <header class="header">
@@ -38,7 +161,7 @@
         <!-- Page Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold mb-2">Beceri Analizi</h1>
-            <p class="text-gray-600">Mevcut becerilerinizin pazar analizi ve gelişim önerileri</p>
+            <p class="text-gray-600">Mevcut becerilerinizin analizi ve gelişim önerileri</p>
         </div>
 
         <div class="grid lg:grid-cols-3 gap-8">
@@ -51,7 +174,7 @@
                             <i class="fas fa-chart-bar"></i>
                             <span>Beceri Durumu</span>
                         </h3>
-                        <p class="text-gray-600">Mevcut becerilerinizin seviyesi ve pazar talebi</p>
+                        <p class="text-gray-600">Mevcut becerilerinizin seviyesini seçiniz</p>
                     </div>
                     <div id="userSkillsAnalysis">
                         <!-- Skills analysis will be loaded here -->
@@ -67,63 +190,12 @@
                         </h3>
                         <p class="text-gray-600">Kariyerinizi ilerletmek için öğrenmeniz gereken beceriler</p>
                     </div>
-                    <div class="space-y-4">
-                        <div class="skill-gap-card">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-3">
-                                    <h4 class="font-semibold">GraphQL</h4>
-                                    <span class="badge badge-red">Yüksek</span>
-                                    <span class="badge badge-outline">Orta</span>
-                                </div>
-                                <a href="../html/learning_path_page.html" class="btn btn-primary btn-small">
-                                    <i class="fas fa-book-open mr-2"></i>
-                                    Öğrenmeye Başla
-                                </a>
-                            </div>
-                            <div class="grid md:grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">Pazar Talebi</p>
-                                    <p class="font-medium">%78</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">İş İlanı Sayısı</p>
-                                    <p class="font-medium">320</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Öğrenme Süresi</p>
-                                    <p class="font-medium">3-4 hafta</p>
-                                </div>
-                            </div>
-                        </div>
 
-                        <div class="skill-gap-card">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-3">
-                                    <h4 class="font-semibold">AWS</h4>
-                                    <span class="badge badge-red">Yüksek</span>
-                                    <span class="badge badge-outline">Zor</span>
-                                </div>
-                                <a href="../html/learning_path_page.html" class="btn btn-primary btn-small">
-                                    <i class="fas fa-book-open mr-2"></i>
-                                    Öğrenmeye Başla
-                                </a>
-                            </div>
-                            <div class="grid md:grid-cols-3 gap-4 text-sm">
-                                <div>
-                                    <p class="text-gray-600">Pazar Talebi</p>
-                                    <p class="font-medium">%82</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">İş İlanı Sayısı</p>
-                                    <p class="font-medium">580</p>
-                                </div>
-                                <div>
-                                    <p class="text-gray-600">Öğrenme Süresi</p>
-                                    <p class="font-medium">6-8 hafta</p>
-                                </div>
-                            </div>
-                        </div>
+                    <!-- Dinamik Eksik Bilgiler Listesi -->
+                    <div id="missingSkillsList" class="space-y-4">
+                        <p>Yükleniyor...</p>
                     </div>
+
                 </div>
 
                 <!-- Industry Insights -->
@@ -133,51 +205,17 @@
                             <i class="fas fa-bolt text-purple-500"></i>
                             <span>Sektör İçgörüleri</span>
                         </h3>
-                        <p class="text-gray-600">AI destekli pazar analizi ve öneriler</p>
                     </div>
-                    <div class="space-y-4">
-                        <div class="insight-card positive">
-                            <h4 class="font-semibold mb-2">Frontend Geliştirici Trendleri</h4>
-                            <p class="text-sm text-gray-700">React ve TypeScript kombinasyonu 2024'te en çok aranan beceri seti</p>
-                        </div>
-                        <div class="insight-card warning">
-                            <h4 class="font-semibold mb-2">Backend Beceri Eksikliği</h4>
-                            <p class="text-sm text-gray-700">Node.js ve veritabanı bilginizi geliştirmeniz full-stack pozisyonlara erişimi artıracak</p>
-                        </div>
-                        <div class="insight-card positive">
-                            <h4 class="font-semibold mb-2">DevOps Fırsatı</h4>
-                            <p class="text-sm text-gray-700">Docker ve cloud teknolojileri öğrenerek maaş bandınızı %25 artırabilirsiniz</p>
-                        </div>
+                    <div id="llmIndustryInsights" class="llm-insight-output">
+                        <p>Yükleniyor...</p>
                     </div>
                 </div>
+
+
             </div>
 
             <!-- Sidebar -->
             <div class="space-y-6">
-                <!-- Quick Stats -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Hızlı İstatistikler</h3>
-                    </div>
-                    <div class="space-y-4">
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Güçlü Beceriler</span>
-                            <span class="font-semibold text-green-600">2</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Geliştirilmesi Gerekenler</span>
-                            <span class="font-semibold text-orange-600">1</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Kritik Eksiklikler</span>
-                            <span class="font-semibold text-red-600">1</span>
-                        </div>
-                        <div class="flex items-center justify-between">
-                            <span class="text-sm text-gray-600">Öğrenilecek Beceriler</span>
-                            <span class="font-semibold text-blue-600">3</span>
-                        </div>
-                    </div>
-                </div>
 
                 <!-- Recommended Actions -->
                 <div class="card">
@@ -200,45 +238,17 @@
                     </div>
                 </div>
 
-                <!-- Skill Comparison -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Sektör Karşılaştırması</h3>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span>Frontend Becerileriniz</span>
-                                <span>Sektör Ortalaması</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="progress flex-1">
-                                    <div class="progress-bar" style="width: 85%"></div>
-                                </div>
-                                <span class="text-xs">vs %72</span>
-                            </div>
-                            <p class="text-xs text-green-600 mt-1">Ortalamanın üzerinde</p>
-                        </div>
-                        
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span>Backend Becerileriniz</span>
-                                <span>Sektör Ortalaması</span>
-                            </div>
-                            <div class="flex items-center gap-2">
-                                <div class="progress flex-1">
-                                    <div class="progress-bar" style="width: 38%"></div>
-                                </div>
-                                <span class="text-xs">vs %65</span>
-                            </div>
-                            <p class="text-xs text-red-600 mt-1">Ortalamanın altında</p>
-                        </div>
-                    </div>
-                </div>
+
             </div>
         </div>
     </div>
 
     <script src="../js/skill_analysis_page.js"></script>
+    <script>
+    document.addEventListener("DOMContentLoaded", () => {
+        initializeSkillAnalysis();
+    });
+    </script>
+
 </body>
 </html>
