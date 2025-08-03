@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İnteraktif Kariyer Simülasyonu - KariyerAI</title>
+    <link rel="stylesheet" href="../css/styles.css">
+    <link rel="stylesheet" href="../css/additional-styles.css">
+    <link rel="stylesheet" href="../css/simulation-styles.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/vs2015.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/python.min.js"></script>
+    <style>
+        .simulation-workspace {
+            display: grid;
+            grid-template-columns: 300px 1fr 350px;
+            grid-template-rows: auto 1fr;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .task-sidebar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .main-workspace {
+            background: #f8fafc;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .assistant-panel {
+            background: white;
+            border-left: 1px solid #e2e8f0;
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+
+        .task-card {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .task-card:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .task-card.active {
+            background: rgba(255, 255, 255, 0.3);
+            border-color: #ffd700;
+        }
+
+        .task-card.completed {
+            background: rgba(16, 185, 129, 0.2);
+            border-color: #10b981;
+        }
+
+        .email-interface {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .email-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .email-compose {
+            padding: 2rem;
+        }
+
+        .email-field {
+            margin-bottom: 1.5rem;
+        }
+
+        .email-field label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: #374151;
+        }
+
+        .email-field input,
+        .email-field textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .email-field input:focus,
+        .email-field textarea:focus {
+            outline: none;
+            border-color: #4f46e5;
+        }
+
+        .email-conversation {
+            max-height: 400px;
+            overflow-y: auto;
+            padding: 1rem;
+            background: #f9fafb;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .email-message {
+            background: white;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .email-message.user {
+            background: #dbeafe;
+            margin-left: 2rem;
+        }
+
+        .email-message.ai {
+            background: #f3e8ff;
+            margin-right: 2rem;
+        }
+
+        .code-interface {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .code-header {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .code-editor {
+            position: relative;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .code-editor textarea {
+            width: 100%;
+            height: 400px;
+            padding: 1rem;
+            border: none;
+            background: #1e293b;
+            color: #e2e8f0;
+            font-family: inherit;
+            font-size: 14px;
+            line-height: 1.5;
+            resize: vertical;
+        }
+
+        .code-evaluation {
+            padding: 1.5rem;
+            background: #f8fafc;
+        }
+
+        .meeting-interface {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .meeting-header {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            color: white;
+            padding: 1.5rem;
+        }
+
+        .participant {
+            background: #f3f4f6;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+
+        .progress-tracker {
+            background: white;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .progress-bar {
+            background: #e5e7eb;
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #10b981, #34d399);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .hint-panel {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .feedback-panel {
+            background: #dcfce7;
+            border: 1px solid #16a34a;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .action-button {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+
+        .action-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .score-display {
+            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 1024px) {
+            .simulation-workspace {
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto;
+            }
+            
+            .task-sidebar,
+            .assistant-panel {
+                max-height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header class="header" style="grid-column: 1 / -1;">
+        <div class="container">
+            <div class="header-content">
+                <div class="flex items-center gap-4">
+                    <a href="../html/dashboard_page.html" class="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <div class="logo">
+                        <div class="logo-icon">
+                            <i class="fas fa-bullseye"></i>
+                        </div>
+                        <span class="logo-text">KariyerAI</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-6">
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fas fa-star text-yellow-500"></i>
+                        <span id="totalScore">Skor: 0</span>
+                    </div>
+                    <div class="flex items-center gap-2 text-sm">
+                        <i class="fas fa-clock"></i>
+                        <span id="simulationTimer">--:--</span>
+                    </div>
+                    <div class="user-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="simulation-workspace">
+        <!-- Task Sidebar -->
+        <div class="task-sidebar">
+            <div class="score-display">
+                <h3>Günlük Performans</h3>
+                <div style="font-size: 1.8rem; font-weight: bold;" id="scoreDisplay">0</div>
+                <p style="font-size: 0.8rem; margin-top: 0.25rem;">puan</p>
+            </div>
+
+            <div class="progress-tracker">
+                <h4>İlerleme</h4>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="overallProgress" style="width: 0%"></div>
+                </div>
+                <p style="color: #6b7280; font-size: 0.875rem; margin-top: 0.5rem;" id="progressText">0 / 0 görev tamamlandı</p>
+            </div>
+
+            <h3 style="margin-bottom: 1rem;">Günlük Görevler</h3>
+            <div id="taskList">
+                <!-- Tasks will be loaded here -->
+            </div>
+
+            <button class="action-button" style="width: 100%; margin-top: 1rem; font-size: 0.8rem; padding: 0.75rem 1rem;" onclick="getHint()">
+                <i class="fas fa-lightbulb"></i> İpucu Al
+            </button>
+        </div>
+
+        <!-- Main Workspace -->
+        <div class="main-workspace">
+            <div id="welcomeScreen">
+                <div style="text-align: center; padding: 4rem 2rem;">
+                    <i class="fas fa-briefcase" style="font-size: 4rem; color: #6366f1; margin-bottom: 2rem;"></i>
+                    <h1 style="font-size: 2.5rem; margin-bottom: 1rem; color: #1f2937;">İnteraktif Kariyer Simülasyonu</h1>
+                    <p style="font-size: 1.25rem; color: #6b7280; margin-bottom: 2rem;">Gerçek meslek deneyimi yaşamaya hazır mısınız?</p>
+                    <button class="action-button" onclick="startSimulation()">
+                        <i class="fas fa-play"></i> Simülasyonu Başlat
+                    </button>
+                </div>
+            </div>
+
+            <!-- Email Interface -->
+            <div id="emailInterface" class="email-interface hidden">
+                <div class="email-header">
+                    <h2><i class="fas fa-envelope"></i> E-posta Görevi</h2>
+                    <p id="emailScenario">Email senaryosu yükleniyor...</p>
+                </div>
+                
+                <div class="email-compose">
+                    <div id="incomingEmail" class="email-message ai" style="margin-bottom: 2rem;">
+                        <!-- Incoming email will be shown here -->
+                    </div>
+
+                    <div class="email-conversation" id="emailConversation">
+                        <!-- Email conversation history -->
+                    </div>
+
+                    <div class="email-field">
+                        <label for="emailSubject">Konu:</label>
+                        <input type="text" id="emailSubject" placeholder="Email konusu...">
+                    </div>
+
+                    <div class="email-field">
+                        <label for="emailBody">Mesaj:</label>
+                        <textarea id="emailBody" rows="8" placeholder="Email içeriğinizi yazın..."></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        <button class="action-button" onclick="sendEmail()">
+                            <i class="fas fa-paper-plane"></i> Gönder
+                        </button>
+                        <button class="action-button" style="background: #6b7280;" onclick="saveEmailDraft()">
+                            <i class="fas fa-save"></i> Taslak Kaydet
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Code Interface -->
+            <div id="codeInterface" class="code-interface hidden">
+                <div class="code-header">
+                    <h2><i class="fas fa-code"></i> Kod Yazma Görevi</h2>
+                    <p id="codeScenario">Kod yazma senaryosu yükleniyor...</p>
+                </div>
+
+                <div style="padding: 1.5rem;">
+                    <div id="codeProblem" style="background: #f3f4f6; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;">
+                        <!-- Problem description -->
+                    </div>
+
+                    <div class="code-editor">
+                        <textarea id="codeEditor" placeholder="// Kodunuzu buraya yazın..."></textarea>
+                    </div>
+
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button class="action-button" onclick="runCode()">
+                            <i class="fas fa-play"></i> Kodu Çalıştır
+                        </button>
+                        <button class="action-button" onclick="evaluateCode()">
+                            <i class="fas fa-check"></i> Değerlendir
+                        </button>
+                    </div>
+
+                    <div class="code-evaluation" id="codeEvaluation">
+                        <!-- Code evaluation results -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Meeting Interface -->
+            <div id="meetingInterface" class="meeting-interface hidden">
+                <div class="meeting-header">
+                    <h2><i class="fas fa-users"></i> Toplantı Simülasyonu</h2>
+                    <p id="meetingScenario">Toplantı senaryosu yükleniyor...</p>
+                </div>
+
+                <div style="padding: 1.5rem;">
+                    <div id="meetingAgenda" style="margin-bottom: 2rem;">
+                        <!-- Meeting agenda -->
+                    </div>
+
+                    <div id="meetingParticipants">
+                        <!-- Participants list -->
+                    </div>
+
+                    <div id="meetingDiscussion" style="background: #f8fafc; border-radius: 8px; padding: 1rem; margin: 1rem 0; max-height: 300px; overflow-y: auto;">
+                        <!-- Discussion flow -->
+                    </div>
+
+                    <div style="display: flex; gap: 1rem;">
+                        <input type="text" id="meetingInput" placeholder="Toplantıda ne söylemek istiyorsunuz?" style="flex: 1; padding: 0.75rem; border: 2px solid #e5e7eb; border-radius: 8px;">
+                        <button class="action-button" onclick="speakInMeeting()">
+                            <i class="fas fa-microphone"></i> Konuş
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- General Task Interface -->
+            <div id="generalInterface" class="hidden">
+                <div style="background: white; border-radius: 12px; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1); padding: 2rem;">
+                    <h2 id="taskTitle">Görev</h2>
+                    <div id="taskContent">
+                        <!-- Task content will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assistant Panel -->
+        <div class="assistant-panel">
+            <h3 style="margin-bottom: 1rem; color: #374151;">AI Asistan</h3>
+            
+            <div id="hintDisplay" class="hint-panel hidden">
+                <h4><i class="fas fa-lightbulb"></i> İpucu</h4>
+                <p id="hintText"></p>
+            </div>
+
+            <div id="feedbackDisplay" class="feedback-panel hidden">
+                <h4><i class="fas fa-star"></i> Geri Bildirim</h4>
+                <p id="feedbackText"></p>
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                <h4 style="margin-bottom: 0.5rem;">Mevcut Görev</h4>
+                <p id="currentTaskInfo" style="color: #6b7280; font-size: 0.875rem;">Henüz görev seçilmedi</p>
+            </div>
+
+            <div style="background: #f8fafc; border-radius: 8px; padding: 1rem;">
+                <h4 style="margin-bottom: 0.5rem;">İstatistikler</h4>
+                <div style="font-size: 0.875rem; color: #6b7280;">
+                    <p>Toplam Süre: <span id="totalTime">00:00</span></p>
+                    <p>Ortalama Skor: <span id="averageScore">0</span></p>
+                    <p>Tamamlanan: <span id="completedTasks">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../js/interactive_simulation.js"></script>
+</body>
+</html>

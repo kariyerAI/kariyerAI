@@ -38,22 +38,15 @@ import traceback
 def home():
     return 'KariyerAI Backend çalışıyor!'
 
+
+
 # Profil verisini Supabase'e kaydetmek için
 @app.route("/save-profile", methods=["POST"])  
 def save_profile():
     try:
         profile_data_raw = request.json
-        print("📌 Gelen profil verisi:", profile_data_raw)
+        print("Gelen profil verisi:", profile_data_raw)
 
-        # 🛠 Skills'i Supabase formatına çevir
-        skills = profile_data_raw.get("skills", [])
-        skills_str = "{" + ",".join([s.replace(",", "") for s in skills]) + "}" if skills else None
-
-        # 🛠 Experiences jsonb formatına çevir
-        experiences = profile_data_raw.get("experiences", [])
-        experiences_json = json.dumps(experiences) if experiences else None
-
-        # Supabase'e gönderilecek veri
         profile_data = {
             "first_name": profile_data_raw.get("firstName"),
             "last_name": profile_data_raw.get("lastName"),
@@ -63,12 +56,8 @@ def save_profile():
             "current_title": profile_data_raw.get("currentTitle"),
             "experience_level": profile_data_raw.get("experienceLevel"),
             "summary": profile_data_raw.get("summary"),
-            "skills": skills_str,                  # ✅ text[] format
-            "experiences": (
-                profile_data_raw.get("experiences") 
-                if isinstance(profile_data_raw.get("experiences"), list)
-                else json.loads(profile_data_raw.get("experiences", "[]"))
-                ),
+            "skills": profile_data_raw.get("skills", []),
+            "experiences": profile_data_raw.get("experiences", []),  
             "university": profile_data_raw.get("university"),
             "degree": profile_data_raw.get("degree"),
             "graduation_year": profile_data_raw.get("graduationYear"),
@@ -79,7 +68,7 @@ def save_profile():
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}",
             "Content-Type": "application/json",
-            "Prefer": "return=representation"  # ✅ ID'nin dönmesi için
+            "Prefer": "return=representation"  # ID'nin dönmesi için gerekli
         }
 
         response = requests.post(
@@ -88,14 +77,14 @@ def save_profile():
             json=profile_data
         )
 
-        print("📌 Supabase response:", response.status_code, response.text)
+        print("Supabase response:", response.status_code, response.text)
 
         if response.status_code in [200, 201]:
             data = response.json()
             return jsonify({
                 "success": True,
                 "message": "Profil başarıyla kaydedildi",
-                "data": data
+                "data": data  # id: uuid dönecek
             })
         else:
             return jsonify({
@@ -104,7 +93,7 @@ def save_profile():
             }), 400
 
     except Exception as e:
-        print("❌ save_profile hatası:", traceback.format_exc())
+        print("save_profile hatası:", traceback.format_exc())
         return jsonify({
             "success": False,
             "message": f"Server hatası: {str(e)}"
@@ -337,7 +326,7 @@ def career_simulation(user_id):
             - feedback (detaylı geri bildirim, artı-eksi yönler)
             - score (0-5 arası puan)
         6. Olayları mümkün olduğunca gerçekçi ve detaylı yaz, iş hayatındaki küçük ayrıntıları da ekle
-           (örneğin: kahve molası, Slack üzerinden acil mesaj, müşteri talebi değişiklik bildirimi vb.)
+           (örneğin: kahve molası (bunu sadece dinlenmek için bir süre olarak tut simülasyon görevi gibi olmasın), Slack üzerinden acil mesaj, müşteri talebi değişiklik bildirimi vb.)
         7. Cevabı aşağıdaki JSON formatında ve sadece JSON olarak döndür:
         {{
           "title": "Simülasyon Başlığı",
@@ -417,101 +406,340 @@ def career_simulation(user_id):
         print("❌ career_simulation genel hata:", traceback.format_exc())
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
+# =====================================================
+# İNTERAKTİF GÖREV SİSTEMLERİ
+# =====================================================
+
+# Görev simülasyonu oluşturma
 @app.route("/task-simulation", methods=["POST"])
 def task_simulation():
-    data = request.json
-    task = data.get("task")
-    user = data.get("user", {})
+    """Bir görev için detaylı simülasyon oluştur"""
+    try:
+        data = request.json
+        task = data.get('task', {})
+        user = data.get('user', {})
+        
+        task_type = task.get('task', '').lower()
+        current_title = user.get('current_title', 'Developer')
+        
+        # Görev tipine göre farklı simülasyon promptları
+        if 'email' in task_type or 'mail' in task_type:
+            prompt = f"""
+            Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
+            Bu görev için gerçekçi bir email simülasyonu oluştur.
+            
+            JSON formatında döndür:
+            {{
+                "type": "email",
+                "scenario": "Email senaryosu açıklaması",
+                "incoming_email": {{
+                    "from": "gönderen@company.com",
+                    "subject": "Konu başlığı",
+                    "body": "Email içeriği",
+                    "priority": "Yüksek|Orta|Düşük",
+                    "requires_response": true
+                }},
+                "context": "Bu emaile nasıl yanıt vermeli açıklama",
+                "success_criteria": ["Başarı kriterleri listesi"]
+            }}
+            """
+        elif 'kod' in task_type or 'code' in task_type or 'geliştir' in task_type:
+            prompt = f"""
+            Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
+            Bu görev için gerçekçi bir kod yazma simülasyonu oluştur.
+            
+            JSON formatında döndür:
+            {{
+                "type": "coding",
+                "scenario": "Kod yazma senaryosu",
+                "problem": "Çözülmesi gereken problem açıklaması",
+                "requirements": ["Gereksinimler listesi"],
+                "example_input": "Örnek girdi",
+                "expected_output": "Beklenen çıktı",
+                "constraints": ["Kısıtlamalar"],
+                "hints": ["İpuçları"],
+                "difficulty": "Kolay|Orta|Zor"
+            }}
+            """
+        elif 'toplantı' in task_type or 'meeting' in task_type:
+            prompt = f"""
+            Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
+            Bu görev için gerçekçi bir toplantı simülasyonu oluştur.
+            
+            JSON formatında döndür:
+            {{
+                "type": "meeting",
+                "scenario": "Toplantı senaryosu",
+                "agenda": ["Gündem maddeleri"],
+                "participants": [
+                    {{"name": "İsim", "role": "Rol", "personality": "Kişilik"}},
+                    {{"name": "İsim", "role": "Rol", "personality": "Kişilik"}}
+                ],
+                "key_decisions": ["Alınması gereken kararlar"],
+                "challenges": ["Karşılaşabilecek zorluklar"],
+                "success_metrics": ["Başarı metrikleri"]
+            }}
+            """
+        else:
+            prompt = f"""
+            Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
+            Bu görev için genel bir simülasyon oluştur.
+            
+            JSON formatında döndür:
+            {{
+                "type": "general",
+                "scenario": "Görev senaryosu",
+                "mini_event": "Bu görev sırasında yaşanabilecek bir olay",
+                "challenge": "Karşılaşabilecek zorluk",
+                "decision": {{
+                    "question": "Karar sorusu",
+                    "options": [
+                        {{"id": "a", "text": "Seçenek 1", "score": 5}},
+                        {{"id": "b", "text": "Seçenek 2", "score": 3}}
+                    ]
+                }},
+                "resources": ["Kullanabileceği kaynaklar"],
+                "tips": ["İpuçları"]
+            }}
+            """
+        
+        # Gemini API çağrısı
+        gemini_payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.6, "maxOutputTokens": 2000}
+        }
+        
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json=gemini_payload
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            ai_response = result['candidates'][0]['content']['parts'][0]['text']
+            
+            # JSON parse et
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                simulation_data = json.loads(json_match.group(0))
+                return jsonify({"success": True, "data": simulation_data})
+        
+        return jsonify({"success": False, "message": "Görev simülasyonu oluşturulamadı"}), 400
+        
+    except Exception as e:
+        print(f"Task simulation error: {str(e)}")
+        return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-    prompt = f"""
-Aşağıda detayları verilen iş günü görevi için, görevin ve kullanıcının mesleğinin doğasına uygun, gerçekçi ve etkileşimli bir mini simülasyon üret.
+# Email simülasyon chat sistemi
+@app.route("/email-chat", methods=["POST"])
+def email_chat():
+    """Email konversasyonu için LLM chat"""
+    try:
+        data = request.json
+        user_message = data.get('message', '')
+        chat_context = data.get('context', {})
+        user_role = data.get('user_role', 'Employee')
+        
+        # LLM'e müşteri/iş ortağı rolünde davranmasını söyle
+        prompt = f"""
+        Sen bir müşteri/iş ortağı rolündesin. Kullanıcı {user_role} pozisyonunda çalışıyor.
+        
+        Kontext: {chat_context.get('scenario', 'İş emaili konversasyonu')}
+        
+        Kullanıcının mesajı: "{user_message}"
+        
+        Bu mesaja gerçekçi, profesyonel bir müşteri/iş ortağı gibi yanıt ver.
+        Yanıtın JSON formatında olsun:
+        {{
+            "reply": "Email yanıtı",
+            "tone": "Profesyonel|Samimi|Resmi|Acil",
+            "satisfaction": "Memnun|Nötr|Memnun değil",
+            "next_action": "Bir sonraki beklenen aksiyon",
+            "feedback": "Kullanıcının mesajı hakkında geri bildirim"
+        }}
+        """
+        
+        gemini_payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.7, "maxOutputTokens": 1000}
+        }
+        
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json=gemini_payload
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            ai_response = result['candidates'][0]['content']['parts'][0]['text']
+            
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                reply_data = json.loads(json_match.group(0))
+                return jsonify({"success": True, "data": reply_data})
+        
+        return jsonify({"success": False, "message": "Email yanıtı oluşturulamadı"}), 400
+        
+    except Exception as e:
+        print(f"Email chat error: {str(e)}")
+        return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-- Eğer görev "e-posta kontrolü" ise, örnek e-postalar ve önemli bir karar anı üret.
-- Eğer görev "teknik geliştirme" veya "API entegrasyonu" ise, kod snippet'i, hata mesajı, müşteri isteği, test sonucu ve karar anı üret.
-- Eğer görev "toplantı" ise, toplantı özeti, alınan kararlar, kısa bir olay ve karar anı üret.
-- Eğer görev "gözlem" veya "raporlama" ise, gözlem raporu, beklenmedik olay ve karar anı üret.
-- Eğer görev "müşteri görüşmesi" ise, müşteriyle ilgili bir durum, iletişim örneği ve karar anı üret.
-- Eğer görev "sosyal etkinlik" veya "kahve molası" ise, sosyal bir olay veya sürpriz üret.
-- Eğer görev başka bir türdeyse, o görevin mesleğe uygun tipik çıktısını, yaşanabilecek bir olay ve karar anı üret.
-- Her görevde sadece o göreve ve mesleğe uygun içerik üret, gereksiz bilgi ekleme.
+# Kod değerlendirme sistemi
+@app.route("/evaluate-code", methods=["POST"])
+def evaluate_code():
+    """Kullanıcının yazdığı kodu değerlendir"""
+    try:
+        data = request.json
+        user_code = data.get('code', '')
+        problem = data.get('problem', '')
+        requirements = data.get('requirements', [])
+        
+        prompt = f"""
+        Kullanıcının yazdığı kodu değerlendir:
+        
+        Problem: {problem}
+        Gereksinimler: {', '.join(requirements)}
+        
+        Kullanıcının kodu:
+        ```
+        {user_code}
+        ```
+        
+        Değerlendirmeyi JSON formatında döndür:
+        {{
+            "score": 85,
+            "correctness": "Doğru|Kısmen doğru|Yanlış",
+            "efficiency": "Verimli|Orta|Verimsiz",
+            "readability": "Okunabilir|Orta|Karmaşık",
+            "best_practices": "İyi|Orta|Kötü",
+            "feedback": "Detaylı geri bildirim",
+            "suggestions": ["İyileştirme önerileri"],
+            "corrected_code": "Düzeltilmiş kod (eğer gerekirse)",
+            "explanation": "Çözümün açıklaması"
+        }}
+        """
+        
+        gemini_payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.3, "maxOutputTokens": 2000}
+        }
+        
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json=gemini_payload
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            ai_response = result['candidates'][0]['content']['parts'][0]['text']
+            
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                evaluation = json.loads(json_match.group(0))
+                return jsonify({"success": True, "data": evaluation})
+        
+        return jsonify({"success": False, "message": "Kod değerlendirilemedi"}), 400
+        
+    except Exception as e:
+        print(f"Code evaluation error: {str(e)}")
+        return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-Yanıtı sadece geçerli bir JSON olarak ver.
+# Görev tamamlama ve progress tracking
+@app.route("/complete-task", methods=["POST"])
+def complete_task():
+    """Görev tamamlandığında skor ve ilerleme kaydet"""
+    try:
+        data = request.json
+        user_id = data.get('user_id')
+        task_id = data.get('task_id')
+        score = data.get('score', 0)
+        completion_data = data.get('completion_data', {})
+        
+        # Supabase'e görev tamamlama kaydı ekle
+        task_completion = {
+            "user_id": user_id,
+            "task_id": task_id,
+            "score": score,
+            "completion_data": completion_data,
+            "completed_at": "now()"
+        }
+        
+        headers = {
+            "apikey": SUPABASE_API_KEY,
+            "Authorization": f"Bearer {SUPABASE_API_KEY}",
+            "Content-Type": "application/json"
+        }
+        
+        response = requests.post(
+            f"{SUPABASE_API_URL}/rest/v1/task_completions",
+            headers=headers,
+            json=task_completion
+        )
+        
+        if response.status_code in [200, 201]:
+            return jsonify({"success": True, "message": "Görev tamamlandı"})
+        else:
+            return jsonify({"success": False, "message": "Görev kaydedilemedi"}), 400
+            
+    except Exception as e:
+        print(f"Task completion error: {str(e)}")
+        return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-Kullanıcı Bilgileri:
-- Meslek: {user.get('current_title', '')}
-- Departman: {user.get('department', '')}
-- Sektör: {user.get('sector', '')}
-- Beceriler: {', '.join(user.get('skills', []))}
-
-Görev Bilgileri:
-- Saat: {task.get('time')}
-- Görev: {task.get('task')}
-- Öncelik: {task.get('priority')}
-- Ekip: {task.get('team_size')}
-- Araçlar: {', '.join(task.get('tools', []))}
-- Süre: {task.get('duration_min')} dk
-
-JSON formatı:
-{{
-  // Sadece göreve ve mesleğe uygun alanlar!
-  // Teknik görev için:
-  "code_snippet": "public class PaymentAPI {{ ... }}",
-  "error_message": "HTTP 500 Internal Server Error",
-  "customer_request": "API'nin döviz desteği eklemesini istiyoruz.",
-  "test_result": "Tüm testler geçti, ancak ödeme entegrasyonu başarısız.",
-  "emails": [
-    {{"from": "pm@company.com", "subject": "API Feedback", "summary": "Müşteri yeni özellik istedi."}}
-  ],
-  "meeting_summary": "Sprint planlama toplantısında yeni görevler dağıtıldı.",
-  "observation_report": "Makine A'da sıcaklık dalgalanması gözlendi.",
-  "mini_event": "Takım arkadaşı acil bir hata bildirdi.",
-  "decision": {{
-    "question": "API endpoint'inde hata oluştu. Ne yaparsın?",
-    "options": [
-      {{"id": "a", "text": "Logları incele", "feedback": "Sorunun kaynağını bulabilirsin.", "score": 3}},
-      {{"id": "b", "text": "Rollback yap", "feedback": "Acele karar riskli olabilir.", "score": 2}}
-    ]
-  }}
-}}
-"""
-    # Gemini API çağrısı ve JSON parse işlemleri aynı kalabilir
-
-    gemini_payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.4, "maxOutputTokens": 1500}
-    }
-    response = requests.post(
-        f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
-        headers={"Content-Type": "application/json"},
-        json=gemini_payload
-    )
-
-    if response.status_code == 200:
-        result = response.json()
-        ai_response = result['candidates'][0]['content']['parts'][0]['text']
-
-        # JSON temizle ve parse et
-        cleaned_response = ai_response.replace('```json\n', '').replace('\n```', '').strip()
-
-        try:
-            parsed_data = json.loads(cleaned_response)
-            return jsonify({
-                "success": True,
-                "data": parsed_data
-            })
-        except json.JSONDecodeError as e:
-            return jsonify({
-                "success": False,
-                "message": f"AI yanıtı parse edilemedi: {str(e)}"
-            }), 400
-    else:
-        return jsonify({
-            "success": False,
-            "message": f"Gemini API hatası: {response.text}"
-        }), 400
+# Gerçek zamanlı feedback ve ipuçları
+@app.route("/get-hint", methods=["POST"])
+def get_hint():
+    """Kullanıcıya görev sırasında ipucu ver"""
+    try:
+        data = request.json
+        current_task = data.get('task', {})
+        user_progress = data.get('progress', {})
+        user_role = data.get('user_role', 'Employee')
+        
+        prompt = f"""
+        Kullanıcı {user_role} pozisyonunda "{current_task.get('task', '')}" görevini yapıyor.
+        Şu anki ilerleme: {user_progress}
+        
+        Kullanıcıya yardımcı olacak bir ipucu ver. JSON formatında:
+        {{
+            "hint": "İpucu metni",
+            "type": "Teknik|Süreç|İletişim|Strateji",
+            "urgency": "Düşük|Orta|Yüksek",
+            "action": "Önerilen aksiyon"
+        }}
+        """
+        
+        gemini_payload = {
+            "contents": [{"parts": [{"text": prompt}]}],
+            "generationConfig": {"temperature": 0.6, "maxOutputTokens": 500}
+        }
+        
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json=gemini_payload
+        )
+        
+        if response.status_code == 200:
+            result = response.json()
+            ai_response = result['candidates'][0]['content']['parts'][0]['text']
+            
+            json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
+            if json_match:
+                hint_data = json.loads(json_match.group(0))
+                return jsonify({"success": True, "data": hint_data})
+        
+        return jsonify({"success": False, "message": "İpucu oluşturulamadı"}), 400
+        
+    except Exception as e:
+        print(f"Hint generation error: {str(e)}")
+        return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
 if __name__ == "__main__":
     print("🚀 KariyerAI Backend başlatılıyor...")
     print(f"📋 Supabase URL: {SUPABASE_API_URL if SUPABASE_API_URL else '❌ Tanımlanmadı'}")
     print(f"🤖 Gemini API: {'✅ Yapılandırıldı' if GEMINI_API_KEY else '❌ Yapılandırılmadı'}")
     app.run(debug=True, port=5000)
+
