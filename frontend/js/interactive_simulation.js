@@ -142,7 +142,9 @@ function showPersonalityTestWarning() {
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; text-align: center; margin: 2rem; max-width: 600px; margin: 2rem auto;">
             <div style="font-size: 3rem; margin-bottom: 1rem;">🧠</div>
             <h3 style="font-size: 1.5rem; margin-bottom: 1rem;">Kişilik Testi Gerekli!</h3>
+
             <p style="margin-bottom: 1.5rem; font-size: 1.1rem; opacity: 0.9; color: white;">
+
                 Size özel simülasyon hazırlayabilmek için önce kişilik testinizi tamamlamanız gerekiyor. 
                 Bu sayede zorlik seviyesi, öğrenme stili ve senaryolar size göre ayarlanacak.
             </p>

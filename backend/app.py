@@ -95,7 +95,16 @@ def save_profile():
             "university": profile_data_raw.get("university"),
             "degree": profile_data_raw.get("degree"),
             "graduation_year": profile_data_raw.get("graduationYear"),
-            "gpa": profile_data_raw.get("gpa")
+
+            "gpa": profile_data_raw.get("gpa"),
+        }
+
+        headers = {
+            "apikey": SUPABASE_API_KEY,
+            "Authorization": f"Bearer {SUPABASE_API_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+
         }
         
         print(f"📌 [save-profile] Raw skills from frontend: {profile_data_raw.get('skills')}")
@@ -103,6 +112,7 @@ def save_profile():
         print(f"📌 [save-profile] Processed skills: {profile_data['skills']}")
         print(f"📌 [save-profile] Processed experiences: {profile_data['experiences']}")
         print(f"📌 [save-profile] Full profile_data: {profile_data}")
+
 
         if existing_users:
             # Update existing user
@@ -167,6 +177,7 @@ def save_profile():
             "user_id": user_id,
             "skills_processed": skills_processed,
             "experiences_processed": experiences_processed
+
         })
 
     except Exception as e:

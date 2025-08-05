@@ -148,6 +148,7 @@ function showPersonalityTestNotification() {
   }
 }
 
+
 // Kişiselleştirilmiş öneriler göster
 function showPersonalizedRecommendations(personalityAssessment) {
   const recommendationHtml = `

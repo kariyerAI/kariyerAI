@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KariyerAI - LinkedIn İş İlanları ile Akıllı Kariyer Eşleştirme</title>
+    <title>KariyerAI - İş İlanları ile Akıllı Kariyer Eşleştirme</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
@@ -21,6 +21,7 @@
                 <nav class="nav">
                     <a href="#ozellikler" class="nav-link">Özellikler</a>
                     <a href="#nasil-calisir" class="nav-link">Nasıl Çalışır</a>
+                    <a href="../html/login_page.html" class="nav-link">Giriş Yap</a>
                     <a href="../html/create_profile_page.html" class="btn btn-primary">Hemen Başla</a>
                 </nav>
                 <div class="mobile-menu-toggle">
@@ -41,14 +42,17 @@
                 </h1>
                 <p class="hero-description">
                     CV'nizi analiz ederiz, iş ilanlarıyla eşleştiririz, eksiklerinizi tespit ederiz ve size özel oyunlaştırılmış
-                    öğrenme yol haritası oluştururuz.
+                    öğrenme yol haritası oluştururuz. Zaten hesabınız varsa hemen giriş yapabilirsiniz!
                 </p>
                 <div class="hero-buttons">
                     <a href="../html/create_profile_page.html" class="btn btn-primary btn-large">
                         Ücretsiz Başla
                         <i class="fas fa-arrow-right"></i>
                     </a>
-
+                    <a href="../html/login_page.html" class="btn btn-outline btn-large">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Hesabım Var
+                    </a>
                 </div>
             </div>
         </div>
@@ -156,10 +160,17 @@
             <div class="cta-content">
                 <h2>Kariyerinizi Bugün Geliştirmeye Başlayın</h2>
                 <p>Binlerce profesyonel KariyerAI ile hayallerindeki işe kavuştu</p>
-                <a href="../html/create_profile_page.html" class="btn btn-white btn-large">
-                    Ücretsiz Hesap Oluştur
-                    <i class="fas fa-arrow-right"></i>
-                </a>
+                <div style="display: flex; gap: 1rem; justify-content: center; align-items: center; flex-wrap: wrap;">
+                    <a href="../html/create_profile_page.html" class="btn btn-white btn-large">
+                        Ücretsiz Hesap Oluştur
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                    <span style="color: rgba(255,255,255,0.7); font-size: 0.9rem;">veya</span>
+                    <a href="../html/login_page.html" class="btn" style="background: transparent; border: 2px solid rgba(255,255,255,0.3); color: white;">
+                        <i class="fas fa-sign-in-alt"></i>
+                        Mevcut Hesapla Giriş
+                    </a>
+                </div>
             </div>
         </div>
     </section>

@@ -6,105 +6,214 @@
     <title>İş Eşleştirme - KariyerAI</title>
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .job-card {
+            background: #fff;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            padding: 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            margin-bottom: 20px; /* ✅ Kartlar arasına boşluk ekler */
+
+        }
+        .job-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+        }
+        .job-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+        .job-title {
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: #1f2937;
+        }
+        .company-name {
+            font-weight: 500;
+            color: #2563eb;
+        }
+        .match-score {
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 3px 8px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .job-skills-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 10px;
+        }
+        .skill-badge {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            min-width: 200px;
+            max-width: 100%;
+            white-space: nowrap;
+        }
+        .skill-have {
+            background-color: #d1fae5;
+            color: #065f46;
+            border: 1px solid #34d399;
+        }
+        .skill-missing {
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+        }
+        .compare-text {
+            margin-top: 8px;
+            font-size: 0.85rem;
+            color: #6b7280;
+        }
+        .skills-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 8px;
+        }
+
+        /* ✅ Skill Badge + Butonlar Yan Yana ve Daha Geniş */
+        .skill-badge.skill-missing {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #f87171;
+            padding: 12px 18px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 500;
+            min-width: 260px;
+            max-width: 100%;
+            flex-wrap: nowrap;
+            gap: 12px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .skills-container strong {
+            display: block;
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #374151;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-left: auto;
+        }
+
+        .action-btn {
+            padding: 8px 14px;
+            border-radius: 6px; /* Köşeler yuvarlatılmış kare görünüm */
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            min-width: 150px;
+            justify-content: center;
+        }
+
+        /* ✅ Varsayılan kırmızımsı ton (iki buton da aynı) */
+        .learn-btn,
+        .know-btn {
+            background-color: #f87171; /* kırmızımsı */
+            color: white;
+            border: 1px solid #ef4444;
+        }
+
+        .learn-btn:hover,
+        .know-btn:hover {
+            background-color: #ef4444;
+            transform: translateY(-1px);
+        }
+
+        /* ✅ Biliyorum tıklandığında yeşile döner */
+        .know-btn.active {
+            background-color: #10b981 !important;
+            border-color: #059669 !important;
+        }
+
+        .save-missing-btn {
+            background: #f87171;
+            border: none;
+            border-radius: 6px;
+            color: #fff;
+            padding: 10px 18px;       /* ✅ daha büyük padding */
+            font-size: 15px;          /* ✅ yazıyı biraz büyüt */
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-width: 180px;         /* ✅ genişliği artırdık */
+            max-width: 250px;         /* taşmayı önlemek için */
+            justify-content: center;
+            white-space: nowrap;      /* ✅ alt satıra geçmeyi engeller */
+        }
+
+
+        .save-missing-btn:hover {
+            background: #ef4444;
+            transform: scale(1.1);
+        }
+
+        .saved-btn {
+            background: #10b981 !important;
+            cursor: default !important;
+        }
+        .saved-btn i {
+            color: #fff;
+        }
+    </style>
+
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="container">
-            <div class="header-content">
-                <div class="flex items-center gap-4">
-                    <a href="../html/dashboard_page.html" class="flex items-center gap-2 text-gray-600 hover:text-blue-600">
-                        <i class="fas fa-arrow-left"></i>
-                        <span>Dashboard</span>
-                    </a>
-                    <div class="logo">
-                        <div class="logo-icon">
-                            <i class="fas fa-bullseye"></i>
-                        </div>
-                        <span class="logo-text">KariyerAI</span>
+            <div class="header-content flex items-center justify-between">
+                <a href="../html/dashboard_page.html" class="flex items-center gap-2 text-gray-600 hover:text-blue-600">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Dashboard</span>
+                </a>
+                <div class="logo">
+                    <div class="logo-icon">
+                        <i class="fas fa-bullseye"></i>
                     </div>
-                </div>
-
-                <div class="flex items-center gap-4">
-                    <div class="user-avatar">
-                        <i class="fas fa-user"></i>
-                    </div>
+                    <span class="logo-text">KariyerAI</span>
                 </div>
             </div>
         </div>
     </header>
 
     <div class="container" style="padding: 2rem 20px;">
-        <!-- Page Header -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold mb-2">İş Eşleştirme</h1>
-            <p class="text-gray-600">Profilinize uygun <span id="jobCount">15</span> iş ilanı bulundu</p>
+            <p class="text-gray-600">Profilinize uygun <span id="jobCount">0</span> iş ilanı bulundu</p>
         </div>
 
-        <!-- Filters -->
-        <div class="card mb-8">
-            <div class="card-header">
-                <h3 class="flex items-center gap-2">
-                    <i class="fas fa-filter"></i>
-                    <span>Filtreler</span>
-                </h3>
-            </div>
-            <div class="grid md:grid-cols-4 gap-4">
-                <div class="form-group">
-                    <div class="relative">
-                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
-                        <input type="text" id="jobSearch" class="form-input pl-10" placeholder="Pozisyon ara...">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <select id="locationFilter" class="form-select">
-                        <option value="">Konum seç</option>
-                        <option value="istanbul">İstanbul</option>
-                        <option value="ankara">Ankara</option>
-                        <option value="izmir">İzmir</option>
-                        <option value="remote">Uzaktan</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <select id="experienceFilter" class="form-select">
-                        <option value="">Deneyim seviyesi</option>
-                        <option value="junior">Junior</option>
-                        <option value="mid">Mid-Level</option>
-                        <option value="senior">Senior</option>
-                        <option value="lead">Lead/Principal</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <button id="filterBtn" class="btn btn-primary w-full">
-                        <i class="fas fa-search mr-2"></i>
-                        Filtrele
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Job Listings -->
         <div id="jobListings" class="space-y-6">
-            <!-- Jobs will be loaded here -->
-        </div>
-
-        <!-- Load More -->
-        <div class="text-center mt-8">
-            <button class="btn btn-outline btn-large" onclick="loadMoreJobs()">
-                Daha Fazla İş İlanı Yükle
-            </button>
+            <!-- Dinamik iş ilanları buraya gelecek -->
         </div>
     </div>
 
     <script src="../js/job_matching_page.js"></script>
-    <script>
-        // Load more jobs function
-        function loadMoreJobs() {
-            //showNotification("Daha fazla iş ilanı yükleniyor...", "info");
-            setTimeout(() => {
-                //showNotification("Yeni iş ilanları yüklendi!", "success");
-            }, 1500);
-        }
-    </script>
 </body>
 </html>

@@ -5,6 +5,7 @@
   box-sizing: border-box;
 }
 
+
 /* User Dropdown Styles */
 .user-dropdown {
   position: relative;
@@ -91,6 +92,7 @@
 .user-dropdown-item:hover {
   background-color: #fef2f2;
 }
+
 html, body {
   width: 100%;
   max-width: 100%;
@@ -890,6 +892,7 @@ p {
 .skill-badge.missing {
     background-color: #dc2626; /* kırmızı */
 }
+
 
 .skill-badge.none {
     background-color: #6b7280; /* gri */
