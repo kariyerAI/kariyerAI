@@ -642,12 +642,66 @@
 }
 
 /* İş Deneyim Kartları */
-#userExperienceList .experience-card {
+#userExperienceList .experience-card,
+.experience-card {
   background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
   padding: 1rem;
   transition: all 0.2s ease;
+  position: relative;
+}
+
+.experience-card .remove-experience {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  cursor: pointer;
+  color: #ef4444;
+  font-size: 0.875rem;
+  padding: 0.25rem;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.experience-card .remove-experience:hover {
+  color: #dc2626;
+  background: rgba(239, 68, 68, 0.1);
+}
+
+/* Form Styles */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #374151;
+  margin-bottom: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.skill-form {
+  padding: 1rem;
+  background: #f8fafc;
+  border-radius: 0.5rem;
+  border: 1px solid #e2e8f0;
+}
+
+.btn-small {
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
 }
 
 #userExperienceList .experience-card:hover {

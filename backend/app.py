@@ -49,22 +49,18 @@ def save_profile():
         profile_data_raw = request.json
         print("Gelen profil verisi:", profile_data_raw)
 
-        profile_data = {
-            "first_name": profile_data_raw.get("firstName"),
-            "last_name": profile_data_raw.get("lastName"),
-            "email": profile_data_raw.get("email"),
-            "phone": profile_data_raw.get("phone"),
-            "location": profile_data_raw.get("location"),
-            "current_title": profile_data_raw.get("currentTitle"),
-            "experience_level": profile_data_raw.get("experienceLevel"),
-            "summary": profile_data_raw.get("summary"),
-            "skills": profile_data_raw.get("skills", []),
-            "experiences": profile_data_raw.get("experiences", []),  
-            "university": profile_data_raw.get("university"),
-            "degree": profile_data_raw.get("degree"),
-            "graduation_year": profile_data_raw.get("graduationYear"),
-            "gpa": profile_data_raw.get("gpa"),
-        }
+        # Validate required fields
+        firstName = profile_data_raw.get("firstName")
+        lastName = profile_data_raw.get("lastName") 
+        email = profile_data_raw.get("email")
+        
+        print(f"📌 [save-profile] Field 'firstName': '{firstName}'")
+        print(f"📌 [save-profile] Field 'lastName': '{lastName}'")
+        print(f"📌 [save-profile] Field 'email': '{email}'")
+        
+        if not firstName or not lastName or not email:
+            print("❌ [save-profile] Missing required fields")
+            return jsonify({"success": False, "message": "Required fields missing: firstName, lastName, email"}), 400
 
         headers = {
             "apikey": SUPABASE_API_KEY,
@@ -73,37 +69,115 @@ def save_profile():
             "Prefer": "return=representation"
         }
 
-        # 1️⃣ Profili kaydet
-        response = requests.post(
-            f"{SUPABASE_API_URL}/rest/v1/profiles",
-            headers=headers,
-            json=profile_data
+        # Check if user already exists by email
+        print(f"📌 [save-profile] Checking if user exists with email: {email}")
+        check_response = requests.get(
+            f"{SUPABASE_API_URL}/rest/v1/profiles?email=eq.{email}",
+            headers=headers
         )
+        
+        print(f"📌 [save-profile] Existing user check status: {check_response.status_code}")
+        print(f"📌 [save-profile] Existing user response: {check_response.text}")
+        
+        existing_users = check_response.json() if check_response.status_code == 200 else []
+        
+        profile_data = {
+            "first_name": firstName,
+            "last_name": lastName,
+            "email": email,
+            "phone": profile_data_raw.get("phone"),
+            "location": profile_data_raw.get("location"),
+            "current_title": profile_data_raw.get("currentTitle"),
+            "experience_level": profile_data_raw.get("experienceLevel"),
+            "summary": profile_data_raw.get("summary"),
+            "skills": profile_data_raw.get("skills", []),
+            "experiences": profile_data_raw.get("experiences", []),
+            "university": profile_data_raw.get("university"),
+            "degree": profile_data_raw.get("degree"),
+            "graduation_year": profile_data_raw.get("graduationYear"),
 
-        if response.status_code not in [200, 201]:
-            return jsonify({"success": False, "message": response.text}), 400
+            "gpa": profile_data_raw.get("gpa"),
+        }
 
-        data = response.json()
-        user_id = data[0]["id"] if isinstance(data, list) else data.get("id")
+        headers = {
+            "apikey": SUPABASE_API_KEY,
+            "Authorization": f"Bearer {SUPABASE_API_KEY}",
+            "Content-Type": "application/json",
+            "Prefer": "return=representation"
+
+        }
+        
+        print(f"📌 [save-profile] Raw skills from frontend: {profile_data_raw.get('skills')}")
+        print(f"📌 [save-profile] Raw experiences from frontend: {profile_data_raw.get('experiences')}")
+        print(f"📌 [save-profile] Processed skills: {profile_data['skills']}")
+        print(f"📌 [save-profile] Processed experiences: {profile_data['experiences']}")
+        print(f"📌 [save-profile] Full profile_data: {profile_data}")
+
+
+        if existing_users:
+            # Update existing user
+            user_id = existing_users[0]["id"]
+            print(f"📌 [save-profile] Updating existing user: {user_id}")
+            
+            response = requests.patch(
+                f"{SUPABASE_API_URL}/rest/v1/profiles?id=eq.{user_id}",
+                headers=headers,
+                json=profile_data
+            )
+            print(f"📌 [save-profile] Update response status: {response.status_code}")
+            print(f"📌 [save-profile] Update response: {response.text}")
+            
+            if response.status_code not in [200, 204]:
+                print(f"❌ [save-profile] Update failed: {response.text}")
+                return jsonify({"success": False, "message": response.text}), 400
+                
+            # Get updated data
+            user_data = existing_users[0]
+            user_data.update(profile_data)
+        else:
+            # Create new user
+            print("📌 [save-profile] Creating new user")
+            response = requests.post(
+                f"{SUPABASE_API_URL}/rest/v1/profiles",
+                headers=headers,
+                json=profile_data
+            )
+            print(f"📌 [save-profile] Create response status: {response.status_code}")
+            print(f"📌 [save-profile] Create response: {response.text}")
+            
+            if response.status_code not in [200, 201]:
+                print(f"❌ [save-profile] Create failed: {response.text}")
+                return jsonify({"success": False, "message": response.text}), 400
+                
+            user_data = response.json()[0] if isinstance(response.json(), list) else response.json()
+            user_id = user_data["id"]
 
         # 2️⃣ Skill levels tablosuna otomatik 50% ekle
         skills = profile_data_raw.get("skills", [])
+        skills_processed = 0
+        experiences_processed = len(profile_data_raw.get("experiences", []))
+        
         for skill in skills:
             skill_payload = {
                 "user_id": user_id,
                 "skill": skill,
                 "level": 50
             }
-            requests.post(
+            skill_response = requests.post(
                 f"{SUPABASE_API_URL}/rest/v1/skill_levels",
                 headers=headers,
                 json=skill_payload
             )
+            if skill_response.status_code in [200, 201]:
+                skills_processed += 1
 
         return jsonify({
             "success": True,
-            "message": "Profil başarıyla kaydedildi ve skill seviyeleri eklendi",
-            "data": data
+            "message": "Profil başarıyla güncellendi",
+            "user_id": user_id,
+            "skills_processed": skills_processed,
+            "experiences_processed": experiences_processed
+
         })
 
     except Exception as e:
@@ -114,26 +188,45 @@ def save_profile():
         }), 500
 
 # Kullanıcı profilini Supabase'den çekmek için
-@app.route("/get-profile/<user_id>", methods=["GET"]) 
-def get_profile(user_id):
-    """Kullanıcı profilini Supabase'den çek"""
+@app.route("/get-profile/<identifier>", methods=["GET"]) 
+def get_profile(identifier):
+    """Kullanıcı profilini Supabase'den çek (ID veya email ile)"""
     try:
         headers = {
             "apikey": SUPABASE_API_KEY,
             "Authorization": f"Bearer {SUPABASE_API_KEY}"
         }
         
+        # Check if it's an email or ID
+        by_param = request.args.get('by', 'id')  # default to 'id'
+        
+        if by_param == 'email':
+            query_param = f"email=eq.{identifier}"
+        else:
+            query_param = f"id=eq.{identifier}"
+            
+        print(f"📌 [get-profile] Fetching profile with {query_param}")
+        
         response = requests.get(
-            f"{SUPABASE_API_URL}/rest/v1/profiles?id=eq.{user_id}",
+            f"{SUPABASE_API_URL}/rest/v1/profiles?{query_param}",
             headers=headers
         )
         
+        print(f"📌 [get-profile] Response status: {response.status_code}")
+        print(f"📌 [get-profile] Response: {response.text}")
+        
         if response.status_code == 200:
             data = response.json()
-            return jsonify({
-                "success": True,
-                "data": data[0] if data else None
-            })
+            if data:
+                return jsonify({
+                    "success": True,
+                    "data": data[0]
+                })
+            else:
+                return jsonify({
+                    "success": False,
+                    "message": "Profile not found"
+                }), 404
         else:
             return jsonify({
                 "success": False,

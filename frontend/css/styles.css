@@ -4,6 +4,95 @@
   padding: 0;
   box-sizing: border-box;
 }
+
+
+/* User Dropdown Styles */
+.user-dropdown {
+  position: relative;
+}
+
+.user-dropdown-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+}
+
+.user-dropdown-btn:hover {
+  background-color: #f1f5f9;
+}
+
+.user-dropdown-btn .chevron {
+  transition: transform 0.2s ease;
+}
+
+.user-dropdown-btn.active .chevron {
+  transform: rotate(180deg);
+}
+
+.user-dropdown-menu {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  margin-top: 0.5rem;
+  width: 12rem;
+  background: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid #e2e8f0;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.95) translateY(-10px);
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+
+.user-dropdown-menu.show {
+  opacity: 1;
+  visibility: visible;
+  transform: scale(1) translateY(0);
+}
+
+.user-dropdown-header {
+  padding: 1rem;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.user-dropdown-header .name {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 0.25rem;
+}
+
+.user-dropdown-header .email {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+.user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+  color: #dc2626;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.user-dropdown-item:hover {
+  background-color: #fef2f2;
+}
+
 html, body {
   width: 100%;
   max-width: 100%;
@@ -512,12 +601,16 @@ p {
   border-radius: 9999px;
   font-size: 0.875rem;
 }
-.skill-tag .remove {
+.skill-tag .remove,
+.skill-tag .remove-skill {
   cursor: pointer;
   color: #ef4444;
   font-weight: bold;
+  margin-left: 0.5rem;
+  font-size: 0.75rem;
 }
-.skill-tag .remove:hover {
+.skill-tag .remove:hover,
+.skill-tag .remove-skill:hover {
   color: #dc2626;
 }
 /* Stats */
@@ -799,6 +892,7 @@ p {
 .skill-badge.missing {
     background-color: #dc2626; /* kırmızı */
 }
+
 
 .skill-badge.none {
     background-color: #6b7280; /* gri */
