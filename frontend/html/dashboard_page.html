@@ -23,6 +23,7 @@
 
                 <nav class="nav">
                     <a href="../html/dashboard_page.html" class="nav-link active">Dashboard</a>
+                    <a href="../html/profile_page.html" class="nav-link">Profil</a>
                     <a href="../html/job_matching_page.html" class="nav-link">İş Eşleştirme</a>
                     <a href="../html/skill_analysis_page.html" class="nav-link">Beceri Analizi</a>
                     <a href="../html/learning_path_page.html" class="nav-link">Öğrenme</a>
@@ -30,20 +31,30 @@
                 </nav>
 
                 <div class="flex items-center gap-4">
-                    <!-- Bildirimler -->
-                    <div class="notification-bell relative">
-                        <i class="fas fa-bell text-gray-600 hover:text-gray-800 cursor-pointer"></i>
-                        <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">3</span>
-                    </div>
-                    
-                    <!-- Kullanıcı Profili -->
-                    <div class="user-avatar flex items-center gap-2 cursor-pointer hover:bg-gray-100 px-3 py-2 rounded-lg transition-colors">
-                        <i class="fas fa-user bg-blue-500 text-white p-2 rounded-full"></i>
-                        <div class="hidden md:block">
-                            <p class="text-sm font-medium text-gray-800" id="userDisplayName">Kullanıcı</p>
-                            <p class="text-xs text-gray-600" id="userDisplayTitle">Pozisyon</p>
+                    <!-- Kullanıcı Profili Dropdown -->
+                    <div class="user-dropdown">
+                        <button id="userDropdownBtn" class="user-dropdown-btn">
+                            <div class="w-10 h-10 bg-blue-500 text-white rounded-full flex items-center justify-center">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="hidden md:block text-left">
+                                <p class="text-sm font-medium text-gray-800" id="userDisplayName">Kullanıcı</p>
+                                <p class="text-xs text-gray-600" id="userDisplayTitle">Pozisyon</p>
+                            </div>
+                            <i class="fas fa-chevron-down chevron text-gray-500 text-xs"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="userDropdownMenu" class="user-dropdown-menu">
+                            <div class="user-dropdown-header">
+                                <p class="name" id="dropdownUserName">Kullanıcı</p>
+                                <p class="email" id="dropdownUserEmail">email@example.com</p>
+                            </div>
+                            <button id="logoutBtn" class="user-dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Çıkış Yap</span>
+                            </button>
                         </div>
-                        <i class="fas fa-chevron-down text-gray-400 text-xs hidden md:block"></i>
                     </div>
                 </div>
             </div>
@@ -63,94 +74,11 @@
         <div class="grid lg:grid-cols-3 gap-8">
             <!-- Main Content -->
             <div class="lg:col-span-2">
-                <!-- Stats Overview -->
+                <!-- Quick Stats -->
                 <div class="stats-grid mb-8">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <p class="stat-label">Seviye İlerleme</p>
-                                <p id="userLevel" class="stat-value">Yükleniyor...</p>
-                            </div>
-                            <div class="stat-icon blue">
-                                <i class="fas fa-trending-up"></i>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <div id="xpProgress" class="progress">
-                                <div class="progress-bar" style="width: 0%"></div>
-                            </div>
-                            <p class="text-xs text-gray-500 mt-1">0 / 0 XP</p>
-                        </div>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <p class="stat-label">İş Eşleştirme</p>
-                                <p id="jobMatches" class="stat-value">0</p>
-                            </div>
-                            <div class="stat-icon green">
-                                <i class="fas fa-briefcase"></i>
-                            </div>
-                        </div>
-                        <p class="text-xs text-green-600 mt-2">Becerilerinize göre</p>
-                    </div>
-
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div>
-                                <p class="stat-label">Tamamlanan</p>
-                                <p id="completedCourses" class="stat-value">0</p>
-                            </div>
-                            <div class="stat-icon purple">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                        </div>
-                        <p class="text-xs text-purple-600 mt-2">Eğitim modülü</p>
-                    </div>
                 </div>
 
-                <!-- User Profile Summary Card -->
-                <div class="card mb-8 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-4">
-                            <div id="userProfileAvatar" class="w-16 h-16 rounded-full bg-blue-500 text-white flex items-center justify-center text-xl font-bold">
-                
-                            </div>
-                            <div>
-                                <h3 id="userFullName" class="text-xl font-bold text-gray-800">Kullanıcı Adı</h3>
-                                <p id="userCurrentTitle" class="text-gray-600">Pozisyon</p>
-                                <div class="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                                    <span id="userLocation"><i class="fas fa-map-marker-alt mr-1"></i>Lokasyon</span>
-                                    <span id="userSkillCount"><i class="fas fa-cogs mr-1"></i>0 Beceri</span>
-                                    <span id="userExperienceLevel"><i class="fas fa-chart-line mr-1"></i>Seviye</span>
-                                </div>
-                            </div>
-                            
-                        </div>
-                        <a href="../html/create_profile_page.html" class="btn btn-outline">
-                            <i class="fas fa-edit mr-2"></i>Profili Düzenle
-                        </a>
-                    </div>
-                </div>
-                <!-- Skills List -->
-                <div class="card mb-8">
-                    <div class="card-header flex items-center gap-2">
-                        <i class="fas fa-cogs text-blue-500"></i>
-                        <h3 class="font-semibold">Becerilerim</h3>
-                    </div>
-                    <div id="userSkillsList" class="p-3 flex flex-wrap gap-2"></div>
-                </div>
-
-                <!-- Experiences List -->
-                <div class="card mb-8">
-                    <div class="card-header flex items-center gap-2">
-                        <i class="fas fa-briefcase text-purple-500"></i>
-                        <h3 class="font-semibold">İş Deneyimlerim</h3>
-                    </div>
-                    <div id="userExperienceList" class="p-3 space-y-3"></div>
-                </div>
-           
+            
 
                 <!-- Skill Gaps -->
                 <div class="card mb-8">
@@ -169,22 +97,7 @@
                     </div>
                 </div>
 
-                <!-- Upcoming Tasks -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3 class="flex items-center gap-2">
-                            <i class="fas fa-clock text-blue-500"></i>
-                            <span>Yaklaşan Görevler</span>
-                        </h3>
-                        <p class="text-sm text-gray-600">Size özel önerilen aktiviteler</p>
-                    </div>
-                    <div id="upcomingTasks">
-                        <div class="text-center py-6">
-                            <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
-                            <p class="text-gray-500">Görevler yükleniyor...</p>
-                        </div>
-                    </div>
-                </div>
+               
             </div>
 
             <!-- Sidebar -->
@@ -214,69 +127,11 @@
                     </div>
                 </div>
 
-                <!-- Weekly Progress -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Bu Hafta</h3>
-                        <p class="text-sm text-gray-600">İlerleme durumunuz</p>
-                    </div>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span>Haftalık Hedef</span>
-                                <span id="weeklyGoalText">0/300 XP</span>
-                            </div>
-                            <div class="progress">
-                                <div id="weeklyProgressBar" class="progress-bar" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <div class="flex justify-between text-sm">
-                            <span>Günlük Seri</span>
-                            <span id="dailyStreak" class="font-medium text-green-600">0 gün</span>
-                        </div>
-                    </div>
-                </div>
+                
 
-                <!-- Recent Activity -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Son Aktiviteler</h3>
-                    </div>
-                    <div id="recentActivities">
-                        <div class="text-center py-6">
-                            <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
-                            <p class="text-gray-500">Aktiviteler yükleniyor...</p>
-                        </div>
-                    </div>
-                </div>
+               
 
-                <!-- Achievement Showcase -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Son Başarılar</h3>
-                        <p class="text-sm text-gray-600">Kazandığınız rozetler</p>
-                    </div>
-                    <div class="grid grid-cols-3 gap-3">
-                        <div class="text-center">
-                            <div class="achievement-badge gray">
-                                <i class="fas fa-trophy"></i>
-                            </div>
-                            <p class="text-xs font-medium mt-2">Başlangıç</p>
-                        </div>
-                        <div class="text-center">
-                            <div class="achievement-badge gray">
-                                <i class="fas fa-star"></i>
-                            </div>
-                            <p class="text-xs font-medium mt-2">İlk Adım</p>
-                        </div>
-                        <div class="text-center">
-                            <div class="achievement-badge gray">
-                                <i class="fas fa-check-circle"></i>
-                            </div>
-                            <p class="text-xs font-medium mt-2">Katılımcı</p>
-                        </div>
-                    </div>
-                </div>
+                
             </div>
         </div>
     </div>

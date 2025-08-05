@@ -86,11 +86,15 @@ function loadUserProfile() {
     const firstLetter = (user.firstName || user.first_name || 'U').charAt(0).toUpperCase();
     avatar.textContent = firstLetter;
   }
-    // Update welcome section with user's first name
+  
+  // Update welcome section with user's first name
   const welcomeName = document.getElementById('welcomeUserName');
   if (welcomeName) {
       welcomeName.textContent = user.firstName || user.first_name || 'Kullanıcı';
   }
+
+  // Update dropdown user information
+  updateDropdownUserInfo();
 
   
   console.log("User profile loaded successfully:", {
@@ -101,7 +105,82 @@ function loadUserProfile() {
 
   renderUserSkills(user.skills);
   renderUserExperiences(user.experiences);
+  
+  // Kişilik testi kontrolü ekle
+  checkPersonalityAssessment(user);
+}
 
+// Kişilik testi kontrolü
+function checkPersonalityAssessment(user) {
+  const hasPersonalityAssessment = user.personality_assessment && 
+                                 user.personality_assessment.personality_type;
+  
+  if (!hasPersonalityAssessment) {
+    showPersonalityTestNotification();
+  } else {
+    showPersonalizedRecommendations(user.personality_assessment);
+  }
+}
+
+// Kişilik testi bildirimi göster
+function showPersonalityTestNotification() {
+  const notificationHtml = `
+    <div class="card mb-6" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+      <div class="card-body text-center">
+        <div style="font-size: 2.5rem; margin-bottom: 1rem;">🧠</div>
+        <h3 style="font-size: 1.3rem; margin-bottom: 1rem; color: white;">Kişilik Testinizi Tamamlayın!</h3>
+        <p style="margin-bottom: 1.5rem; opacity: 0.9; color: white; font-size: 0.9rem;">
+          Size özel simülasyonlar ve öneriler alabilmek için kişilik testinizi tamamlayın. 
+          Sadece 5-7 dakika sürecek!
+        </p>
+        <a href="../html/personality_assessment.html" style="background: white; color: #667eea; padding: 0.75rem 1.5rem; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-flex; align-items: center; gap: 0.5rem;">
+          <i class="fas fa-brain"></i>
+          Kişilik Testini Başlat
+        </a>
+      </div>
+    </div>
+  `;
+  
+  // Main content alanına ekle
+  const statsGrid = document.querySelector('.stats-grid');
+  if (statsGrid) {
+    statsGrid.insertAdjacentHTML('beforebegin', notificationHtml);
+  }
+}
+
+// Kişiselleştirilmiş öneriler göster
+function showPersonalizedRecommendations(personalityAssessment) {
+  const recommendationHtml = `
+    <div class="card mb-6" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; border: none;">
+      <div class="card-body">
+        <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+          <div style="font-size: 2rem;">✨</div>
+          <div>
+            <h3 style="font-size: 1.2rem; margin-bottom: 0.5rem; color: white;">Kişiselleştirilmiş Deneyim Aktif</h3>
+            <p style="margin: 0; opacity: 0.9; font-size: 0.9rem;">
+              ${personalityAssessment.personality_type} kişiliğinize özel öneriler hazırlandı
+            </p>
+          </div>
+        </div>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+          <a href="../html/interactive_simulation.html?personalized=true" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-play"></i>
+            Kişisel Simülasyon
+          </a>
+          <a href="../html/personality_assessment.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+            <i class="fas fa-chart-bar"></i>
+            Test Sonuçları
+          </a>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  // Main content alanına ekle
+  const statsGrid = document.querySelector('.stats-grid');
+  if (statsGrid) {
+    statsGrid.insertAdjacentHTML('beforebegin', recommendationHtml);
+  }
 }
 
 // Beceriler
@@ -450,12 +529,117 @@ function setupDashboardEventListeners() {
     });
   }
 
-  // Add user avatar click handler
-  const userAvatar = document.querySelector('.user-avatar');
-  if (userAvatar) {
-    userAvatar.addEventListener('click', () => {
-      alert('Kullanıcı menüsü yakında eklenecek!');
-    });
+  // Setup user dropdown functionality
+  setupUserDropdown();
+}
+
+// Setup user dropdown functionality
+function setupUserDropdown() {
+  const dropdownBtn = document.getElementById('userDropdownBtn');
+  const dropdownMenu = document.getElementById('userDropdownMenu');
+  const logoutBtn = document.getElementById('logoutBtn');
+
+  if (!dropdownBtn || !dropdownMenu || !logoutBtn) {
+    console.log('User dropdown elements not found');
+    return;
+  }
+
+  // Toggle dropdown on button click
+  dropdownBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleDropdown();
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  // Close dropdown on escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      closeDropdown();
+    }
+  });
+
+  // Logout functionality
+  logoutBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    handleLogout();
+  });
+
+  // Update dropdown user info
+  updateDropdownUserInfo();
+}
+
+// Toggle dropdown visibility
+function toggleDropdown() {
+  const dropdownBtn = document.getElementById('userDropdownBtn');
+  const dropdownMenu = document.getElementById('userDropdownMenu');
+  
+  if (dropdownMenu.classList.contains('show')) {
+    closeDropdown();
+  } else {
+    openDropdown();
+  }
+}
+
+// Open dropdown
+function openDropdown() {
+  const dropdownBtn = document.getElementById('userDropdownBtn');
+  const dropdownMenu = document.getElementById('userDropdownMenu');
+  
+  dropdownBtn.classList.add('active');
+  dropdownMenu.classList.add('show');
+}
+
+// Close dropdown
+function closeDropdown() {
+  const dropdownBtn = document.getElementById('userDropdownBtn');
+  const dropdownMenu = document.getElementById('userDropdownMenu');
+  
+  dropdownBtn.classList.remove('active');
+  dropdownMenu.classList.remove('show');
+}
+
+// Update dropdown user information
+function updateDropdownUserInfo() {
+  const user = window.KariyerAI?.currentUser;
+  if (!user) return;
+
+  const dropdownUserName = document.getElementById('dropdownUserName');
+  const dropdownUserEmail = document.getElementById('dropdownUserEmail');
+
+  if (dropdownUserName) {
+    const fullName = `${user.firstName || user.first_name || ''} ${user.lastName || user.last_name || ''}`.trim();
+    dropdownUserName.textContent = fullName || 'Kullanıcı';
+  }
+
+  if (dropdownUserEmail) {
+    dropdownUserEmail.textContent = user.email || 'email@example.com';
+  }
+}
+
+// Handle logout
+function handleLogout() {
+  if (confirm('Çıkış yapmak istediğinizden emin misiniz?')) {
+    console.log('Logging out user...');
+    
+    // Clear user data
+    if (window.KariyerAI) {
+      window.KariyerAI.currentUser = null;
+      window.KariyerAI.saveUserData();
+    }
+    
+    // Clear localStorage
+    localStorage.removeItem('kariyerAI_user');
+    localStorage.removeItem('currentEmail');
+    
+    // Redirect to login page
+    window.location.href = '../html/login_page.html';
   }
 }
 
