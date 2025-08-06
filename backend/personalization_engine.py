@@ -2,7 +2,6 @@
 KariyerAI - Gelişmiş Kişiselleştirme Motoru
 Bu modül kullanıcı verilerini analiz ederek daha kişiye özel simülasyonlar üretir.
 """
-
 import json
 from typing import Dict, List, Any
 from dataclasses import dataclass
@@ -101,19 +100,19 @@ class PersonalizationEngine:
         for exp in experiences:
             description = exp.get('description', '').lower()
             
-            # Liderlik
+            # Leadership
             if any(word in description for word in ['lead', 'manage', 'coordinate', 'supervise']):
                 soft_skills.add('leadership')
             
-            # İletişim
+            # Communication
             if any(word in description for word in ['present', 'communicate', 'collaborate', 'meeting']):
                 soft_skills.add('communication')
             
-            # Problem çözme
+            # Problem solving
             if any(word in description for word in ['solve', 'debug', 'troubleshoot', 'optimize']):
                 soft_skills.add('problem_solving')
             
-            # Proje yönetimi
+            # Project management
             if any(word in description for word in ['project', 'plan', 'deadline', 'deliver']):
                 soft_skills.add('project_management')
         
@@ -159,7 +158,6 @@ class PersonalizationEngine:
         total_years = 0
         for exp in experiences:
             duration = exp.get('duration', '')
-            # Basit duration parsing (gerçek uygulamada daha sofistike olmalı)
             if 'year' in duration.lower():
                 try:
                     years = int(duration.split()[0])
@@ -167,7 +165,7 @@ class PersonalizationEngine:
                 except:
                     total_years += 1
             else:
-                total_years += 0.5  # Kısa süre varsayımı
+                total_years += 0.5 
         
         return min(10, max(1, int(total_years)))
     
@@ -176,7 +174,6 @@ class PersonalizationEngine:
         if len(experiences) < 2:
             return 'entry_level'
         
-        # Pozisyon seviyelerini analiz et
         positions = [exp.get('position', '').lower() for exp in experiences]
         
         junior_keywords = ['junior', 'intern', 'trainee', 'assistant']
@@ -214,7 +211,7 @@ class PersonalizationEngine:
                     if not any(rec_skill in current_skill for current_skill in current_skills_lower):
                         gaps.append(rec_skill)
         
-        return gaps[:5]  # En önemli 5 eksiklik
+        return gaps[:5]  
     
     def _generate_personalization_params(self, profile: Dict) -> Dict[str, Any]:
         """Kişiselleştirme parametrelerini üret"""
@@ -251,7 +248,7 @@ class PersonalizationEngine:
         if any(word in current_title for word in ['designer']):
             scenarios.extend(['design_review', 'user_research', 'client_presentation'])
         
-        # Genel senaryolar
+        
         scenarios.extend(['email_communication', 'problem_solving', 'time_management'])
         
         return list(set(scenarios))
@@ -270,7 +267,7 @@ class PersonalizationEngine:
         else:
             focus_areas.extend(['strategic_thinking', 'team_building', 'business_acumen'])
         
-        # Skill gap'lere göre ek odak alanları
+        
         if gaps:
             focus_areas.extend(gaps[:3])
         
@@ -296,7 +293,7 @@ class PersonalizationEngine:
         """Kullanıcı analizine göre kişiselleştirilmiş prompt üret"""
         personalization = user_analysis.get('personalization_params', {})
         
-        # Kompleksite seviyesi
+        
         complexity = personalization.get('complexity_preference', 'medium')
         complexity_instruction = {
             'low': "Senaryoyu basit ve anlaşılır tut. Karmaşık teknik detaylardan kaçın.",
@@ -304,19 +301,19 @@ class PersonalizationEngine:
             'high': "Karmaşık, çok katmanlı senaryolar oluştur. Stratejik düşünme gerektiren durumlar ekle."
         }
         
-        # Tercih edilen senaryo tipleri
+        # Scenario types that choosen
         preferred_scenarios = personalization.get('scenario_types', [])
         scenario_focus = f"Özellikle şu tür senaryolara odaklan: {', '.join(preferred_scenarios[:3])}"
-        
-        # Öğrenme odağı
+
+        # Learning Focus
         learning_focus = personalization.get('learning_focus', [])
         learning_instruction = f"Şu alanlarda öğrenme fırsatları sun: {', '.join(learning_focus[:3])}"
         
-        # Zorluk alanları
+        # Challenge Areas
         challenge_areas = personalization.get('challenge_areas', [])
         challenge_instruction = f"Şu zorluklarla karşılaşabilir: {', '.join(challenge_areas[:2])}"
-        
-        # Kişiselleştirilmiş prompt'u oluştur
+
+        # Personalized prompt
         personalized_prompt = f"""
         {base_prompt}
         

@@ -1,6 +1,4 @@
-// create_profile_page.js - Fixed Version
 
-// Global variables for this page
 let userSkills = [];
 let userExperiences = [];
 
@@ -89,7 +87,6 @@ async function handleFileUpload(file, statusElement) {
     if (file.type === 'application/pdf') {
       text = await extractTextFromPDF(file);
     } else {
-      // For DOC/DOCX files, you might need a different approach
       statusElement.innerHTML = '<span style="color: orange;">⚠️ DOC/DOCX dosyaları şu anda tam desteklenmiyor. PDF kullanın.</span>';
       return;
     }
@@ -380,13 +377,10 @@ function validateField(field) {
   return isValid;
 }
 
-// Fixed completeProfile function in create_profile_page.js
 
-// Complete profile function (called by button)
 async function completeProfile() {
   console.log("Completing profile...");
 
-  // Skills ve Experiences'i temizle
   const cleanedSkills = (userSkills && Array.isArray(userSkills))
     ? userSkills.filter(s => typeof s === "string" && s.trim() !== "")
     : [];
@@ -400,7 +394,6 @@ async function completeProfile() {
       }))
     : [];
 
-  // Form verilerini topla
   const profileData = {
     firstName: document.getElementById('firstName')?.value || '',
     lastName: document.getElementById('lastName')?.value || '',
@@ -410,19 +403,17 @@ async function completeProfile() {
     currentTitle: document.getElementById('currentTitle')?.value || '',
     experienceLevel: document.getElementById('experienceLevel')?.value || '',
     summary: document.getElementById('summary')?.value || '',
-    skills: cleanedSkills.length > 0 ? cleanedSkills : [],              // ✅ her zaman array
-    experiences: cleanedExperiences.length > 0 ? cleanedExperiences : [], // ✅ her zaman array
+    skills: cleanedSkills.length > 0 ? cleanedSkills : [],              
+    experiences: cleanedExperiences.length > 0 ? cleanedExperiences : [], 
     university: document.getElementById('university')?.value || '',
     degree: document.getElementById('degree')?.value || '',
     graduationYear: document.getElementById('graduationYear')?.value || '',
     gpa: document.getElementById('gpa')?.value || ''
   };
 
-  // LocalStorage güncelle
   localStorage.setItem("kariyerAI_user", JSON.stringify(profileData));
   window.KariyerAI.currentUser = profileData;
 
-  // Backend’e gönder
   try {
     const button = event.target;
     const originalText = button.textContent;
@@ -452,11 +443,12 @@ async function completeProfile() {
     }
 
     if (result.success && result.data && result.data.length > 0) {
-      profileData.id = result.data[0].id;  // ✅ Backend ID kaydedildi
-      localStorage.setItem("kariyerAI_user", JSON.stringify(profileData));
-      window.KariyerAI.currentUser = profileData;
-      console.log("✅ User saved with ID:", profileData.id);
+      const updatedUser = result.data[0];
+      localStorage.setItem("kariyerAI_user", JSON.stringify(updatedUser));
+      window.KariyerAI.currentUser = updatedUser;
+      console.log("✅ User saved with ID:", updatedUser.id);
     }
+
 
     if (result.success) {
       alert('Profil başarıyla oluşturuldu!');
@@ -478,7 +470,6 @@ async function completeProfile() {
 
 }
 
-
 // Save profile to backend
 async function saveProfile(profileData) {
     try {
@@ -488,7 +479,6 @@ async function saveProfile(profileData) {
             body: JSON.stringify(profileData)
         });
 
-        // Hata olsa bile JSON'u oku
         const result = await res.json();
 
         if (res.status === 409) {
@@ -507,16 +497,13 @@ async function saveProfile(profileData) {
     }
 }
 
-// Basit bildirim fonksiyonu
 function showNotification(message, type = "info") {
     alert(message);
 }
 
-// Make functions available globally
 window.removeSkill = removeSkill;
 window.removeExperience = removeExperience;
 window.updateExperience = updateExperience;
 window.completeProfile = completeProfile;
 
-// Initialize when DOM is loaded
 document.addEventListener('DOMContentLoaded', initializeProfilePage);

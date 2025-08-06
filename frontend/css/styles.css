@@ -204,8 +204,7 @@ p {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: box-shadow 0.2s;
   overflow: hidden;
-  /* Kartların altında ek boşluk bırakır, özellikle tek sütunlu düzende faydalı */
-  margin-bottom: 1.5rem; /* Mevcut gap'e ek olarak */
+  margin-bottom: 1.5rem; 
 }
 .card:hover {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -399,7 +398,6 @@ p {
 .steps-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  /* Boşluğu biraz daha artırdık */
   gap: 2.5rem;
   align-items: stretch;
 }
@@ -859,10 +857,9 @@ p {
   box-shadow: 0 20px 25px rgba(0, 0, 0, 0.1);
 }
 .skill-have {
-    background-color: #d1fae5;
-    color: #065f46;
-    padding: 4px 8px;
-    border-radius: 5px;
+    background-color: #dcfce7;
+    color: #166534;
+    border: 1px solid #16a34a;
 }
 
 .skill-neutral {
@@ -886,16 +883,16 @@ p {
 }
 
 .skill-badge.match {
-    background-color: #16a34a; /* yeşil */
+    background-color: #16a34a; 
 }
 
 .skill-badge.missing {
-    background-color: #dc2626; /* kırmızı */
+    background-color: #dc2626; 
 }
 
 
 .skill-badge.none {
-    background-color: #6b7280; /* gri */
+    background-color: #6b7280; 
 }
 .skill-slider {
     width: 100%;
@@ -967,4 +964,121 @@ p {
 
 .tooltip-icon:hover::after {
     opacity: 1;
+}
+/* Help Center Styles */
+.help-center-container {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 2rem;
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.help-sidebar {
+    background: #f8fafc;
+    padding: 1.5rem;
+    border-radius: 8px;
+    position: sticky;
+    top: 2rem;
+    height: fit-content;
+}
+
+/* Contact Page Styles */
+.contact-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    max-width: 1200px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+.contact-methods {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+/* Privacy Page Styles */
+.privacy-container {
+    max-width: 800px;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+.privacy-section {
+    margin: 2rem 0;
+    padding: 2rem;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.last-updated {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 2rem;
+}
+.quick-actions-card {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    overflow: hidden;
+}
+
+.quick-actions-header {
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fdba74 0%, #fb923c 100%);
+    color: white;
+    text-decoration: none; /* Header'da altı çizgili olmasın */
+}
+
+.quick-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* 2 columns */
+    grid-template-rows: repeat(2, 1fr);    /* 2 rows */
+    gap: 1px;
+    background: #f3f4f6;
+}
+
+.quick-action-item {
+    padding: 2rem;  /* Increased padding for larger boxes */
+    min-height: 160px; /* Fixed height for uniformity */
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    background: white;
+    transition: all 0.3s ease;
+    border-left: 4px solid transparent;
+    text-decoration: none;
+    color: inherit;
+}
+
+.quick-action-icon {
+    width: 60px;  /* Larger icons */
+    height: 60px;
+    background: #fff7ed;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.quick-action-icon i {
+    font-size: 2rem; /* Larger icon size */
+    color: #fb923c;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quick-actions-grid {
+        grid-template-columns: 1fr; /* Stack on mobile */
+    }
+    
+    .quick-action-item {
+        padding: 1.5rem;
+        min-height: 120px;
+    }
 }

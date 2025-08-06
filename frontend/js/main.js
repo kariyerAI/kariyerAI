@@ -1,6 +1,3 @@
-// main.js - Fixed Version
-
-// Global Constants and Variables
 const BACKEND_URL = 'http://127.0.0.1:5000';
 let currentUser = null;
 let skills = [];
@@ -159,7 +156,6 @@ function initializeApp() {
   const currentPage = getCurrentPage();
   console.log("Current page:", currentPage);
 
-  // Sadece profil tamamlanmış sayfalarda userData yüklensin
   if (currentPage !== "create_profile") {
     loadUserData();
   } else {

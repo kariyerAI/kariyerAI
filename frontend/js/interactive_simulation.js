@@ -1,7 +1,3 @@
-// =====================================================
-// İNTERAKTİF SİMÜLASYON SİSTEMİ
-// =====================================================
-
 let currentUser = null;
 let currentScenario = null;
 let currentTask = null;
@@ -11,7 +7,6 @@ let completedTasks = 0;
 let startTime = null;
 let currentTimer = null;
 
-// Ana başlatma fonksiyonu
 document.addEventListener('DOMContentLoaded', function() {
     initializeUser();
     setupEventListeners();
@@ -19,12 +14,10 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function checkAutoStart() {
-    // URL parametrelerini kontrol et
     const urlParams = new URLSearchParams(window.location.search);
     const isPersonalized = urlParams.get('personalized');
     
     if (isPersonalized === 'true') {
-        // Kişilik testi tamamlandığından otomatik başlat
         setTimeout(() => {
             if (currentUser) {
                 startSimulation();
@@ -34,7 +27,6 @@ function checkAutoStart() {
 }
 
 function initializeUser() {
-    // Kullanıcı bilgilerini al
     if (window.KariyerAI?.currentUser) {
         currentUser = window.KariyerAI.currentUser;
     } else {
@@ -51,7 +43,6 @@ function initializeUser() {
         }
     }
 
-    // Eğer kullanıcı yoksa geçici kullanıcı oluştur
     if (!currentUser) {
         console.log("User not found, creating temporary user for simulation");
         currentUser = {
@@ -61,7 +52,6 @@ function initializeUser() {
             experience_level: 'intermediate'
         };
         
-        // Kişilik testi sonuçları varsa ekle
         const personalityData = localStorage.getItem('personality_assessment_temp');
         if (personalityData) {
             try {
@@ -74,21 +64,18 @@ function initializeUser() {
 }
 
 function setupEventListeners() {
-    // Enter tuşu ile email gönderme
     document.getElementById('emailBody').addEventListener('keydown', function(e) {
         if (e.ctrlKey && e.key === 'Enter') {
             sendEmail();
         }
     });
 
-    // Enter tuşu ile toplantıda konuşma
     document.getElementById('meetingInput').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
             speakInMeeting();
         }
     });
 
-    // Kod editöründe Tab tuşu
     document.getElementById('codeEditor').addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             e.preventDefault();
@@ -100,11 +87,11 @@ function setupEventListeners() {
     });
 }
 
-// Simülasyonu başlat
+// Start simulation
 window.startSimulation = async function() {
     if (!currentUser) return;
 
-    // Kişilik testi kontrolü
+    // Check if user has personality assessment
     const hasPersonalityAssessment = currentUser.personality_assessment && 
                                    currentUser.personality_assessment.personality_type;
     
@@ -136,7 +123,7 @@ window.startSimulation = async function() {
     }
 }
 
-// Kişilik testi uyarısı göster
+// Show personality test warning
 function showPersonalityTestWarning() {
     const warningHtml = `
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 2rem; border-radius: 12px; text-align: center; margin: 2rem; max-width: 600px; margin: 2rem auto;">
@@ -161,7 +148,6 @@ function showPersonalityTestWarning() {
         </div>
     `;
     
-    // Mevcut içeriği gizle ve uyarıyı göster
     document.getElementById('welcomeScreen').innerHTML = warningHtml;
     showElement('welcomeScreen');
 }
@@ -171,7 +157,6 @@ window.goToPersonalityTest = function() {
 }
 
 window.hidePersonalityTestWarning = function() {
-    // Uyarıyı gizle ve normal simülasyonu başlat
     showLoading("Genel simülasyon yükleniyor...");
     setTimeout(async () => {
         try {
@@ -231,19 +216,14 @@ async function selectTask(index) {
     currentTaskIndex = index;
     currentTask = currentScenario.daily_schedule[index];
     
-    // Tüm task card'larından active class'ını kaldır
     document.querySelectorAll('.task-card').forEach(card => {
         card.classList.remove('active');
     });
     
-    // Seçilen card'a active class ekle
     document.querySelectorAll('.task-card')[index].classList.add('active');
-    
-    // Mevcut görev bilgisini güncelle
-    document.getElementById('currentTaskInfo').textContent = 
+        document.getElementById('currentTaskInfo').textContent = 
         `${currentTask.time} - ${currentTask.task}`;
     
-    // Görev simülasyonu yükle
     await loadTaskSimulation();
 }
 
@@ -276,7 +256,6 @@ async function loadTaskSimulation() {
 }
 
 function displayTaskInterface(taskData) {
-    // Tüm interface'leri gizle
     hideAllInterfaces();
     
     switch (taskData.type) {
@@ -300,10 +279,7 @@ function hideAllInterfaces() {
     });
 }
 
-// =====================================================
-// EMAIL INTERFACE
-// =====================================================
-
+// Email Interface
 function showEmailInterface(taskData) {
     showElement('emailInterface');
     
@@ -318,11 +294,9 @@ function showEmailInterface(taskData) {
             ${taskData.incoming_email.body}
         `;
         
-        // Otomatik konu doldur
         document.getElementById('emailSubject').value = `Re: ${taskData.incoming_email.subject}`;
     }
     
-    // Konversasyon geçmişini temizle
     document.getElementById('emailConversation').innerHTML = '';
 }
 
@@ -335,10 +309,8 @@ window.sendEmail = async function() {
         return;
     }
     
-    // Kullanıcının mesajını konversasyona ekle
     addEmailToConversation(body, 'user');
     
-    // Email alanlarını temizle
     document.getElementById('emailBody').value = '';
     
     showLoading("AI yanıtı bekleniyor...");
@@ -357,15 +329,12 @@ window.sendEmail = async function() {
         const data = await response.json();
         
         if (data.success && data.data) {
-            // AI yanıtını konversasyona ekle
             addEmailToConversation(data.data.reply, 'ai');
             
-            // Feedback göster
             if (data.data.feedback) {
                 showFeedback(data.data.feedback);
             }
             
-            // Skor güncelle (basit skor sistemi)
             const score = calculateEmailScore(data.data);
             updateScore(score);
             
@@ -401,7 +370,7 @@ function addEmailToConversation(message, sender) {
 }
 
 function calculateEmailScore(responseData) {
-    let score = 50; // Base score
+    let score = 50; 
     
     if (responseData.satisfaction === 'Memnun') score += 30;
     else if (responseData.satisfaction === 'Nötr') score += 10;
@@ -419,10 +388,7 @@ window.saveEmailDraft = function() {
     }
 }
 
-// =====================================================
-// CODE INTERFACE
-// =====================================================
-
+// Code Interface
 function showCodeInterface(taskData) {
     showElement('codeInterface');
     
@@ -448,7 +414,6 @@ function showCodeInterface(taskData) {
         </div>
     `;
     
-    // Code editor'ı temizle
     document.getElementById('codeEditor').value = '';
     document.getElementById('codeEvaluation').innerHTML = '';
 }
@@ -460,7 +425,7 @@ window.runCode = function() {
         return;
     }
     
-    // Basit kod çalıştırma simülasyonu
+    // Simulate code execution
     const evaluationDiv = document.getElementById('codeEvaluation');
     evaluationDiv.innerHTML = `
         <div style="background: #dbeafe; border: 1px solid #3b82f6; border-radius: 8px; padding: 1rem; margin-top: 1rem;">
@@ -480,7 +445,6 @@ window.evaluateCode = async function() {
     showLoading("Kod değerlendiriliyor...");
     
     try {
-        // Problem ve requirements bilgilerini al
         const problemText = document.querySelector('#codeProblem p').textContent;
         const requirements = Array.from(document.querySelectorAll('#codeProblem li')).map(li => li.textContent);
         
@@ -565,14 +529,11 @@ function displayCodeEvaluation(evaluation) {
     showFeedback(evaluation.explanation);
 }
 
-// =====================================================
-// MEETING INTERFACE
-// =====================================================
-
+// Meeting Interface
 function showMeetingInterface(taskData) {
     showElement('meetingInterface');
     
-    // Meeting chat system'i başlat
+    // Meeting chat system
     window.meetingChatSystem.initializeParticipants(taskData.participants || [
         { name: 'Proje Yöneticisi', role: 'PM', personality: 'Zaman odaklı, koordinatör' },
         { name: 'Senior Developer', role: 'Tech Lead', personality: 'Teknik detayları seven' },
@@ -610,7 +571,7 @@ function showMeetingInterface(taskData) {
         `).join('')}
     `;
     
-    // Discussion başlat
+    // Discussion
     const discussionDiv = document.getElementById('meetingDiscussion');
     discussionDiv.innerHTML = `
         <div style="text-align: center; color: #6b7280; padding: 2rem; background: #f9fafb; border-radius: 8px; margin-bottom: 1rem;">
@@ -620,7 +581,6 @@ function showMeetingInterface(taskData) {
         </div>
     `;
     
-    // İlk AI mesajı
     setTimeout(() => {
         addEnhancedMeetingMessage(
             "Merhaba ekip! Bugün sprint planning toplantımızdayız. Bu sprint'te hangi feature'ları önceliklendirmeli ve nasıl bir yaklaşım izlemeliyiz?",
@@ -640,18 +600,15 @@ window.speakInMeeting = async function() {
         return;
     }
     
-    // Kullanıcının mesajını ekle
     addEnhancedMeetingMessage(message, 'Siz', 'user');
     input.value = '';
-    
-    // Typing indicator göster
+
     showTypingIndicator();
     
     try {
-        // Akıllı katılımcı seçimi
+
         const nextSpeaker = window.meetingChatSystem.getNextSpeaker(message);
         
-        // AI yanıtı al
         const responseData = await window.meetingChatSystem.generateResponse(
             message, 
             nextSpeaker, 
@@ -661,10 +618,8 @@ window.speakInMeeting = async function() {
             }
         );
         
-        // Typing indicator'ı kaldır
         hideTypingIndicator();
         
-        // AI yanıtını ekle
         addEnhancedMeetingMessage(
             responseData.response, 
             nextSpeaker, 
@@ -672,15 +627,14 @@ window.speakInMeeting = async function() {
             responseData
         );
         
-        // Meeting system'e mesajları kaydet
+        // Meeting system to save conversation
         window.meetingChatSystem.addMessage('Siz', message);
         window.meetingChatSystem.addMessage(nextSpeaker, responseData.response, responseData);
         
-        // Skor güncelle (daha akıllı skorlama)
+        // Skor update
         const score = calculateMeetingScore(message, responseData);
         updateScore(score);
         
-        // Bazen ikinci bir kişi de konuşur (daha dinamik)
         if (Math.random() < 0.3 && window.meetingChatSystem.conversationHistory.length > 3) {
             setTimeout(() => {
                 addFollowUpComment(message, nextSpeaker);
@@ -691,7 +645,7 @@ window.speakInMeeting = async function() {
         hideTypingIndicator();
         console.error('Meeting chat error:', error);
         
-        // Fallback yanıt
+        // Fallback 
         const fallbackResponses = [
             "İlginç bir bakış açısı. Bu konuyu daha detaylı ele alalım.",
             "Bu önerinizin implementation sürecini konuşmalıyız.",
@@ -712,14 +666,12 @@ window.speakInMeeting = async function() {
     }
 }
 
-// Gelişmiş mesaj ekleme fonksiyonu
 function addEnhancedMeetingMessage(message, speaker, type, extraData = {}) {
     const discussionDiv = document.getElementById('meetingDiscussion');
     const messageDiv = document.createElement('div');
     
     const timestamp = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
     
-    // Emoji ve renk seçimi
     const speakerEmojis = {
         'Siz': '👤',
         'Proje Yöneticisi': '👨‍💼',
@@ -752,7 +704,6 @@ function addEnhancedMeetingMessage(message, speaker, type, extraData = {}) {
             </div>
             <p style="margin-bottom: ${extraData.follow_up_question || extraData.action_item ? '0.5rem' : '0'}; line-height: 1.5;">${message}</p>`;
     
-    // Takip sorusu varsa ekle
     if (extraData.follow_up_question) {
         messageContent += `
             <div style="background: rgba(59, 130, 246, 0.1); padding: 0.5rem; border-radius: 6px; margin-top: 0.5rem; border-left: 3px solid #3b82f6;">
@@ -760,7 +711,6 @@ function addEnhancedMeetingMessage(message, speaker, type, extraData = {}) {
             </div>`;
     }
     
-    // Aksiyon önerisi varsa ekle
     if (extraData.action_item) {
         messageContent += `
             <div style="background: rgba(16, 185, 129, 0.1); padding: 0.5rem; border-radius: 6px; margin-top: 0.5rem; border-left: 3px solid #10b981;">
@@ -774,9 +724,7 @@ function addEnhancedMeetingMessage(message, speaker, type, extraData = {}) {
     discussionDiv.appendChild(messageDiv);
     discussionDiv.scrollTop = discussionDiv.scrollHeight;
     
-    // Mesaj sesİ (optional)
     if (type === 'ai') {
-        // Subtle notification sound can be added here
     }
 }
 
@@ -823,13 +771,12 @@ function hideTypingIndicator() {
     }
 }
 
-// Akıllı skorlama sistemi
 function calculateMeetingScore(userMessage, aiResponse) {
-    let score = 10; // Base score
+    let score = 10; 
     
     const message = userMessage.toLowerCase();
     
-    // Keyword bazlı skorlama
+    
     if (message.includes('öneri') || message.includes('öner')) score += 5;
     if (message.includes('risk') || message.includes('problem')) score += 8;
     if (message.includes('çözüm') || message.includes('alternatif')) score += 10;
@@ -837,18 +784,15 @@ function calculateMeetingScore(userMessage, aiResponse) {
     if (message.includes('müşteri') || message.includes('kullanıcı')) score += 7;
     if (message.includes('test') || message.includes('kalite')) score += 6;
     
-    // Mesaj uzunluğu (detaylı açıklama bonus)
+    
     if (message.length > 50) score += 5;
     if (message.length > 100) score += 5;
-    
-    // AI'ın emotion'ına göre bonus
     if (aiResponse.emotion === 'positive') score += 5;
     if (aiResponse.emotion === 'excited') score += 8;
     
-    return Math.min(score, 25); // Max 25 puan
+    return Math.min(score, 25); 
 }
 
-// Takip yorumu ekleme
 async function addFollowUpComment(originalMessage, previousSpeaker) {
     const otherParticipants = ['Proje Yöneticisi', 'Senior Developer', 'UX Designer', 'QA Engineer']
         .filter(p => p !== previousSpeaker);
@@ -872,7 +816,7 @@ async function addFollowUpComment(originalMessage, previousSpeaker) {
         );
         
         addEnhancedMeetingMessage(responseData.response, speaker, 'ai', responseData);
-        updateScore(5); // Bonus dinamik konuşma
+        updateScore(5); 
     } catch (error) {
         console.error('Follow-up comment error:', error);
     }
@@ -898,10 +842,7 @@ function addMeetingMessage(message, speaker, type) {
     discussionDiv.scrollTop = discussionDiv.scrollHeight;
 }
 
-// =====================================================
-// GENERAL INTERFACE
-// =====================================================
-
+// General Interface
 function showGeneralInterface(taskData) {
     showElement('generalInterface');
     
@@ -953,33 +894,25 @@ window.submitDecision = function() {
         showNotification("Lütfen bir seçenek seçin", "warning");
         return;
     }
-    
-    // Seçilen seçeneğin skorunu bul ve ekle
-    // Bu örnek implementasyonda basit bir skor sistemi kullanıyoruz
-    const score = Math.floor(Math.random() * 30) + 20; // 20-50 arası
+
+    const score = Math.floor(Math.random() * 30) + 20; 
     updateScore(score);
     
     showFeedback(`Kararınız kaydedildi. ${score} puan kazandınız!`);
     
-    // Karar butonunu devre dışı bırak
     document.querySelector('button[onclick="submitDecision()"]').disabled = true;
 }
 
-// =====================================================
-// UTILITY FUNCTIONS
-// =====================================================
-
+// Utility Functions
 window.completeCurrentTask = function() {
     if (!currentTask) return;
     
-    // Task'ı tamamlandı olarak işaretle
     const taskCard = document.querySelectorAll('.task-card')[currentTaskIndex];
     taskCard.classList.add('completed');
     
     completedTasks++;
     updateProgressDisplay();
     
-    // Görev tamamlama API'sini çağır
     fetch('http://127.0.0.1:5000/complete-task', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -996,7 +929,6 @@ window.completeCurrentTask = function() {
     
     showNotification(`Görev tamamlandı! ${completedTasks}/${currentScenario.daily_schedule.length}`, "success");
     
-    // Tüm görevler tamamlandıysa
     if (completedTasks >= currentScenario.daily_schedule.length) {
         setTimeout(() => {
             showFinalResults();
@@ -1009,7 +941,6 @@ function showFinalResults() {
     
     alert(`🎉 Simülasyon Tamamlandı!\n\nToplam Skor: ${totalScore}\nOrtalama Skor: ${averageScore}\nTamamlanan Görevler: ${completedTasks}/${currentScenario.daily_schedule.length}\n\nTebrikler!`);
     
-    // Dashboard'a yönlendir
     setTimeout(() => {
         window.location.href = '../html/dashboard_page.html';
     }, 3000);
@@ -1053,7 +984,6 @@ function showHint(hintText) {
     document.getElementById('hintText').textContent = hintText;
     showElement('hintDisplay');
     
-    // 10 saniye sonra gizle
     setTimeout(() => {
         hideElement('hintDisplay');
     }, 10000);
@@ -1064,7 +994,6 @@ function showFeedback(feedbackText) {
     document.getElementById('feedbackText').textContent = feedbackText;
     showElement('feedbackDisplay');
     
-    // 8 saniye sonra gizle
     setTimeout(() => {
         hideElement('feedbackDisplay');
     }, 8000);
@@ -1116,7 +1045,7 @@ function hideElement(id) {
 }
 
 function showLoading(message = "Yükleniyor...") {
-    // Basit loading göstergesi
+    // Basic loading 
     if (!document.getElementById('loadingIndicator')) {
         const loader = document.createElement('div');
         loader.id = 'loadingIndicator';
@@ -1147,7 +1076,7 @@ function hideLoading() {
 }
 
 function showNotification(message, type = 'info') {
-    // Basit notification sistemi
+    // Basic notification system
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed;

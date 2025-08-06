@@ -1,11 +1,10 @@
 let currentScenario = null;
 let currentScore = 0;
 let currentStep = 1;
-let totalSteps = 1; // şimdilik 1 senaryo varsayıyoruz
+let totalSteps = 1; 
 let currentTaskIndex = 0;
-let inTaskFlow = true; // Görev adımlarında mıyız?
+let inTaskFlow = true; 
 
-// Sayfa başlatıldığında çağrılır
 export async function initializeCareerSimulation() {
     let user = null;
 
@@ -40,15 +39,12 @@ export async function initializeCareerSimulation() {
 }
 
 async function loadSimulationScenario(email) {
-    // Yeni interaktif simülasyon sayfasına yönlendir
     showNotification("Yeni interaktif simülasyon deneyimi yükleniyor...", "info");
     setTimeout(() => {
         window.location.href = '../html/interactive_simulation.html';
     }, 1500);
 }
 
-
-// === Senaryoyu ekrana yazar ===
 function displayScenario(scenario) {
     const container = document.getElementById("scenarioContainer");
     if (!container) return;
@@ -133,7 +129,7 @@ function displayScenario(scenario) {
     `;
 }
 
-// === Günlük görevler listesi ===
+// Daily schedule display
 function displayDailySchedule(tasks) {
     const container = document.getElementById("dailyScheduleContainer");
     const list = document.getElementById("dailyScheduleList");
@@ -162,7 +158,7 @@ function displayDailySchedule(tasks) {
     container.classList.remove("hidden");
 }
 
-// === E-mailler listesi ===
+// List of emails
 function displayEmails(emails) {
     const container = document.getElementById("emailsContainer");
     const list = document.getElementById("emailsList");
@@ -187,7 +183,7 @@ function displayEmails(emails) {
     container.classList.remove("hidden");
 }
 
-// === Toplantılar listesi ===
+// List of meetings
 function displayMeetings(meetings) {
     const container = document.getElementById("meetingsContainer");
     const list = document.getElementById("meetingsList");
@@ -215,7 +211,7 @@ function displayMeetings(meetings) {
     container.classList.remove("hidden");
 }
 
-// === Seçenek seçme ===
+// Choose an option
 export function selectOption(optionId) {
     document.querySelectorAll(".option-card").forEach((card) => {
         card.classList.remove("selected");
@@ -224,7 +220,7 @@ export function selectOption(optionId) {
     selectedCard.classList.add("selected");
 }
 
-// === Cevabı gönderme ===
+// Send answer
 export function submitAnswer() {
     const selectedOption = document.querySelector('input[name="answer"]:checked');
     if (!selectedOption) {
@@ -241,12 +237,12 @@ export function submitAnswer() {
     }
 }
 
-// === Cevap geri bildirimi ===
+// Feedback message
 function showAnswerFeedback(feedbackText) {
     alert("Geri Bildirim:\n\n" + feedbackText);
 }
 
-// === Simülasyon zamanlayıcı ===
+// This function initializes the simulation timer
 function setupSimulationTimer() {
     let timeLeft = 300;
     const timerElement = document.getElementById("simulationTimer");
@@ -266,39 +262,39 @@ function setupSimulationTimer() {
     }
 }
 
-// === Basit bildirim fonksiyonu ===
+// Shows a simple notification
 function showNotification(message, type = "info") {
-    alert(message); // Basit çözüm, daha iyisi için toast ekleyebilirsin
+    alert(message); 
 }
 
-// === Görev adımı gösterimi ===
+// Shows task step in the task flow
 async function showTaskStep() {
     const tasks = currentScenario.daily_schedule;
     if (currentTaskIndex >= tasks.length) {
         inTaskFlow = false;
-        displayScenario(currentScenario); // Kritik soru ekranı
+        displayScenario(currentScenario); 
         return;
     }
     const task = tasks[currentTaskIndex];
     const container = document.getElementById("scenarioContainer");
 
-    // Kullanıcı bilgisini al
+    // User info taken from global or localStorage
     let user = window.KariyerAI?.currentUser || JSON.parse(localStorage.getItem("kariyerAI_user") || "{}");
 
-    // Görev için LLM'den mini-senaryo çek
+    // take mini scenario from LLM FOR task simulation
     let taskSim = null;
     try {
         const res = await fetch("http://127.0.0.1:5000/task-simulation", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ task, user }) // <-- user da gönderiliyor!
+            body: JSON.stringify({ task, user }) 
         });
         const data = await res.json();
         if (data.success) {
             taskSim = data.data;
         }
     } catch (e) {
-        // Hata olursa statik göster
+
     }
 
     container.innerHTML = `

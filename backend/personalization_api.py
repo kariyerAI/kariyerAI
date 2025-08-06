@@ -1,18 +1,17 @@
-# Kişiye Özel Simülasyon API'ları
+# Simulation API for User Profiles
 
 from flask import request, jsonify
 import json
 from datetime import datetime
 from personalization_engine import PersonalizationEngine
 
-# Yeni endpoint'ler için ek route'lar
 def add_personalization_routes(app, personalization_engine):
     
     @app.route("/profile-analysis/<uuid:user_id>", methods=["POST"])
     def analyze_user_profile_detailed(user_id):
         """Kullanıcı profilini detaylı analiz et ve kişiselleştirme önerileri üret"""
         try:
-            # Kullanıcı profilini Supabase'den çek
+            
             headers = {
                 "apikey": app.config.get('SUPABASE_API_KEY'),
                 "Authorization": f"Bearer {app.config.get('SUPABASE_API_KEY')}"
@@ -28,10 +27,8 @@ def add_personalization_routes(app, personalization_engine):
             
             profile = response.json()[0]
             
-            # Detaylı analiz yap
             analysis = personalization_engine.analyze_user_profile(profile)
             
-            # Kişiselleştirme önerileri üret
             recommendations = generate_personalized_recommendations(analysis)
             
             return jsonify({
@@ -58,27 +55,23 @@ def add_personalization_routes(app, personalization_engine):
             preferred_difficulty = data.get('preferred_difficulty', 'medium')
             focus_areas = data.get('focus_areas', [])
             
-            # Kullanıcı profilini al
             profile_response = get_user_profile(user_id)
             if not profile_response['success']:
                 return jsonify(profile_response), 404
             
             profile = profile_response['data']
             
-            # Performans bazlı zorluk seviyesi hesapla
             adjusted_difficulty = calculate_adaptive_difficulty(
                 performance_history, 
                 preferred_difficulty
             )
             
-            # Özelleştirilmiş prompt oluştur
             scenario_prompt = create_adaptive_prompt(
                 profile, 
                 adjusted_difficulty, 
                 focus_areas
             )
             
-            # Gemini API ile senaryo üret
             scenario = generate_scenario_with_ai(scenario_prompt)
             
             return jsonify({
@@ -104,17 +97,14 @@ def add_personalization_routes(app, personalization_engine):
     def generate_personalized_learning_path(user_id):
         """Kullanıcıya özel öğrenme yol haritası oluştur"""
         try:
-            # Kullanıcı profilini al
             profile_response = get_user_profile(user_id)
             if not profile_response['success']:
                 return jsonify(profile_response), 404
             
             profile = profile_response['data']
             
-            # Profil analizi yap
             analysis = personalization_engine.analyze_user_profile(profile)
             
-            # Öğrenme yolu oluştur
             learning_path = create_learning_path(analysis)
             
             return jsonify({
@@ -141,13 +131,10 @@ def add_personalization_routes(app, personalization_engine):
             responses = data.get('responses', [])
             user_id = data.get('user_id')
             
-            # Kişilik analizi yap
             personality_profile = analyze_personality(responses)
             
-            # Kişiliğe uygun simülasyon önerisi
             recommended_scenarios = get_personality_based_scenarios(personality_profile)
             
-            # Sonuçları kaydet
             if user_id:
                 save_personality_profile(user_id, personality_profile)
             
@@ -176,7 +163,6 @@ def generate_personalized_recommendations(analysis):
         "learning_resources": []
     }
     
-    # Sektör bazlı öneriler
     industry = analysis.get('industry_focus', 'general')
     if industry == 'technology':
         recommendations["simulation_types"].extend([
@@ -185,7 +171,6 @@ def generate_personalized_recommendations(analysis):
             "debugging_challenges"
         ])
     
-    # Deneyim seviyesi bazlı öneriler
     experience_depth = analysis.get('experience_depth', 1)
     if experience_depth < 3:
         recommendations["skill_development"].extend([
@@ -200,7 +185,6 @@ def generate_personalized_recommendations(analysis):
             "team_building_skills"
         ])
     
-    # Eksik beceriler bazlı öneriler
     skill_gaps = analysis.get('skill_gaps', [])
     for gap in skill_gaps:
         recommendations["learning_resources"].append({
@@ -217,7 +201,6 @@ def calculate_adaptive_difficulty(performance_history, preferred_difficulty):
     if not performance_history:
         return preferred_difficulty
     
-    # Son 5 performansın ortalaması
     recent_scores = [p.get('score', 0) for p in performance_history[-5:]]
     avg_score = sum(recent_scores) / len(recent_scores) if recent_scores else 0
     
@@ -275,7 +258,6 @@ def create_learning_path(analysis):
     skill_gaps = analysis.get('skill_gaps', [])
     experience_level = analysis.get('personalization_params', {}).get('complexity_preference', 'medium')
     
-    # Faz 1: Temel eksiklikleri gider
     if skill_gaps:
         phase1 = {
             "name": "Temel Beceri Geliştirme",
@@ -289,7 +271,6 @@ def create_learning_path(analysis):
         }
         learning_path["phases"].append(phase1)
     
-    # Faz 2: İleri seviye beceriler
     phase2 = {
         "name": "İleri Seviye Uygulamalar",
         "duration_weeks": 6,
@@ -302,7 +283,6 @@ def create_learning_path(analysis):
     }
     learning_path["phases"].append(phase2)
     
-    # Faz 3: Uzmanlık alanı
     specialization = determine_specialization(analysis)
     phase3 = {
         "name": f"{specialization} Uzmanlığı",
@@ -320,15 +300,12 @@ def create_learning_path(analysis):
     
     return learning_path
 
-# Yardımcı fonksiyonlar
 def get_user_profile(user_id):
     """Kullanıcı profilini getir"""
-    # Implementation...
     pass
 
 def analyze_personality(responses):
     """Kişilik analizini yap"""
-    # MBTI benzeri analiz
     personality_scores = {
         "extraversion": 0,
         "sensing": 0,
@@ -336,9 +313,7 @@ def analyze_personality(responses):
         "judging": 0
     }
     
-    # Responses'ları analiz et ve skorları hesapla
-    # Bu basit bir örnek - gerçek uygulamada daha sofistike olmalı
-    
+
     return {
         "type": determine_personality_type(personality_scores),
         "learning_style": determine_learning_style(personality_scores),

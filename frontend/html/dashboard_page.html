@@ -44,7 +44,7 @@
                             <i class="fas fa-chevron-down chevron text-gray-500 text-xs"></i>
                         </button>
                         
-                        <!-- Dropdown Menu -->
+                        <!-- Dropdown Menü -->
                         <div id="userDropdownMenu" class="user-dropdown-menu">
                             <div class="user-dropdown-header">
                                 <p class="name" id="dropdownUserName">Kullanıcı</p>
@@ -62,80 +62,70 @@
     </header>
 
     <div class="container" style="padding: 2rem 20px;">
-<!-- Welcome Section -->
+    <!-- Welcome Section -->
         <div class="mb-8">
             <h1 class="text-3xl font-bold mb-2">
                 Hoş geldin, <span id="welcomeUserName">Kullanıcı</span>! 👋
             </h1>
             <p class="text-gray-600">Kariyerinde bugün hangi adımı atacaksın?</p>
         </div>
-
-
         <div class="grid lg:grid-cols-3 gap-8">
             <!-- Main Content -->
             <div class="lg:col-span-2">
                 <!-- Quick Stats -->
                 <div class="stats-grid mb-8">
                 </div>
-
-            
-
-                <!-- Skill Gaps -->
-                <div class="card mb-8">
-                    <div class="card-header">
-                        <h3 class="flex items-center gap-2">
-                            <i class="fas fa-exclamation-circle text-orange-500"></i>
-                            <span>Öncelikli Beceri Eksiklikleri</span>
-                        </h3>
-                        <p class="text-gray-600">İş ilanlarına göre geliştirmeniz gereken beceriler</p>
-                    </div>
-                    <div id="skillGaps">
-                        <div class="text-center py-6">
-                            <i class="fas fa-spinner fa-spin text-gray-400 text-2xl mb-2"></i>
-                            <p class="text-gray-500">Beceri analizi yapılıyor...</p>
-                        </div>
-                    </div>
-                </div>
-
-               
             </div>
-
             <!-- Sidebar -->
             <div class="space-y-6">
                 <!-- Quick Actions -->
-                <div class="card">
-                    <div class="card-header">
-                        <h3>Hızlı Eylemler</h3>
+                <div class="quick-actions-card">
+                    <div class="quick-actions-header">
+                        <h3><i class="fas fa-bolt"></i> Hızlı Eylemler</h3>
                     </div>
-                    <div class="flex flex-col gap-3">
-                        <a href="../html/personality_assessment.html" class="btn btn-outline w-full justify-start">
-                            <i class="fas fa-brain mr-2"></i>
-                            Kişilik Testi
+                    <div class="quick-actions-grid">
+                    
+                        <a href="../html/job_matching_page.html" class="quick-action-item">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-briefcase"></i>
+                            </div>
+                            <div class="quick-action-text">
+                                <h4>İş İlanları</h4>
+                                <p>Size uygun pozisyonları keşfedin</p>
+                            </div>
                         </a>
-                        <a href="../html/job_matching_page.html" class="btn btn-outline w-full justify-start">
-                            <i class="fas fa-briefcase mr-2"></i>
-                            İş İlanlarını Gör
+
+                        <a href="../html/skill_analysis_page.html" class="quick-action-item">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-bullseye"></i>
+                            </div>
+                            <div class="quick-action-text">
+                                <h4>Beceri Analizi</h4>
+                                <p>Yetkinliklerinizi değerlendirin</p>
+                            </div>
                         </a>
-                        <a href="../html/skill_analysis_page.html" class="btn btn-outline w-full justify-start">
-                            <i class="fas fa-bullseye mr-2"></i>
-                            Beceri Analizi
+
+                        <a href="../html/interactive_simulation.html" class="quick-action-item">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-play"></i>
+                            </div>
+                            <div class="quick-action-text">
+                                <h4>İnteraktif Simülasyon</h4>
+                                <p>Gerçek iş senaryolarını deneyimleyin</p>
+                            </div>
                         </a>
-                        <a href="../html/interactive_simulation.html" class="btn btn-outline w-full justify-start">
-                            <i class="fas fa-play mr-2"></i>
-                            İnteraktif Simülasyon
-                        </a>
-                        <a href="../html/learning_path_page.html" class="btn btn-outline w-full justify-start">
-                            <i class="fas fa-book-open mr-2"></i>
-                            Öğrenme Yol Haritası
+
+                        <a href="../html/learning_path_page.html" class="quick-action-item">
+                            <div class="quick-action-icon">
+                                <i class="fas fa-book-open"></i>
+                            </div>
+                            <div class="quick-action-text">
+                                <h4>Öğrenme Yol Haritası</h4>
+                                <p>Kişiselleştirilmiş eğitim planınız</p>
+                            </div>
                         </a>
                     </div>
                 </div>
-
-                
-
-               
-
-                
             </div>
         </div>
     </div>
@@ -147,11 +137,8 @@
             <p class="text-gray-700">Dashboard yükleniyor...</p>
         </div>
     </div>
-
-    <!-- CRITICAL: Load main.js FIRST, then dashboard_page.js -->
     <script src="../js/main.js"></script>
     <script>
-        // Initialize KariyerAI global object if not loaded from main.js
         if (typeof window.KariyerAI === 'undefined') {
             console.warn("main.js didn't load properly, creating fallback KariyerAI object");
             window.KariyerAI = {

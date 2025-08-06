@@ -1,5 +1,3 @@
-// login_page.js
-
 document.addEventListener('DOMContentLoaded', function() {
   const emailInput = document.getElementById('email');
   const loginButton = document.getElementById('loginButton');
@@ -9,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
 
   loginButton.addEventListener('click', handleLogin);
 
-  // Enter tuşuna basıldığında giriş yap
   emailInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') {
       e.preventDefault();
@@ -34,18 +31,16 @@ async function handleLogin() {
   if (result.success) {
     window.KariyerAI.currentUser = result.data;
     window.KariyerAI.saveUserData();
-    localStorage.setItem("currentEmail", result.data.email);  // 🔹 Aktif oturum emaili
+    localStorage.setItem("currentEmail", result.data.email);  
     window.location.href = "../html/dashboard_page.html";
   } else {
     displayMessage(result.message, "error");
   }
 }
 
-
-
   function displayMessage(message, type) {
     messageContainer.textContent = message;
-    messageContainer.className = 'mb-4 p-3 rounded-lg text-sm'; // Reset classes
+    messageContainer.className = 'mb-4 p-3 rounded-lg text-sm'; 
     if (type === 'success') {
       messageContainer.classList.add('bg-green-100', 'text-green-700');
     } else if (type === 'error') {

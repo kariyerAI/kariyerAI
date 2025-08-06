@@ -1,7 +1,4 @@
-// =====================================================
-// GELİŞMİŞ TOPLANTI CHAT SİSTEMİ
-// =====================================================
-
+// Meeting Chat System
 class MeetingChatSystem {
     constructor() {
         this.participants = [];
@@ -12,7 +9,7 @@ class MeetingChatSystem {
         this.contextAwareness = {};
     }
 
-    // Katılımcıları ve kişiliklerini tanımla
+    // Participants ve personalityProfiles
     initializeParticipants(participants) {
         this.participants = participants;
         this.personalityProfiles = {
@@ -67,7 +64,7 @@ class MeetingChatSystem {
         };
     }
 
-    // Gelişmiş AI yanıt sistemi
+    // AI answer generation
     async generateResponse(userMessage, currentParticipant, context) {
         const prompt = `
         Sen bir ${currentParticipant} rolündesin. Kişiliğin: ${this.personalityProfiles[currentParticipant]?.personality}
@@ -117,16 +114,14 @@ class MeetingChatSystem {
         }
     }
 
-    // Fallback yanıtlar (API hatası durumunda)
+    // Fallback 
     getFallbackResponse(participant, userMessage) {
         const profile = this.personalityProfiles[participant];
         if (!profile) return { response: "İlginç bir bakış açısı.", emotion: "neutral" };
 
-        // Mesajın içeriğine göre akıllı fallback
         const lowerMessage = userMessage.toLowerCase();
         let response = profile.responsePatterns[Math.floor(Math.random() * profile.responsePatterns.length)];
         
-        // Kontekstuel akıllı yanıtlar
         if (lowerMessage.includes('zaman') || lowerMessage.includes('deadline')) {
             if (participant === 'Proje Yöneticisi') {
                 response = "Zaman çizelgemizi gözden geçirmemiz gerekiyor. Bu değişiklik ne kadar sürer?";
@@ -153,13 +148,12 @@ class MeetingChatSystem {
         };
     }
 
-    // Konuşma özetini al
+    // Summary of recent conversations
     getConversationSummary() {
         const recent = this.conversationHistory.slice(-3);
         return recent.map(msg => `${msg.speaker}: ${msg.message.substring(0, 50)}...`).join(' | ');
     }
 
-    // Mesaj ekle
     addMessage(speaker, message, responseData = null) {
         this.conversationHistory.push({
             speaker,
@@ -171,11 +165,9 @@ class MeetingChatSystem {
         });
     }
 
-    // Akıllı katılımcı seçimi
     getNextSpeaker(userMessage) {
         const lowerMessage = userMessage.toLowerCase();
         
-        // İçeriğe göre en uygun katılımcıyı seç
         if (lowerMessage.includes('teknik') || lowerMessage.includes('kod') || lowerMessage.includes('implement')) {
             return 'Senior Developer';
         }
@@ -189,7 +181,6 @@ class MeetingChatSystem {
             return 'Proje Yöneticisi';
         }
         
-        // Rastgele ama son konuşan kişi olmayan birini seç
         const available = this.participants.filter(p => 
             p.name !== 'Siz' && 
             (this.conversationHistory.length === 0 || 
@@ -201,7 +192,7 @@ class MeetingChatSystem {
                'Proje Yöneticisi';
     }
 
-    // Toplantı analitiği
+    // Meeting analytics
     getMeetingAnalytics() {
         const totalMessages = this.conversationHistory.length;
         const userMessages = this.conversationHistory.filter(msg => msg.speaker === 'Siz').length;

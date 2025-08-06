@@ -1,6 +1,4 @@
-/* Additional styles for new components */
 
-/* Skill Tree Items */
 .skill-tree-item {
   padding: 1rem;
   border: 2px solid #e5e7eb;
@@ -133,7 +131,7 @@
     font-size: 14px;
 }
 .skill-analysis-card {
-    width: calc(25% - 10px); /* 4 kart yan yana */
+    width: calc(25% - 10px); 
 }
 /* Insight Cards */
 .insight-card {
@@ -743,11 +741,11 @@
     border-radius: 8px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
     padding: 10px;
-    width: calc(33.33% - 10px); /* 3 kart yan yana */
+    width: calc(33.33% - 10px); 
     display: inline-block;
     margin: 5px;
     vertical-align: top;
-    font-size: 0.9rem; /* Daha küçük yazı */
+    font-size: 0.9rem; 
 }
 
 .skill-analysis-card h4 {

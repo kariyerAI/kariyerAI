@@ -1,9 +1,5 @@
-// Kişiselleştirilmiş Dashboard Geliştirmeleri
-// Bu dosya mevcut dashboard_page.js'e eklenmeli
-
-// Dashboard kişiselleştirme fonksiyonları
+// Dashboard 
 function initializePersonalizedDashboard() {
-    // URL'den personalized parametresini kontrol et
     const urlParams = new URLSearchParams(window.location.search);
     const isPersonalized = urlParams.get('personalized');
     
@@ -18,17 +14,14 @@ function loadPersonalizedContent() {
     const user = getCurrentUser();
     if (!user) return;
     
-    // Kişilik profili varsa özelleştirilmiş içerik göster
     if (user.personality_profile) {
         displayPersonalizedRecommendations(user.personality_profile);
         updateSimulationRecommendations(user.personality_profile);
         showPersonalityInsights(user.personality_profile);
     } else {
-        // Kişilik testi önerisi göster
         showPersonalityTestSuggestion();
     }
     
-    // Kullanıcı performansına göre adaptif öneriler
     loadAdaptiveRecommendations(user);
 }
 
@@ -54,7 +47,6 @@ function displayPersonalizedRecommendations(personalityProfile) {
     const mainContent = document.querySelector('.lg\\:col-span-2');
     if (!mainContent) return;
     
-    // Kişiselleştirilmiş öneriler kartı
     const recommendationsCard = document.createElement('div');
     recommendationsCard.className = 'card mb-8';
     recommendationsCard.innerHTML = `
@@ -82,13 +74,11 @@ function displayPersonalizedRecommendations(personalityProfile) {
         </div>
     `;
     
-    // Mevcut stats grid'den sonra ekle
     const statsGrid = document.querySelector('.stats-grid');
     if (statsGrid) {
         statsGrid.parentNode.insertBefore(recommendationsCard, statsGrid.nextSibling);
     }
     
-    // İçerikleri doldur
     populatePersonalizedRecommendations(personalityProfile);
 }
 
@@ -98,7 +88,6 @@ function populatePersonalizedRecommendations(personalityProfile) {
     
     if (!simulationsList || !learningList) return;
     
-    // Kişilik tipine göre simülasyon önerileri
     const simulationRecommendations = getSimulationRecommendations(personalityProfile.mbti_type);
     const learningRecommendations = getLearningRecommendations(personalityProfile.mbti_type, personalityProfile.preferences);
     
@@ -183,7 +172,6 @@ function showPersonalityInsights(personalityProfile) {
         </div>
     `;
     
-    // Sidebar'ın başına ekle
     sidebar.insertBefore(insightsCard, sidebar.firstChild);
 }
 
@@ -213,7 +201,6 @@ function showPersonalityTestSuggestion() {
         </div>
     `;
     
-    // Stats grid'den sonra ekle
     const statsGrid = document.querySelector('.stats-grid');
     if (statsGrid) {
         statsGrid.parentNode.insertBefore(suggestionCard, statsGrid.nextSibling);
@@ -286,7 +273,6 @@ function displayAdaptiveRecommendations(recommendations) {
 }
 
 function updateSimulationRecommendations(personalityProfile) {
-    // Mevcut simülasyon kartlarını güncelle
     const simulationCards = document.querySelectorAll('[onclick*="simulation"]');
     simulationCards.forEach(card => {
         const difficulty = getRecommendedDifficulty(personalityProfile);
@@ -310,7 +296,6 @@ function getRecommendedDifficulty(personalityProfile) {
     return difficultyMap[complexityPref] || 'Orta';
 }
 
-// Yardımcı fonksiyonlar
 function getLearningSyleDisplay(style) {
     const displays = {
         'visual': 'Görsel Öğrenme',
@@ -341,7 +326,6 @@ function getCommunicationDisplay(style) {
     return displays[style] || 'Dengeli';
 }
 
-// Event handlers
 function startPersonalityTest() {
     window.location.href = '../html/personality_assessment.html';
 }
@@ -354,7 +338,6 @@ function skipPersonalityTest() {
 }
 
 function showDetailedPersonalityReport() {
-    // Modal veya yeni sayfa ile detaylı rapor göster
     alert('Detaylı kişilik raporu yakında hazır olacak!');
 }
 
@@ -366,7 +349,6 @@ async function startPersonalizedSimulation() {
     }
     
     try {
-        // Kişiselleştirilmiş simülasyon oluştur
         const response = await fetch(`http://127.0.0.1:5000/adaptive-scenario/${user.id}`, {
             method: 'POST',
             headers: {
@@ -381,12 +363,10 @@ async function startPersonalizedSimulation() {
         
         const result = await response.json();
         if (result.success) {
-            // Kişiselleştirilmiş simülasyona yönlendir
             window.location.href = '../html/interactive_simulation.html?personalized=true';
         }
     } catch (error) {
         console.error('Personalized simulation start error:', error);
-        // Fallback olarak normal simülasyona yönlendir
         window.location.href = '../html/interactive_simulation.html';
     }
 }
@@ -408,7 +388,6 @@ function getCurrentUser() {
     return null;
 }
 
-// CSS Styles ekle
 const personalizedStyles = `
 <style>
     .personality-badge {
@@ -449,7 +428,6 @@ const personalizedStyles = `
 </style>
 `;
 
-// Sayfa yüklendiğinde styles'ı ekle
 if (!document.querySelector('#personalizedStyles')) {
     const styleElement = document.createElement('div');
     styleElement.id = 'personalizedStyles';
@@ -457,7 +435,6 @@ if (!document.querySelector('#personalizedStyles')) {
     document.head.appendChild(styleElement);
 }
 
-// Export functions for use in main dashboard
 window.initializePersonalizedDashboard = initializePersonalizedDashboard;
 window.startPersonalityTest = startPersonalityTest;
 window.skipPersonalityTest = skipPersonalityTest;
