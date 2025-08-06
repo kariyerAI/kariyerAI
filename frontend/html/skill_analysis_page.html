@@ -7,11 +7,6 @@
     <link rel="stylesheet" href="../css/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-    /* ==========================
-    Beceri Analizi Kartları (Optimize)
-    ========================== */
-
-    /* Ortak Konteyner */
     #userSkillsAnalysis,
     #missingSkillsList {
         display: grid !important;
@@ -20,19 +15,18 @@
         width: 100%;
     }
 
-    /* ✅ Beceri Durumu Kartları */
     .skill-analysis-card {
         background: #fff;
         border-radius: 8px;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
         padding: 12px;
-        width: calc(25% - 5px);   /* 🔹 Kartları biraz genişlettik */
-        min-width: 220px;         /* 🔹 Daha küçük ekranda minimum genişlik */
-        max-width: 280px;         /* 🔹 Maksimum genişlik arttı */
+        width: calc(25% - 5px);   
+        min-width: 220px;         
+        max-width: 280px;        
         display: inline-block;
         margin: 5px;
         vertical-align: top;
-        font-size: 1rem;       /* 🔹 Yazı boyutu biraz büyüdü */
+        font-size: 1rem;      
     }
 
 
@@ -62,7 +56,7 @@
         cursor: pointer;
     }
 
-    /* ✅ Eksik Beceriler Kartları */
+
     .skill-gap-card {
         background: #fff;
         border: 1px solid #f87171;
@@ -70,7 +64,7 @@
         border-radius: 6px;
         padding: 10px;
         font-size: 1rem;
-        width: calc(25% - 10px); /* 4 kart yan yana */
+        width: calc(25% - 10px); 
         min-width: 180px;
         max-width: 220px;
         display: inline-block;
@@ -177,7 +171,6 @@
                         <p class="text-gray-600">Mevcut becerilerinizin seviyesini seçiniz</p>
                     </div>
                     <div id="userSkillsAnalysis">
-                        <!-- Skills analysis will be loaded here -->
                     </div>
                 </div>
 
@@ -225,11 +218,11 @@
                     <div class="flex flex-col gap-3">
                         <a href="../html/learning_path_page.html" class="btn btn-outline w-full justify-start">
                             <i class="fas fa-book-open mr-2"></i>
-                            SQL Öğrenmeye Başla
+                            Öğrenmeye Başla
                         </a>
                         <a href="../html/career_simulation_page.html" class="btn btn-outline w-full justify-start">
                             <i class="fas fa-bolt mr-2"></i>
-                            Node.js Simülasyonu
+                            Simülasyon
                         </a>
                         <a href="../html/job_matching_page.html" class="btn btn-outline w-full justify-start">
                             <i class="fas fa-bullseye mr-2"></i>

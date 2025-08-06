@@ -1,5 +1,4 @@
 
-        // Global variables
         let currentStep = 0;
         let learningData = null;
         let userId = null;
@@ -30,7 +29,7 @@
 
                 if (data.success && data.data.length > 0) {
                     displaySkillCards(data.data);
-                    missingSkillsLoaded = true;   // ✅ Tekrar çağrılmasını engeller
+                    missingSkillsLoaded = true;  
                 } else {
                     showNoSkillsMessage();
                     missingSkillsLoaded = true;
@@ -42,7 +41,6 @@
                 isLoadingMissingSkills = false;
             }
         }
-
 
         // Display skill cards
         function displaySkillCards(skills) {
@@ -446,8 +444,8 @@
                 if (data.success) {
                     alert('🎉 Tebrikler! Beceriyi başarıyla tamamladınız ve +200 XP kazandınız!');
                     closeLearningModal();
-                    missingSkillsLoaded = false;      // Tekrar yüklenmesine izin ver
-                    setTimeout(loadMissingSkills, 500); // Reload the page to remove completed skill
+                    missingSkillsLoaded = false;     
+                    setTimeout(loadMissingSkills, 500); 
                 } else {
                     console.error('Error completing skill:', data.message);
                     alert('Beceri tamamlanırken hata oluştu');

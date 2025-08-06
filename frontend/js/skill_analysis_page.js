@@ -12,11 +12,9 @@ async function loadUserSkills() {
     if (!userId) return;
 
     try {
-        // 1️⃣ Kullanıcı becerilerini getir
         const response = await fetch(`http://127.0.0.1:5000/get-profile/${userId}`);
         const data = await response.json();
 
-        // 2️⃣ Kaydedilmiş skill seviyelerini getir
         const response2 = await fetch(`http://127.0.0.1:5000/api/get-skill-levels/${userId}`);
         const skillLevelsData = await response2.json();
         const savedLevels = skillLevelsData.success ? skillLevelsData.data : [];
@@ -25,7 +23,6 @@ async function loadUserSkills() {
             const userSkills = data.data.skills;
 
             document.getElementById("userSkillsAnalysis").innerHTML = userSkills.map(skill => {
-                // Daha önce kaydedilen seviye varsa onu kullan, yoksa 50
                 let saved = savedLevels.find(s => s.skill.toLowerCase() === skill.toLowerCase());
                 let level = saved ? saved.level : 50;
 
@@ -49,9 +46,6 @@ async function loadUserSkills() {
         console.error("Beceriler yüklenemedi:", error);
     }
 }
-
-
-
 
 function loadSkillGapsAnalysis() {
   console.log("Detaylı beceri eksikliği analizi yüklendi.")
@@ -105,7 +99,7 @@ function capitalizeWords(str) {
     if (!str) return '';
     return str
         .toLowerCase()
-        .split(/\s+/) // birden fazla boşluğu da yakalar
+        .split(/\s+/) 
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(" ");
 }
@@ -158,7 +152,6 @@ async function loadMissingSkills() {
         document.getElementById('missingSkillsList').innerHTML = `<p>Sunucu hatası.</p>`;
     }
 }
-// Slider değiştikçe değeri kaydet
 document.addEventListener("input", async (e) => {
     if (e.target.classList.contains("skill-slider")) {
         let skill = e.target.dataset.skill;

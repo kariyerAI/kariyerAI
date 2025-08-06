@@ -1,21 +1,45 @@
+const BACKEND_URL = 'http://127.0.0.1:5000';
+
 let savedMissingSkills = new Set();
 let userSkillsSet = new Set();
 
-// ✅ Sayfa yüklendiğinde çalışır (tek sefer)
 if (!window.jobPageLoaded) {
     window.jobPageLoaded = true;
     document.addEventListener('DOMContentLoaded', async () => {
         console.log("Job Matching Page Loaded");
 
-        let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
-        let userId = user.id || "guest";
+    let user = null;
 
-        // Kullanıcının mevcut becerilerini al
-        userSkillsSet = new Set((user.skills || []).map(s => s.toLowerCase()));
+    // Method 1: From window.KariyerAI global object
+    if (window.KariyerAI?.currentUser) {
+        user = window.KariyerAI.currentUser;
+        console.log("User loaded from KariyerAI global:", user);
+    }
 
-        // Eksik becerileri DB'den çek
+    // Method 2: From localStorage
+    if (!user) {
         try {
-            const resp = await fetch(`http://127.0.0.1:5000/api/missing_skills/${userId}`);
+            const userData = localStorage.getItem("kariyerAI_user");
+            if (userData) {
+                user = JSON.parse(userData);
+                if (window.KariyerAI) {
+                    window.KariyerAI.currentUser = user;
+                }
+                console.log("User loaded from localStorage:", user);
+            }
+        } catch (error) {
+            console.error("Error reading from localStorage:", error);
+        }
+    }
+
+    if (!user || !user.id) {
+        console.log("Kullanıcı bulunamadı. Lütfen tekrar giriş yapın.", "warning");
+        return;
+    }
+
+
+        try {
+            const resp = await fetch(`http://127.0.0.1:5000/api/missing_skills/${user.id}`);
             const data = await resp.json();
             if (data.success && data.data.length > 0) {
                 savedMissingSkills = new Set(data.data.map(item => item.skill.toLowerCase()));
@@ -24,12 +48,10 @@ if (!window.jobPageLoaded) {
             console.error("Eksik beceriler alınamadı:", err);
         }
 
-        // İş ilanlarını yükle
         loadJobListings();
     });
 }
 
-// ✅ İş ilanlarını yükle
 async function loadJobListings() {
     const container = document.getElementById('jobListings');
     const countElement = document.getElementById('jobCount');
@@ -63,7 +85,6 @@ async function loadJobListings() {
             let jobRequirements = (job.requirements || []).map(r => r.toLowerCase().trim());
             let matchedSkills = jobRequirements.filter(skill => userSkillsSet.has(skill));
             let missingSkills = jobRequirements.filter(skill => !userSkillsSet.has(skill));
-            // ✅ Eşleşme oranını hesapla
             let totalSkills = jobRequirements.length;
             let matchPercentage = totalSkills > 0 ? Math.round((matchedSkills.length / totalSkills) * 100) : 0;
 
@@ -141,17 +162,20 @@ function capitalizeWords(str) {
     return str.toLowerCase().split(/\s+/).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 }
 
-// ✅ Butonlar için click event
 document.addEventListener("click", async (e) => {
     const btn = e.target.closest("button");
     if (!btn) return;
     const skill = btn.getAttribute("data-skill");
     if (!skill) return;
 
-    let user = JSON.parse(localStorage.getItem("kariyerAI_user")) || {};
-    let userId = user.id || "guest";
+    let user = JSON.parse(localStorage.getItem("kariyerAI_user"));
+    if (!user || !user.id) {
+        alert("⚠️ Kullanıcı oturumu bulunamadı.");
+        return;
+    }
+    let userId = user.id;
 
-    // 📌 Eksik beceriye ekleme
+
     if (btn.classList.contains("save-missing-btn")) {
         if (savedMissingSkills.has(skill)) {
             alert(`"${capitalizeWords(skill)}" zaten eksik bilgilerde.`);
@@ -175,49 +199,66 @@ document.addEventListener("click", async (e) => {
         }
     }
 
-  // 📌 Beceriyi biliyorum → profile.skills'e ekleme
-  if (btn.classList.contains("know-skill-btn")) {
-      if (userSkillsSet.has(skill)) {
-          alert(`"${capitalizeWords(skill)}" zaten profilinizde mevcut.`);
-          return;
-      }
-      const confirmAdd = confirm(`"${capitalizeWords(skill)}" becerisini bildiğinizden emin misiniz? Profilinize eklensin mi?`);
-      if (confirmAdd) {
-          try {
-              let updatedSkills = [...userSkillsSet, skill];
+if (btn.classList.contains("know-skill-btn")) {
+    const skill = btn.getAttribute("data-skill").toLowerCase();
+    const jobCard = btn.closest('.job-card');
+    
+    if (!jobCard) {
+        console.error("Job card not found");
+        showToast("İşlem yapılamadı", "error");
+        return;
+    }
 
-              // 1️⃣ Profili güncelle
-              const response = await fetch(`http://127.0.0.1:5000/update-skills/${userId}`, {
-                  method: "PUT",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ skills: updatedSkills })
-              });
+    if (userSkillsSet.has(skill)) {
+        showToast(`"${capitalizeWords(skill)}" zaten profilinizde mevcut.`, "warning");
+        return;
+    }
 
-              if (response.ok) {
-                  // ✅ LocalStorage güncelle
-                  userSkillsSet.add(skill);
-                  user.skills = updatedSkills;
-                  localStorage.setItem("kariyerAI_user", JSON.stringify(user));
+    try {
+        userSkillsSet.add(skill);
+        let updatedSkills = Array.from(userSkillsSet);
 
-                  // 2️⃣ skill_levels tablosuna varsayılan %50 olarak ekle
-                  await fetch(`http://127.0.0.1:5000/save-skill-level`, {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({
-                          user_id: userId,
-                          skill: skill,
-                          level: 50
-                      })
-                  });
+        const response = await fetch(`${BACKEND_URL}/update-skills/${user.id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ skills: updatedSkills })
+        });
 
-                  alert(`"${capitalizeWords(skill)}" profilinize eklendi.`);
-                  loadJobListings(); // ✅ Sayfayı yeniden render et
-              }
-          } catch (err) {
-              console.error("Profil beceri ekleme hatası:", err);
-          }
-      }
-  }
+        if (response.ok) {
+            user.skills = updatedSkills;
+            localStorage.setItem("kariyerAI_user", JSON.stringify(user));
+
+            btn.style.backgroundColor = '#22c55e';
+            btn.style.color = '#ffffff';
+            btn.disabled = true;
+            
+            const skillBadge = btn.closest('.skill-badge');
+            if (skillBadge) {
+                const skillText = skillBadge.querySelector('span')?.textContent.trim() || skill;
+                
+                const matchedSkillsList = jobCard.querySelector('.skills-list');
+                if (matchedSkillsList) {
+                    const noneSkill = matchedSkillsList.querySelector('.skill-none');
+                    if (noneSkill) {
+                        noneSkill.remove();
+                    }
+                    matchedSkillsList.insertAdjacentHTML('beforeend', 
+                        `<span class="skill-badge skill-have">${skillText}</span>`
+                    );
+                }
+
+                skillBadge.remove();
+
+                updateMatchPercentage(jobCard);
+            }
+
+            showToast(`"${capitalizeWords(skill)}" profilinize eklendi.`, "success");
+        }
+    } catch (err) {
+        console.error("Beceri ekleme hatası:", err);
+        showToast("Beceri eklenirken bir hata oluştu", "error");
+    }
+}
 }
 );
 function showToast(message, type = "info") {
@@ -232,4 +273,80 @@ function showToast(message, type = "info") {
         toast.classList.remove("show");
         setTimeout(() => toast.remove(), 400);
     }, 3000);
+}
+
+// Update job card skills
+function updateJobCardSkills(jobCard) {
+    const skillSection = jobCard.querySelector(".skills-section");
+    const scoreElement = jobCard.querySelector(".match-score");
+
+    const allSkillElements = jobCard.querySelectorAll(".skill-badge span");
+    const jobRequirements = Array.from(allSkillElements)
+        .map(el => el.textContent.trim().toLowerCase())
+        .filter(skill => skill !== "yok");
+
+    const matchedSkills = jobRequirements.filter(skill => userSkillsSet.has(skill));
+    const missingSkills = jobRequirements.filter(skill => !userSkillsSet.has(skill));
+
+    const matchPercentage = jobRequirements.length > 0 
+        ? Math.round((matchedSkills.length / jobRequirements.length) * 100) 
+        : 0;
+
+    const skillsHTML = `
+        <div class="skills-container mt-2">
+            <strong>✅ Eşleşen Yetenekler:</strong>
+            <div class="skills-list">
+                ${matchedSkills.length > 0
+                    ? matchedSkills.map(skill => 
+                        `<span class="skill-badge skill-have">${capitalizeWords(skill)}</span>`
+                    ).join('')
+                    : '<span class="skill-badge skill-none">Yok</span>'}
+            </div>
+            <strong class="mt-2 block">❌ Eksik Yetenekler:</strong>
+            <div class="skills-list">
+                ${missingSkills.length > 0
+                    ? missingSkills.map(skill => {
+                        const isAlreadySaved = savedMissingSkills.has(skill);
+                        return `
+                            <div class="skill-badge skill-missing">
+                                <span>${capitalizeWords(skill)}</span>
+                                <div class="action-buttons">
+                                    ${!isAlreadySaved ? `
+                                        <button class="action-btn learn-btn save-missing-btn" data-skill="${skill}">
+                                            <i class="fas fa-book-open"></i> Öğrenmek İstiyorum
+                                        </button>
+                                    ` : `
+                                        <span class="tooltip-icon" data-tooltip="Bu beceri zaten Eksik Bilgiler tablonuzda kayıtlı">
+                                            <i class="fas fa-exclamation-circle"></i>
+                                        </span>
+                                    `}
+                                    <button class="action-btn know-btn know-skill-btn" data-skill="${skill}">
+                                        <i class="fas fa-check-circle"></i> Biliyorum
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('')
+                    : '<span class="skill-badge skill-none">Yok</span>'}
+            </div>
+        </div>
+    `;
+
+    skillSection.innerHTML = skillsHTML;
+    scoreElement.textContent = `${matchPercentage}% Eşleşme`;
+}
+
+function updateMatchPercentage(jobCard) {
+    if (!jobCard) return;
+    
+    const scoreElement = jobCard.querySelector('.match-score');
+    if (!scoreElement) return;
+
+    const totalSkills = jobCard.querySelectorAll('.skill-badge span').length;
+    const matchedSkills = jobCard.querySelectorAll('.skill-badge.skill-have').length;
+    
+    if (totalSkills > 0) {
+        const matchPercentage = Math.round((matchedSkills / totalSkills) * 100);
+        scoreElement.textContent = `${matchPercentage}% Eşleşme`;
+    }
 }

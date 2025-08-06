@@ -1,5 +1,3 @@
-// profile_page.js - User Profile Display & Edit
-
 // Global variables
 let isEditMode = false;
 let originalUserData = null;
@@ -85,7 +83,6 @@ function loadUserProfile() {
             }
         }).catch(error => {
             console.log('📌 [Profile] Backend fetch failed, using localStorage data:', error);
-            // If backend fails, keep using localStorage data (already displayed)
         });
     } else {
         console.log('📌 [Profile] Using existing local data, no backend fetch needed');
@@ -846,11 +843,7 @@ function removeExperience(expIndex) {
     }
 }
 
-// ===========================================
-// SKILLS MANAGEMENT
-// ===========================================
-
-// Setup skills event listeners
+// Skill management event listeners
 function setupSkillsEventListeners() {
     const addSkillBtn = document.getElementById('addSkillBtn');
     const saveSkillBtn = document.getElementById('saveSkillBtn');
@@ -952,11 +945,7 @@ function addNewSkill() {
     showToast('Beceri başarıyla eklendi!', 'success');
 }
 
-// ===========================================
-// EXPERIENCE MANAGEMENT
-// ===========================================
-
-// Setup experience event listeners
+// Experience management
 function setupExperienceEventListeners() {
     const addExperienceBtn = document.getElementById('addExperienceBtn');
     const saveExperienceBtn = document.getElementById('saveExperienceBtn');
@@ -1031,11 +1020,10 @@ function addNewExperience() {
     console.log('📌 [AddExperience] About to save user with experiences:', updatedUser.experiences.length);
     console.log('📌 [AddExperience] Updated user object:', updatedUser);
     
-    // Save to backend and wait for confirmation - make sure to use updated user object
     const dataToSend = {
         ...updatedUser,
-        skills: updatedUser.skills || [],  // Explicitly ensure skills are included
-        experiences: updatedExperiences  // Explicitly ensure experiences are included
+        skills: updatedUser.skills || [], 
+        experiences: updatedExperiences  
     };
     
     console.log('📌 [AddExperience] Data to send to backend:', dataToSend);
@@ -1044,14 +1032,12 @@ function addNewExperience() {
         console.log('📌 [AddExperience] Backend save confirmed, experience should be persisted');
     });
     
-    // Hide form and clear inputs
     document.getElementById('addExperienceForm').style.display = 'none';
     clearExperienceForm();
     
     showToast('Deneyim başarıyla eklendi!', 'success');
 }
 
-// Clear experience form
 function clearExperienceForm() {
     document.getElementById('newExpPosition').value = '';
     document.getElementById('newExpCompany').value = '';
@@ -1060,7 +1046,6 @@ function clearExperienceForm() {
     document.getElementById('newExpDescription').value = '';
 }
 
-// Export functions for external use
 window.profilePageFunctions = {
     initializeProfilePage,
     loadUserProfile,

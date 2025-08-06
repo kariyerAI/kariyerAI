@@ -1,10 +1,10 @@
-// Kişilik ve Öğrenme Stili Değerlendirmesi JavaScript
+// Personality Assessment and Learning Style Evaluation
 
 let currentQuestion = 0;
 let responses = [];
 let currentUser = null;
 
-// Değerlendirme soruları
+// Question set for personality assessment
 const assessmentQuestions = [
     // Extraversion vs Introversion
     {
@@ -229,7 +229,6 @@ const assessmentQuestions = [
     }
 ];
 
-// Kullanıcı bilgilerini yükle
 document.addEventListener('DOMContentLoaded', function() {
     loadUserData();
 });
@@ -279,17 +278,14 @@ function loadQuestion(questionIndex) {
 }
 
 function selectAnswer(questionIndex, value, optionIndex) {
-    // Önceki seçimi temizle
     document.querySelectorAll(`input[name="question_${questionIndex}"]`).forEach(input => {
         input.closest('.answer-option').classList.remove('selected');
     });
     
-    // Yeni seçimi işaretle
     const selectedOption = document.getElementById(`option_${questionIndex}_${optionIndex}`);
     selectedOption.checked = true;
     selectedOption.closest('.answer-option').classList.add('selected');
     
-    // Yanıtı kaydet
     responses[questionIndex] = {
         questionId: assessmentQuestions[questionIndex].id,
         dimension: assessmentQuestions[questionIndex].dimension,
@@ -341,28 +337,22 @@ async function completeAssessment() {
     document.getElementById('assessmentSection').classList.add('hidden');
     document.getElementById('resultsSection').classList.remove('hidden');
     
-    // Analiz yap
     const analysis = analyzeResponses(responses);
     
-    // Sonuçları görüntüle
     displayResults(analysis);
     
-    // Sonuç mesajını güncelle
     updateResultsMessage(analysis);
     
-    // Button'ı güncelle
     const dashboardButton = document.querySelector('button[onclick="goToPersonalizedDashboard()"]');
     if (dashboardButton) {
         dashboardButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sonuçlar kaydediliyor...';
         dashboardButton.disabled = true;
     }
     
-    // Backend'e gönder
     try {
         await saveAssessmentResults(analysis);
     } catch (error) {
         console.error("Assessment save error:", error);
-        // Hata olsa bile yönlendir
         if (dashboardButton) {
             dashboardButton.innerHTML = '<i class="fas fa-play"></i> Simülasyonu Başlat';
             dashboardButton.disabled = false;
@@ -370,7 +360,6 @@ async function completeAssessment() {
     }
 }
 
-// Sonuç mesajını güncelle
 function updateResultsMessage(analysis) {
     const personalityDesc = document.getElementById('personalityDescription');
     if (personalityDesc) {
@@ -410,7 +399,6 @@ function analyzeResponses(responses) {
         career_path: {}
     };
     
-    // MBTI boyutları için skorlama
     responses.forEach(response => {
         if (response.dimension in scores) {
             if (response.value === 'E' || response.value === 'S' || 
@@ -425,14 +413,12 @@ function analyzeResponses(responses) {
         }
     });
     
-    // MBTI tipi belirleme
     const mbtiType = 
         (scores.extraversion >= 2 ? 'E' : 'I') +
         (scores.sensing >= 2 ? 'S' : 'N') +
         (scores.thinking >= 2 ? 'T' : 'F') +
         (scores.judging >= 2 ? 'J' : 'P');
     
-    // Tercih edilen özellikleri belirleme
     const dominantPreferences = {};
     Object.keys(preferences).forEach(key => {
         const prefs = preferences[key];
@@ -451,11 +437,9 @@ function analyzeResponses(responses) {
 }
 
 function displayResults(analysis) {
-    // Kişilik tipi
     document.getElementById('personalityTitle').textContent = `Kişilik Tipiniz: ${analysis.mbti_type}`;
     document.getElementById('personalityDescription').textContent = analysis.personality_description;
     
-    // Trait skorları
     const traitsContainer = document.getElementById('traitScores');
     const traits = [
         { name: 'Dışadönüklük', key: 'extraversion', value: analysis.scores.extraversion * 25 },
@@ -506,7 +490,6 @@ function getLearningRecommendations(mbtiType, preferences) {
         environment: ''
     };
     
-    // Learning style bazlı öneriler
     const learningStyle = preferences.learning_style;
     if (learningStyle === 'visual') {
         recommendations.learning_methods.push('Diagramlar ve görsel materyaller');
@@ -533,7 +516,6 @@ function getSimulationPreferences(mbtiType, preferences) {
         feedback_type: 'balanced'
     };
     
-    // MBTI tipine göre senaryo tercihleri
     if (mbtiType.includes('T')) {
         simPrefs.preferred_scenarios.push('technical_challenges', 'data_analysis', 'logical_problem_solving');
         simPrefs.feedback_type = 'analytical';
@@ -555,7 +537,6 @@ function getSimulationPreferences(mbtiType, preferences) {
 
 async function saveAssessmentResults(analysis) {
     try {
-        // Kullanıcı kontrolü
         if (!currentUser || !currentUser.id) {
             console.error('User not loaded or missing ID');
             showNotification("Kullanıcı bilgisi bulunamadı", "error");
@@ -588,7 +569,6 @@ async function saveAssessmentResults(analysis) {
         if (result.success) {
             console.log('Assessment results saved successfully');
             
-            // Local storage'a da kaydet
             if (currentUser) {
                 currentUser.personality_assessment = {
                     responses: responses,
@@ -610,7 +590,6 @@ async function saveAssessmentResults(analysis) {
         showNotification("Bağlantı hatası - test sonuçları yerel olarak kaydedildi", "warning");
     }
     
-    // Her durumda localStorage'a da kaydet (backend hatası olsa bile)
     try {
         const assessmentData = {
             responses: responses,
@@ -624,7 +603,6 @@ async function saveAssessmentResults(analysis) {
             currentUser.personality_assessment = assessmentData;
             localStorage.setItem('kariyerAI_user', JSON.stringify(currentUser));
         } else {
-            // Geçici kayıt
             localStorage.setItem('personality_assessment_temp', JSON.stringify(assessmentData));
         }
         
@@ -635,17 +613,14 @@ async function saveAssessmentResults(analysis) {
         console.error('Storage save error:', storageError);
     }
     
-    // Test tamamlandıktan sonra otomatik olarak simülasyona yönlendir
     setTimeout(() => {
         goToPersonalizedDashboard();
-    }, 1500); // 1.5 saniye sonra otomatik yönlendir
+    }, 1500); 
 }
 
 function goToPersonalizedDashboard() {
-    // Kişiselleştirilmiş simülasyona yönlendir
     showNotification("Kişilik testi tamamlandı! Simülasyona yönlendiriliyorsunuz...", "success");
     
-    // Eğer kullanıcı yoksa bile localStorage'a test sonuçlarını kaydet
     if (!currentUser) {
         const userData = localStorage.getItem("kariyerAI_user");
         if (userData) {
@@ -653,14 +628,12 @@ function goToPersonalizedDashboard() {
                 currentUser = JSON.parse(userData);
             } catch (error) {
                 console.error("User data parse error:", error);
-                // Geçici kullanıcı oluştur
                 currentUser = {
                     id: 'temp_' + Date.now(),
                     temp_user: true
                 };
             }
         } else {
-            // Geçici kullanıcı oluştur
             currentUser = {
                 id: 'temp_' + Date.now(),
                 temp_user: true
@@ -673,9 +646,7 @@ function goToPersonalizedDashboard() {
     }, 2000);
 }
 
-// Yardımcı fonksiyonlar
 function showNotification(message, type = 'info') {
-    // Basit notification sistemi
     const notification = document.createElement('div');
     notification.style.cssText = `
         position: fixed;

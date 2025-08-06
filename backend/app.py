@@ -42,7 +42,7 @@ SERPAPI_KEY = os.getenv("SERPAPI_KEY")
 def home():
     return 'KariyerAI Backend çalışıyor!'
 
-# Profil verisini Supabase'e kaydetmek için
+# For saving user profile data
 @app.route("/save-profile", methods=["POST"])  
 def save_profile():
     try:
@@ -152,7 +152,7 @@ def save_profile():
             user_data = response.json()[0] if isinstance(response.json(), list) else response.json()
             user_id = user_data["id"]
 
-        # 2️⃣ Skill levels tablosuna otomatik 50% ekle
+        # Process skills and experiences
         skills = profile_data_raw.get("skills", [])
         skills_processed = 0
         experiences_processed = len(profile_data_raw.get("experiences", []))
@@ -170,15 +170,19 @@ def save_profile():
             )
             if skill_response.status_code in [200, 201]:
                 skills_processed += 1
+        print("📌 Yeni kullanıcı JSON:", user_data)
 
         return jsonify({
             "success": True,
             "message": "Profil başarıyla güncellendi",
             "user_id": user_id,
             "skills_processed": skills_processed,
-            "experiences_processed": experiences_processed
+            "experiences_processed": experiences_processed,
+            "data": [user_data]
+        
 
         })
+    
 
     except Exception as e:
         print("save_profile hatası:", traceback.format_exc())
@@ -187,7 +191,7 @@ def save_profile():
             "message": f"Server hatası: {str(e)}"
         }), 500
 
-# Kullanıcı profilini Supabase'den çekmek için
+# Take user identifier (ID or email) and fetch profile from Supabase
 @app.route("/get-profile/<identifier>", methods=["GET"]) 
 def get_profile(identifier):
     """Kullanıcı profilini Supabase'den çek (ID veya email ile)"""
@@ -198,7 +202,7 @@ def get_profile(identifier):
         }
         
         # Check if it's an email or ID
-        by_param = request.args.get('by', 'id')  # default to 'id'
+        by_param = request.args.get('by', 'id')  
         
         if by_param == 'email':
             query_param = f"email=eq.{identifier}"
@@ -238,6 +242,8 @@ def get_profile(identifier):
             "success": False,
             "message": f"Server hatası: {str(e)}"
         }), 500
+    
+# For user login by email    
 @app.route("/login", methods=["POST"])
 def login():
     try:
@@ -272,7 +278,7 @@ def login():
         print("❌ Login hata:", e)
         return jsonify({"success": False, "message": str(e)}), 500
 
-# CV'yi Gemini AI ile analiz etmek için
+# Analyze CV with Gemini AI
 @app.route("/analyze-cv", methods=["POST"])
 def analyze_cv():
     """CV'yi Gemini AI ile analiz et"""
@@ -288,7 +294,8 @@ def analyze_cv():
         
         prompt = f"""
         Lütfen aşağıdaki CV metnini dikkatlice analiz et ve aşağıdaki JSON yapısına uygun şekilde, **sadece** JSON olarak yanıt ver ve lütfen her şeyi doldur ekiklik olmasın:
-
+        "experienceLevel" için kullanıcının staj ve iş deneyimlerine dikkat et, sadece iş deneyimini baz alarak doldur staj deneyimini baz alma. Bütün hepsi staj ise junior olur. Ayrıca, süre hesaplmasını doğru yap.
+        Tüm iş ilanlarını kaydettiğinden emin ol.
         {{
           "firstName": "ad",
           "lastName": "soyad",
@@ -297,7 +304,7 @@ def analyze_cv():
           "location": "şehir, ülke",
           "currentTitle": "mevcut pozisyon",
           "summary": "kısa özet",
-          "experienceLevel": "junior | mid | senior | lead",
+          "experienceLevel": "junior | mid | senior | lead", 
           "skills": ["beceri1", "beceri2"],
           "experiences": [{{"company": "şirket", "position": "pozisyon", "duration": "2022-2024", "description": "açıklama"}}],
           "education": {{
@@ -369,7 +376,7 @@ def analyze_cv():
             "message": f"CV analizi hatası: {str(e)}"
         }), 500
 
-# Servisin sağlık durumunu kontrol etmek için
+# Check backend health
 @app.route("/health", methods=["GET"]) 
 def health_check():
     """
@@ -380,34 +387,29 @@ def health_check():
         "service": "KariyerAI Backend",
         "version": "1.0.0"
     })
-import re
-# from personalization_engine import PersonalizationEngine  # Geçici olarak devre dışı
 
-# Kişiselleştirme motoru instance - şimdilik None
-# personalization_engine = PersonalizationEngine()
+import re
+
 personalization_engine = None
 
-# Kullanıcı profil analizi fonksiyonu
+# Analyze user profile to generate personalized parameters
 def analyze_user_profile(profile):
     """Kullanıcı profilini analiz edip kişiselleştirme parametreleri üret"""
     try:
-        # Temel bilgiler
+
         current_title = profile.get("current_title", "").lower()
         skills = profile.get("skills", [])
         experience_level = profile.get("experience_level", "").lower()
         degree = profile.get("degree", "").lower()
         university = profile.get("university", "")
         
-        # Kişilik testi sonuçları (localStorage'dan gelecek)
         personality_data = profile.get("personality_assessment", {})
         
-        # Sektör analizi - bölüm bilgisini de dikkate al
-        industry_focus = "technology"  # Varsayılan
+        industry_focus = "technology"  
         if any(keyword in current_title for keyword in ["developer", "engineer", "programmer", "software"]):
             industry_focus = "technology"
         elif any(keyword in current_title for keyword in ["designer", "ux", "ui"]):
             industry_focus = "design"
-        # Bölüm bilgisine göre sektör belirleme
         elif any(keyword in degree for keyword in ["endüstri mühendisliği", "industrial engineering"]):
             industry_focus = "industrial_engineering"
         elif any(keyword in degree for keyword in ["bilgisayar", "computer", "yazılım", "software"]):
@@ -421,7 +423,6 @@ def analyze_user_profile(profile):
         elif any(keyword in current_title for keyword in ["analyst", "data", "research"]):
             industry_focus = "analytics"
         
-        # Rol tipi belirleme - bölüm ve deneyim seviyesini dikkate al
         role_type = "individual_contributor"
         if any(keyword in current_title for keyword in ["senior", "lead", "principal"]):
             role_type = "senior_individual_contributor"
@@ -432,7 +433,6 @@ def analyze_user_profile(profile):
         elif "endüstri mühendisliği" in degree and experience_level in ["junior", "entry"]:
             role_type = "junior_engineer"
         
-        # Teknik beceri kategorileri - bölüm bilgisine göre varsayılan beceriler ekle
         technical_skills = {}
         programming_langs = []
         frameworks = []
@@ -447,12 +447,10 @@ def analyze_user_profile(profile):
             elif skill_lower in ["git", "docker", "kubernetes", "aws", "azure"]:
                 tools.append(skill)
         
-        # Bölüm bilgisine göre varsayılan beceriler ekle
         if "endüstri mühendisliği" in degree:
-            # Endüstri mühendisliği için tipik beceriler
             tools.extend(["Excel", "SAP", "AutoCAD", "MATLAB", "Minitab", "Process Analysis"])
             if not programming_langs:
-                programming_langs.extend(["Python", "SQL"])  # Endüstri mühendislerinin sık kullandığı diller
+                programming_langs.extend(["Python", "SQL"])  
         
         technical_skills = {
             "programming_languages": programming_langs,
@@ -460,7 +458,6 @@ def analyze_user_profile(profile):
             "tools": tools
         }
         
-        # Soft skill'ler (kişilik testinden gelecek)
         soft_skills = []
         if personality_data.get("personality_type"):
             personality_type = personality_data.get("personality_type", "")
@@ -473,7 +470,6 @@ def analyze_user_profile(profile):
             if "F" in personality_type:
                 soft_skills.extend(["empati", "müşteri odaklılık"])
         
-        # Beceri açıkları belirleme
         skill_gaps = []
         if role_type in ["senior_individual_contributor", "management"] and not programming_langs:
             skill_gaps.append("teknik_liderlik")
@@ -482,7 +478,6 @@ def analyze_user_profile(profile):
         if role_type == "management" and "liderlik" not in soft_skills:
             skill_gaps.append("liderlik_becerileri")
         
-        # Kariyer yörüngesi
         career_trajectory = "stable"
         if experience_level in ["junior", "entry"]:
             career_trajectory = "growing"
@@ -491,7 +486,6 @@ def analyze_user_profile(profile):
         elif "manager" in current_title:
             career_trajectory = "management_track"
         
-        # Kişiselleştirme parametreleri - bölüm ve kişilik tipine göre ayarla
         personalization_params = {
             "difficulty_preference": "medium",
             "learning_style": personality_data.get("learning_style", "mixed"),
@@ -500,7 +494,6 @@ def analyze_user_profile(profile):
             "collaboration_preference": "team" if "E" in personality_data.get("personality_type", "") else "individual"
         }
         
-        # Bölüm bilgisine göre simülasyon türlerini ayarla
         if "endüstri mühendisliği" in degree:
             personalization_params["simulation_types"] = ["process_optimization", "project_management", "data_analysis", "quality_control"]
         elif any(keyword in degree for keyword in ["bilgisayar", "yazılım"]):
@@ -508,7 +501,6 @@ def analyze_user_profile(profile):
         elif any(keyword in degree for keyword in ["makine", "elektrik"]):
             personalization_params["simulation_types"] = ["technical_problem_solving", "design_review", "testing"]
         
-        # Deneyim seviyesine göre zorluk ayarı
         if experience_level in ["junior", "entry"]:
             personalization_params["difficulty_preference"] = "easy"
             if "endüstri mühendisliği" in degree:
@@ -531,7 +523,6 @@ def analyze_user_profile(profile):
         
     except Exception as e:
         print(f"Kullanıcı analizi hatası: {str(e)}")
-        # Fallback analiz
         return {
             'industry_focus': 'technology',
             'role_type': 'general',
@@ -547,7 +538,7 @@ def analyze_user_profile(profile):
             }
         }
 
-# Kullanıcı profilinden detaylı kariyer simülasyonu senaryosu oluşturmak için
+# Create a career simulation for users
 @app.route("/career-simulation/<user_id>", methods=["GET", "OPTIONS"])
 def career_simulation(user_id):
     if request.method == "OPTIONS":
@@ -556,7 +547,6 @@ def career_simulation(user_id):
     print("📌 [career_simulation] İstek alındı | user_id:", user_id)
 
     try:
-        # Geçici kullanıcı kontrolü
         if str(user_id).startswith('temp_'):
             print(f"📌 Geçici kullanıcı {user_id} için varsayılan simülasyon oluşturuluyor")
             return generate_default_simulation()
@@ -581,13 +571,9 @@ def career_simulation(user_id):
         skills = ", ".join(profile.get("skills", [])) or "Belirtilmemiş"
         print(f"📌 Profil verisi: title={current_title}, skills={skills}")
 
-        # ŞİMDİLİK: Kişilik testi verileri localStorage'da olduğu için varsayılan analiz kullan
-        # TODO: Veritabanından kişilik testi verilerini çek
+
         user_analysis = analyze_user_profile(profile)
         print(f"📌 Kullanıcı analizi: {user_analysis.get('personalization_params', {})}")
-
-        # Not: Kişilik testi verileri şu anda localStorage'da tutuluyor
-        # Frontend'den bu veriler alınarak simülasyon kişiselleştirilebilir
 
         base_prompt = f"""
         Sen bir kariyer simülasyonu üreticisisin. MUTLAKA kullanıcının gerçek profiline uygun simülasyon üret.
@@ -671,8 +657,6 @@ def career_simulation(user_id):
         ❗ KONTROL: Simülasyon kullanıcının bölümüne uygun mu? Eğer değilse baştan yaz!
         """
 
-        # Kişiselleştirilmiş prompt oluştur
-        # Şimdilik basit olarak base_prompt'u kullan
         prompt = base_prompt
 
         gemini_payload = {
@@ -694,7 +678,6 @@ def career_simulation(user_id):
         ai_response = result['candidates'][0]['content']['parts'][0]['text']
         print("📌 Ham Gemini yanıt (ilk 500 karakter):", ai_response[:500])
 
-        # Sadece JSON kısmını yakala
         json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
         if not json_match:
             print("❌ Gemini yanıtında JSON bulunamadı")
@@ -707,7 +690,6 @@ def career_simulation(user_id):
         try:
             scenario = json.loads(cleaned)
             
-            # ✅ BÖLÜM UYGUNLUK KONTROLÜ
             user_degree = profile.get("degree", "").lower()
             scenario_title = scenario.get("title", "").lower()
             scenario_category = scenario.get("category", "").lower()
@@ -715,7 +697,6 @@ def career_simulation(user_id):
             
             print(f"🔍 Uygunluk kontrolü: Bölüm='{user_degree}' | Senaryo='{scenario_title}'")
             
-            # Bölüm-senaryo uyumu kontrol et
             degree_mismatch = False
             mismatch_reason = ""
             
@@ -737,13 +718,11 @@ def career_simulation(user_id):
                     degree_mismatch = True
                     mismatch_reason = "Makine Mühendisi için yazılım simülasyonu üretildi"
             
-            # Eğer uyumsuzluk varsa, bölüme özel simülasyon oluştur
             if degree_mismatch:
                 print(f"❌ UYUMSUZLUK: {mismatch_reason}")
                 print("🔄 Bölüme özel simülasyon oluşturuluyor...")
                 return generate_degree_specific_simulation(profile)
             
-            # ✅ Senaryo uygunsa kabul et
             print("✅ Senaryo bölüme uygun - kabul ediliyor")
             return jsonify({"success": True, "data": scenario})
             
@@ -756,11 +735,7 @@ def career_simulation(user_id):
         print("❌ career_simulation genel hata:", traceback.format_exc())
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# =====================================================
-# İNTERAKTİF GÖREV SİSTEMLERİ
-# =====================================================
-
-# Görev simülasyonu oluşturma
+# Interface for task simulation
 @app.route("/task-simulation", methods=["POST"])
 def task_simulation():
     """Bir görev için detaylı simülasyon oluştur"""
@@ -772,7 +747,6 @@ def task_simulation():
         task_type = task.get('task', '').lower()
         current_title = user.get('current_title', 'Developer')
         
-        # Görev tipine göre farklı simülasyon promptları
         if 'email' in task_type or 'mail' in task_type:
             prompt = f"""
             Kullanıcı {current_title} pozisyonunda ve "{task.get('task')}" görevini yapıyor.
@@ -853,7 +827,6 @@ def task_simulation():
             }}
             """
         
-        # Gemini API çağrısı
         gemini_payload = {
             "contents": [{"parts": [{"text": prompt}]}],
             "generationConfig": {
@@ -876,16 +849,13 @@ def task_simulation():
             
             print(f"📌 Ham Gemini yanıt (task-simulation): {ai_response[:500]}...")
             
-            # JSON'u çıkarmak için çeşitli yöntemler dene
             json_content = None
             
-            # 1. Markdown kod bloğu kontrolü
             markdown_match = re.search(r'```json\s*(\{.*?\})\s*```', ai_response, re.DOTALL)
             if markdown_match:
                 json_content = markdown_match.group(1)
                 print("📌 Markdown kod bloğundan JSON çıkarıldı")
             else:
-                # 2. Sadece süslü parantez kontrolü
                 json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
                 if json_match:
                     json_content = json_match.group(0)
@@ -912,7 +882,7 @@ def task_simulation():
         print(f"Task simulation error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# Email simülasyon chat sistemi
+# Email simülation chat
 @app.route("/email-chat", methods=["POST"])
 def email_chat():
     """Email konversasyonu için LLM chat"""
@@ -922,7 +892,6 @@ def email_chat():
         chat_context = data.get('context', {})
         user_role = data.get('user_role', 'Employee')
         
-        # LLM'e müşteri/iş ortağı rolünde davranmasını söyle
         prompt = f"""
         Sen bir müşteri/iş ortağı rolündesin. Kullanıcı {user_role} pozisyonunda çalışıyor.
         
@@ -967,7 +936,7 @@ def email_chat():
         print(f"Email chat error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# Kod değerlendirme sistemi
+# Code evaluation endpoint
 @app.route("/evaluate-code", methods=["POST"])
 def evaluate_code():
     """Kullanıcının yazdığı kodu değerlendir"""
@@ -1028,7 +997,7 @@ def evaluate_code():
         print(f"Code evaluation error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# Görev tamamlama ve progress tracking
+# Complete task and save score
 @app.route("/complete-task", methods=["POST"])
 def complete_task():
     """Görev tamamlandığında skor ve ilerleme kaydet"""
@@ -1039,7 +1008,7 @@ def complete_task():
         score = data.get('score', 0)
         completion_data = data.get('completion_data', {})
         
-        # Supabase'e görev tamamlama kaydı ekle
+        # Supabase save task completion
         task_completion = {
             "user_id": user_id,
             "task_id": task_id,
@@ -1069,7 +1038,7 @@ def complete_task():
         print(f"Task completion error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# Gerçek zamanlı feedback ve ipuçları
+# Get hint for user during task
 @app.route("/get-hint", methods=["POST"])
 def get_hint():
     """Kullanıcıya görev sırasında ipucu ver"""
@@ -1118,7 +1087,7 @@ def get_hint():
         print(f"Hint generation error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# Gelişmiş toplantı chat sistemi
+# Get realistic AI responses during meetings
 @app.route("/meeting-chat", methods=["POST"])
 def meeting_chat():
     """Toplantıda gerçekçi AI katılımcı yanıtları"""
@@ -1133,7 +1102,7 @@ def meeting_chat():
         if not user_message:
             return jsonify({"success": False, "message": "Mesaj boş olamaz"}), 400
 
-        # Daha detaylı prompt oluştur
+        # Detailed prompt with conversation context
         conversation_context = ""
         if conversation_history:
             conversation_context = "Önceki konuşma:\n" + "\n".join([
@@ -1160,7 +1129,7 @@ def meeting_chat():
         gemini_payload = {
             "contents": [{"parts": [{"text": enhanced_prompt}]}],
             "generationConfig": {
-                "temperature": 0.8,  # Daha yaratıcı yanıtlar için
+                "temperature": 0.8,  
                 "maxOutputTokens": 500,
                 "topP": 0.9
             }
@@ -1177,19 +1146,16 @@ def meeting_chat():
             result = response.json()
             ai_response = result['candidates'][0]['content']['parts'][0]['text']
             
-            # JSON parse et
             json_match = re.search(r'\{.*\}', ai_response, re.DOTALL)
             if json_match:
                 try:
                     response_data = json.loads(json_match.group(0))
                     
-                    # Yanıt kalitesini artır
                     if not response_data.get('response'):
                         response_data['response'] = "İlginç bir bakış açısı. Bu konuyu daha detaylı konuşabilir miyiz?"
                     
                     return jsonify({"success": True, "data": response_data})
                 except json.JSONDecodeError:
-                    # Fallback yanıt
                     fallback_responses = {
                         'Proje Yöneticisi': "Bu konuda deadline'ımızı nasıl etkiler? Kaynak planlaması yapmamız gerekiyor.",
                         'Senior Developer': "Teknik implementasyon açısından hangi approach'u öneriyorsun?",
@@ -1213,7 +1179,7 @@ def meeting_chat():
         print(f"Meeting chat error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# Kişilik testi sonuçlarını kaydetme
+# Save personality assessment results
 @app.route("/save-personality-assessment", methods=["POST"])
 def save_personality_assessment():
     """Kullanıcının kişilik testi sonuçlarını kaydet"""
@@ -1232,7 +1198,6 @@ def save_personality_assessment():
             print("Error: Missing assessment_results")
             return jsonify({"success": False, "message": "Test sonuçları eksik"}), 400
         
-        # Geçici kullanıcılar için sadece localStorage'a kaydet
         if str(user_id).startswith('temp_'):
             print(f"Temporary user {user_id}, skipping database save")
             return jsonify({
@@ -1240,14 +1205,12 @@ def save_personality_assessment():
                 "message": "Geçici kullanıcı - sonuçlar yerel olarak kaydedildi"
             })
         
-        # ŞİMDİLİK: Veritabanı kolonu eksik olduğu için sadece localStorage'a kaydediyoruz
         print(f"Database column missing, only saving to localStorage for user {user_id}")
         return jsonify({
             "success": True,
             "message": "Kişilik testi sonuçları yerel olarak kaydedildi (veritabanı desteği yakında)"
         })
         
-        # TODO: Supabase'de personality_assessment kolonu eklendikten sonra aşağıdaki kodu aktif et
         """
         # Supabase'e kişilik testi sonuçlarını kaydet
         headers = {
@@ -1287,7 +1250,7 @@ def save_personality_assessment():
         print(f"Personality assessment save error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# Kullanıcı kişiselleştirme verilerini getir
+#   Get user analysis
 @app.route("/get-user-analysis/<uuid:user_id>", methods=["GET"])
 def get_user_analysis(user_id):
     """Kullanıcının analiz edilmiş profilini getir"""
@@ -1509,7 +1472,7 @@ def generate_degree_specific_simulation(profile):
         })
         
     else:
-        # Diğer bölümler için generic approach
+        # Standard simulation
         return jsonify({
             "success": True,
             "data": {
@@ -1572,12 +1535,8 @@ def generate_degree_specific_simulation(profile):
 def generate_default_simulation():
     """Dinamik varsayılan simülasyon - localStorage'dan kullanıcı bilgilerini al"""
     
-    # Not: Bu fonksiyon frontend'den localStorage'da bulunan kullanıcı bilgilerini kullanmalı
-    # Şimdilik farklı senaryolar arasından rastgele seçim yapacak
-    
     import random
     
-    # Farklı simülasyon senaryoları havuzu
     scenarios = [
         {
             "title": "Frontend Developer - React Projesi",
@@ -1785,10 +1744,8 @@ def generate_default_simulation():
         }
     ]
     
-    # Rastgele bir senaryo seç
     selected_scenario = random.choice(scenarios)
     
-    # Email ve meeting bilgilerini ekle
     selected_scenario["emails"] = [
         {"from": "manager@company.com", "subject": "Günlük Hedefler", "summary": "Bugünkü öncelikli görevler"},
         {"from": "team@company.com", "subject": "Proje Güncellemesi", "summary": "Ekip çalışması durumu"}
@@ -1805,7 +1762,7 @@ def generate_default_simulation():
         "message": f"Dinamik simülasyon: {selected_scenario['category']}"
     })
 
-# İş ilanlarını SerpAPI ile bulmak ve AI ile analiz etmek için KULLANILIYOR
+#   Get real jobs with AI
 @app.route("/api/jobs", methods=["GET"])
 def get_real_jobs_with_ai():
     try:
@@ -1822,7 +1779,7 @@ def get_real_jobs_with_ai():
         params = {
             "engine": "google",
             "q": f'"{title}" job opening {location} site:kariyer.net OR site:secretcv.com OR site:yenibiris.com OR site:indeed.com OR site:glassdoor.com OR site:linkedin.com/jobs',
-            "num": 20,
+            "num": 25,
             "api_key": SERPAPI_KEY
         }
 
@@ -1871,7 +1828,7 @@ def get_real_jobs_with_ai():
         for i, link in enumerate(job_links):
             print(f"  {i+1}. {link['url']}")
 
-        # 2️⃣ Scraping verileri topla
+        # Scraping 
         job_data_for_ai = []
         headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
 
@@ -1907,14 +1864,14 @@ def get_real_jobs_with_ai():
                 print("   ⚠️ Scraping başarısız, snippet kullanılacak")
             time.sleep(1)
 
-        # 3️⃣ AI analizi
+       
         prompt = f"""
 Aşağıdaki verilerden "{title}" pozisyonu için iş ilanı detaylarını çıkar.
 Kurallar:
 - **"not specified", "belirtilmemiş", "unknown", "n/a" gibi ifadeleri ASLA kullanma.** Bunları yazarsan cevap geçersiz sayılır.
 - Eksik veya yarım bırakma. Her alanı dikkatli incele ve doldur.
 - Şirket adını, konumu ve pozisyon adını mutlaka belirt. Bu bilgiler eksikse ilgili alanı tahmine dayalı olarak doldur ama "not specified" yazma.
-- Requirements kısmında ilanın açıklamasını inceleyerek **anahtar becerileri ve teknolojileri** listele. En az 6–8 tane özgün ve alakalı beceri yaz. Genel terimler ya da "not specified" yazma.
+- Requirements kısmında ilanın açıklamasını inceleyerek **anahtar becerileri ve teknolojileri** listele. En az 6 tane özgün ve alakalı tek kelimelik beceri yaz. Genel terimler ya da "not specified" yazma.
 - Eğer ilanda açıkça "başvuru kapandı", "ilan süresi doldu", "yayından kaldırıldı" gibi ifadeler varsa bu ilanı tamamen atla.
 
 Veri:
@@ -1956,7 +1913,6 @@ JSON yanıt formatı (dikkatlice doldur):
         if ai_response.status_code != 200:
             return jsonify({"success": False, "message": "AI analizi başarısız", "jobs": []}), 500
 
-        # 4️⃣ JSON parse (geliştirilmiş regex)
         result = ai_response.json()
         ai_text = result['candidates'][0]['content']['parts'][0]['text']
         print(f"📌 AI yanıtı (ilk 300): {ai_text[:300]}...")
@@ -1970,7 +1926,6 @@ JSON yanıt formatı (dikkatlice doldur):
             ai_data = json.loads(json_match.group(1))
             jobs = ai_data.get("jobs", [])
 
-            # 5️⃣ Toleranslı filtreleme
             final_jobs = []
             for job in jobs:
                 if job.get("title") and job.get("url"):
@@ -2066,7 +2021,6 @@ def update_skills(user_id):
             "Content-Type": "application/json"
         }
 
-        # Profil tablosunda becerileri güncelle
         response = requests.patch(
             f"{SUPABASE_API_URL}/rest/v1/profiles?id=eq.{user_id}",
             headers=headers,
@@ -2082,10 +2036,7 @@ def update_skills(user_id):
         print("update_skills hatası:", e)
         return jsonify({"success": False, "message": str(e)}), 500
 
-# -----------------------------------
-# SKILL LEVEL ENDPOINTLERİ
-# -----------------------------------
-
+# Skill Level Endpoints
 @app.route("/api/save-skill-level", methods=["POST"])
 def save_skill_level():
     try:
@@ -2104,11 +2055,9 @@ def save_skill_level():
             "Prefer": "return=minimal"
         }
 
-        # 1️⃣ Aynı user_id + skill varsa önce sil (güncelleme gibi davranır)
         delete_url = f"{SUPABASE_API_URL}/rest/v1/skill_levels?user_id=eq.{user_id}&skill=eq.{skill}"
         requests.delete(delete_url, headers=headers)
 
-        # 2️⃣ Yeni veriyi ekle
         payload = {
             "user_id": user_id,
             "skill": skill,
@@ -2161,14 +2110,12 @@ def generate_industry_insights(user_id):
             "Authorization": f"Bearer {SUPABASE_API_KEY}"
         }
 
-        # 1️⃣ Önce UUID (id) ile dene
         profile_resp = requests.get(
             f"{SUPABASE_API_URL}/rest/v1/profiles?id=eq.{user_id}",
             headers=headers
         )
         profile_data = profile_resp.json()
 
-        # 2️⃣ Eğer bulunamadıysa user_id ile dene
         if not profile_data:
             profile_resp = requests.get(
                 f"{SUPABASE_API_URL}/rest/v1/profiles?user_id=eq.{user_id}",
@@ -2182,7 +2129,6 @@ def generate_industry_insights(user_id):
         user_data = profile_data[0]
         job_title = user_data.get("current_title", "bilinmeyen meslek")
 
-        # Gemini çağrısı
         payload = {
             "contents": [{
                 "parts": [{
@@ -2212,8 +2158,6 @@ def generate_industry_insights(user_id):
     except Exception as e:
         print("LLM sektör içgörü hatası:", e)
         return jsonify({"success": False, "message": str(e)}), 500
-
-# Mevcut get_missing_skills fonksiyonunuz zaten var, bu yüzden bu kısmı kaldırıyoruz
 
 
 # Enhanced learning module generator
@@ -2295,7 +2239,6 @@ def generate_learning_module():
 
         ai_text = response.json()['candidates'][0]['content']['parts'][0]['text']
         
-        # JSON'u çıkar
         import re
         json_match = re.search(r'\{.*\}', ai_text, re.DOTALL)
         if not json_match:
@@ -2425,7 +2368,6 @@ def evaluate_challenge():
 
         ai_text = response.json()['candidates'][0]['content']['parts'][0]['text']
         
-        # JSON'u çıkar
         import re
         json_match = re.search(r'\{.*\}', ai_text, re.DOTALL)
         if not json_match:
@@ -2461,7 +2403,7 @@ def complete_skill():
             "Prefer": "return=representation"
         }
         
-        # 1️⃣ missing_skills tablosundan sil
+        
         delete_response = requests.delete(
             f"{SUPABASE_API_URL}/rest/v1/missing_skills?user_id=eq.{user_id}&skill=eq.{skill}",
             headers=headers
@@ -2470,7 +2412,7 @@ def complete_skill():
         if delete_response.status_code not in [200, 204]:
             print("Missing skill silme hatası:", delete_response.text)
         
-        # 2️⃣ completed_skills tablosuna ekle
+        
         from datetime import datetime
         completed_skill_data = {
             "user_id": user_id,

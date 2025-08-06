@@ -125,6 +125,25 @@
             margin-bottom: 1rem;
             opacity: 0.5;
         }
+        
+        #profileCurrentTitle {
+            color: rgba(255, 255, 255, 1);
+            font-weight: 500;
+        }
+        
+        .profile-header-content {
+            display: flex;
+            align-items: center;
+            gap: 2.5rem; 
+        }
+        
+        .profile-info {
+            padding-left: 1rem; 
+        }
+        
+        .profile-avatar {
+            flex-shrink: 0; 
+        }
     </style>
 </head>
 <body>
@@ -162,11 +181,11 @@
     <!-- Profile Header -->
     <div class="profile-header">
         <div class="container">
-            <div class="flex items-center gap-6">
+            <div class="profile-header-content"> 
                 <div id="profileAvatar" class="profile-avatar flex items-center justify-center">
                     U
                 </div>
-                <div class="flex-1">
+                <div class="profile-info flex-1"> 
                     <h1 id="profileFullName" class="text-3xl font-bold mb-2">Kullanıcı Adı</h1>
                     <p id="profileCurrentTitle" class="text-xl mb-2 opacity-90">Pozisyon</p>
                     <div class="flex items-center gap-4 text-sm opacity-80">
@@ -180,10 +199,7 @@
                         <i class="fas fa-edit mr-2"></i>
                         <span id="editBtnText">Profili Düzenle</span>
                     </button>
-                    <button id="shareProfileBtn" class="btn btn-outline" style="color: white; border-color: white;">
-                        <i class="fas fa-share-alt mr-2"></i>
-                        Profili Paylaş
-                    </button>
+
                 </div>
             </div>
         </div>
