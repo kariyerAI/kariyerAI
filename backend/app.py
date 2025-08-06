@@ -2445,7 +2445,161 @@ def complete_skill():
             "success": False,
             "message": f"Server hatası: {str(e)}"
         }), 500
-    
+
+
+@app.route("/api/personality-analysis", methods=["POST"])
+def personality_analysis():
+    """LLM ile detaylı kişilik analizi yapma"""
+    try:
+        data = request.json
+        user_context = data.get('user_context', {})
+        analysis_type = data.get('analysis_type', 'basic')
+        
+        # Kullanıcı bilgilerini topla
+        personality_type = user_context.get('personalityType', 'Belirtilmemiş')
+        responses = user_context.get('responses', {})
+        skills = user_context.get('skills', [])
+        experiences = user_context.get('experiences', [])
+        current_title = user_context.get('currentTitle', '')
+        location = user_context.get('location', '')
+        first_name = user_context.get('firstName', 'Kullanıcı')
+        
+        # LLM için detaylı prompt hazırla
+        analysis_prompt = f"""
+Kişilik Analizi Uzmanı olarak, aşağıdaki kullanıcının detaylı kişilik analizi raporu hazırla:
+
+KULLANICI BİLGİLERİ:
+- İsim: {first_name}
+- Kişilik Tipi: {personality_type}
+- Mevcut Pozisyon: {current_title}
+- Lokasyon: {location}
+- Beceriler: {', '.join(skills) if skills else 'Belirtilmemiş'}
+- İş Deneyimleri: {len(experiences)} adet deneyim
+
+KIŞILIK TESTİ YANITLARI:
+{json.dumps(responses, ensure_ascii=False, indent=2)}
+
+Lütfen aşağıdaki formatta JSON yanıtı ver:
+
+{{
+    "personality_overview": "Kişilik tipinin genel açıklaması ve bu kullanıcıya özgü yorumlar",
+    "personality_traits": [
+        {{
+            "name": "Özellik Adı",
+            "score": 85,
+            "description": "Bu özelliğin kullanıcıdaki yansıması"
+        }}
+    ],
+    "career_fit": {{
+        "suitable_careers": ["Kariyer 1", "Kariyer 2", "Kariyer 3"],
+        "explanation": "Neden bu kariyerler uygun olduğunun açıklaması"
+    }},
+    "strengths": [
+        {{
+            "title": "Güçlü Yön Başlığı",
+            "description": "Detaylı açıklama"
+        }}
+    ],
+    "development_areas": [
+        {{
+            "title": "Gelişim Alanı Başlığı", 
+            "description": "Nasıl geliştirilebileceği"
+        }}
+    ],
+    "recommendations": [
+        {{
+            "category": "Kariyer Gelişimi",
+            "suggestion": "Önerinin açıklaması",
+            "action_items": ["Yapılacak 1", "Yapılacak 2"]
+        }}
+    ]
+}}
+
+Analizi Türkçe yap ve kullanıcının mevcut durumunu dikkate alarak kişiselleştirilmiş öneriler sun.
+"""
+
+        print(f"🧠 {first_name} için kişilik analizi yapılıyor...")
+        
+        # Gemini API ile analiz yap
+        gemini_payload = {
+            "contents": [{
+                "parts": [{
+                    "text": analysis_prompt
+                }]
+            }],
+            "generationConfig": {
+                "temperature": 0.7,
+                "topK": 40,
+                "topP": 0.95,
+                "maxOutputTokens": 2048,
+            }
+        }
+        
+        response = requests.post(
+            f"{GEMINI_API_URL}?key={GEMINI_API_KEY}",
+            headers={"Content-Type": "application/json"},
+            json=gemini_payload
+        )
+        
+        if response.status_code != 200:
+            print("Gemini API hatası:", response.text)
+            return jsonify({
+                "success": False,
+                "message": f"LLM analizi başarısız: {response.text}"
+            }), 500
+            
+        result = response.json()
+        print("✅ Gemini yanıtı alındı")
+        
+        # Gemini yanıtından metni çıkar
+        if 'candidates' in result and len(result['candidates']) > 0:
+            content = result['candidates'][0]['content']['parts'][0]['text']
+            
+            # JSON formatındaki yanıtı parse et
+            try:
+                # JSON kısmını bul ve parse et
+                json_start = content.find('{')
+                json_end = content.rfind('}') + 1
+                
+                if json_start != -1 and json_end > json_start:
+                    json_content = content[json_start:json_end]
+                    analysis_result = json.loads(json_content)
+                    
+                    print(f"📊 {first_name} için analiz tamamlandı")
+                    return jsonify({
+                        "success": True,
+                        **analysis_result
+                    })
+                else:
+                    raise ValueError("JSON formatı bulunamadı")
+                    
+            except (json.JSONDecodeError, ValueError) as e:
+                print("JSON parse hatası:", e)
+                print("Ham içerik:", content)
+                
+                # Fallback: Ham metni döndür
+                return jsonify({
+                    "success": True,
+                    "personality_overview": content,
+                    "personality_traits": [],
+                    "career_fit": {"suitable_careers": [], "explanation": ""},
+                    "strengths": [],
+                    "development_areas": [],
+                    "recommendations": []
+                })
+        else:
+            return jsonify({
+                "success": False,
+                "message": "LLM'den geçerli yanıt alınamadı"
+            }), 500
+            
+    except Exception as e:
+        print("personality_analysis hatası:", traceback.format_exc())
+        return jsonify({
+            "success": False,
+            "message": f"Server hatası: {str(e)}"
+        }), 500
+
 
 if __name__ == "__main__":
     print("🚀 KariyerAI Backend başlatılıyor...")

@@ -153,7 +153,7 @@ function showPersonalizedRecommendations(personalityAssessment) {
             <i class="fas fa-play"></i>
             Kişisel Simülasyon
           </a>
-          <a href="../html/personality_assessment.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem;">
+          <a href="../html/personality_results.html" style="background: rgba(255,255,255,0.2); color: white; padding: 0.5rem 1rem; border-radius: 6px; text-decoration: none; font-size: 0.9rem; display: inline-flex; align-items: center; gap: 0.5rem;">
             <i class="fas fa-chart-bar"></i>
             Test Sonuçları
           </a>
