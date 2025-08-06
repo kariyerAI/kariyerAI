@@ -648,8 +648,8 @@ def career_simulation(user_id):
           "situation": "Bölüme özel gerçekçi problem",
           "question": "Bu durumda ne yaparsınız?",
           "options": [
-            {{"id":"a","text":"Seçenek1","feedback":"Analiz","score":5}},
-            {{"id":"b","text":"Seçenek2","feedback":"Analiz","score":3}}
+            {{"id":"a","text":"Seçenek1","feedback":"Analiz"}},
+            {{"id":"b","text":"Seçenek2","feedback":"Analiz"}}
           ]
         }}
         
@@ -818,8 +818,8 @@ def task_simulation():
                 "decision": {{
                     "question": "Karar sorusu",
                     "options": [
-                        {{"id": "a", "text": "Seçenek 1", "score": 5}},
-                        {{"id": "b", "text": "Seçenek 2", "score": 3}}
+                        {{"id": "a", "text": "Seçenek 1"}},
+                        {{"id": "b", "text": "Seçenek 2"}}
                     ]
                 }},
                 "resources": ["Kullanabileceği kaynaklar"],
@@ -959,7 +959,6 @@ def evaluate_code():
         
         Değerlendirmeyi JSON formatında döndür:
         {{
-            "score": 85,
             "correctness": "Doğru|Kısmen doğru|Yanlış",
             "efficiency": "Verimli|Orta|Verimsiz",
             "readability": "Okunabilir|Orta|Karmaşık",
@@ -997,22 +996,20 @@ def evaluate_code():
         print(f"Code evaluation error: {str(e)}")
         return jsonify({"success": False, "message": f"Hata: {str(e)}"}), 500
 
-# Complete task and save score
+# Complete task (without scoring)
 @app.route("/complete-task", methods=["POST"])
 def complete_task():
-    """Görev tamamlandığında skor ve ilerleme kaydet"""
+    """Görev tamamlandığında ilerleme kaydet"""
     try:
         data = request.json
         user_id = data.get('user_id')
         task_id = data.get('task_id')
-        score = data.get('score', 0)
         completion_data = data.get('completion_data', {})
         
         # Supabase save task completion
         task_completion = {
             "user_id": user_id,
             "task_id": task_id,
-            "score": score,
             "completion_data": completion_data,
             "completed_at": "now()"
         }
@@ -1379,10 +1376,10 @@ def generate_degree_specific_simulation(profile):
                 "situation": "Ana üretim hattında beklenmedik bir şekilde %15 verimlilik düşüşü yaşanıyor. Müşteri siparişlerinde gecikme riski var ve üst yönetim acil çözüm bekliyor. İlk analiz sonuçlarına göre sorun ekipman, operatör performansı veya süreç akışından kaynaklanıyor olabilir.",
                 "question": "Bu kritik durumda hangi yaklaşımı benimsersiniz?",
                 "options": [
-                    {"id":"a","text":"Immediate root cause analysis ile 8D metodolojisi uygulayarak sistematik problem çözme","feedback":"Mükemmel yaklaşım. 8D (8 Disciplines) endüstride standart problem solving metodudur. Kök nedeni bulup kalıcı çözüm sağlar. Takım çalışmasını da destekler.","score":5},
-                    {"id":"b","text":"Hemen yedek ekipman devreye alıp üretimi sürdürme, sonra analiz yapma","feedback":"Pragmatik yaklaşım, üretim sürekliliğini sağlar ama kök neden çözülmezse tekrar edebilir. Kısa vadeli çözüm.","score":3},
-                    {"id":"c","text":"En deneyimli operatörleri bu hatta görevlendirip performansı izleme","feedback":"İnsan faktörüne odaklanmış çözüm. Faydalı olabilir ama ekipman veya süreç sorunuysa çözmez. Diğer hatları etkileyebilir.","score":3},
-                    {"id":"d","text":"Tüm üretim parametrelerini fabrika ayarlarına resetleyip sıfırdan başlama","feedback":"Riskli yaklaşım. Daha fazla problem yaratabilir ve standardizasyon ilkelerine aykırı. Sorunun kaynağını anlamadan müdahale tehlikelidir.","score":2}
+                    {"id":"a","text":"Immediate root cause analysis ile 8D metodolojisi uygulayarak sistematik problem çözme","feedback":"Mükemmel yaklaşım. 8D (8 Disciplines) endüstride standart problem solving metodudur. Kök nedeni bulup kalıcı çözüm sağlar. Takım çalışmasını da destekler."},
+                    {"id":"b","text":"Hemen yedek ekipman devreye alıp üretimi sürdürme, sonra analiz yapma","feedback":"Pragmatik yaklaşım, üretim sürekliliğini sağlar ama kök neden çözülmezse tekrar edebilir. Kısa vadeli çözüm."},
+                    {"id":"c","text":"En deneyimli operatörleri bu hatta görevlendirip performansı izleme","feedback":"İnsan faktörüne odaklanmış çözüm. Faydalı olabilir ama ekipman veya süreç sorunuysa çözmez. Diğer hatları etkileyebilir."},
+                    {"id":"d","text":"Tüm üretim parametrelerini fabrika ayarlarına resetleyip sıfırdan başlama","feedback":"Riskli yaklaşım. Daha fazla problem yaratabilir ve standardizasyon ilkelerine aykırı. Sorunun kaynağını anlamadan müdahale tehlikelidir."}
                 ]
             },
             "message": "Endüstri Mühendisliği'ne özel simülasyon oluşturuldu"
@@ -1462,10 +1459,10 @@ def generate_degree_specific_simulation(profile):
                 "situation": "Production'da kritik bir API endpoint'te unexpected error rate artışı var (%0.1'den %2.5'e çıktı). Monitoring sistemleri alarm veriyor ve müşteri deneyimi etkileniyor. Database connection pool, memory usage ve network latency metriklerini inceleme gerekiyor.",
                 "question": "Bu production issue'yu nasıl handle edersiniz?",
                 "options": [
-                    {"id":"a","text":"Incident response procedure başlatıp, monitoring dashboard'larını deep dive analysis yapma","feedback":"Mükemmel yaklaşım. Önce impact assessment, sonra systematic debugging. Industry best practice olan incident management sürecini takip ediyor.","score":5},
-                    {"id":"b","text":"Hemen rollback yapıp previous stable version'a dönme","feedback":"Safe approach ama root cause'u çözmez. Eğer issue yeni deploy'dan kaynaklıysa mantıklı, ama investigation eksik kalır.","score":4},
-                    {"id":"c","text":"Load balancer'dan problematic instance'ları çıkarıp scale up yapma","feedback":"Pragmatik immediate action ama underlying problem persist edebilir. Temporary fix, permanent solution değil.","score":3},
-                    {"id":"d","text":"Database cache'ini clear edip application server'ları restart etme","feedback":"Risky approach. Data loss riski var ve root cause analysis yapmadan shotgun debugging yaklaşımı. Professional ortamda önerilmez.","score":2}
+                    {"id":"a","text":"Incident response procedure başlatıp, monitoring dashboard'larını deep dive analysis yapma","feedback":"Mükemmel yaklaşım. Önce impact assessment, sonra systematic debugging. Industry best practice olan incident management sürecini takip ediyor."},
+                    {"id":"b","text":"Hemen rollback yapıp previous stable version'a dönme","feedback":"Safe approach ama root cause'u çözmez. Eğer issue yeni deploy'dan kaynaklıysa mantıklı, ama investigation eksik kalır."},
+                    {"id":"c","text":"Load balancer'dan problematic instance'ları çıkarıp scale up yapma","feedback":"Pragmatik immediate action ama underlying problem persist edebilir. Temporary fix, permanent solution değil."},
+                    {"id":"d","text":"Database cache'ini clear edip application server'ları restart etme","feedback":"Risky approach. Data loss riski var ve root cause analysis yapmadan shotgun debugging yaklaşımı. Professional ortamda önerilmez."}
                 ]
             },
             "message": "Yazılım Mühendisliği'ne özel simülasyon oluşturuldu"
@@ -1523,10 +1520,10 @@ def generate_degree_specific_simulation(profile):
                 "situation": "Projenizde beklenmedik bir zorlukla karşılaştınız ve alternatif yaklaşımlar değerlendirmeniz gerekiyor.",
                 "question": "Bu durumda nasıl hareket edersiniz?",
                 "options": [
-                    {"id":"a","text":"Sistematik analiz yapıp alternatif çözümler geliştirmek","feedback":"Methodical approach, sürdürülebilir sonuçlar verir","score":5},
-                    {"id":"b","text":"Ekiple brainstorm yapıp yaratıcı çözümler bulmak","feedback":"Collaborative approach, iyi fikirler çıkabilir","score":4},
-                    {"id":"c","text":"Benzer projelerden referans alıp adapte etmek","feedback":"Practical approach ama unique challenge'ları kaçırabilir","score":3},
-                    {"id":"d","text":"Hızlı karar verip deneme yanılma ile ilerlemek","feedback":"Risky approach, resources waste edebilir","score":2}
+                    {"id":"a","text":"Sistematik analiz yapıp alternatif çözümler geliştirmek","feedback":"Methodical approach, sürdürülebilir sonuçlar verir"},
+                    {"id":"b","text":"Ekiple brainstorm yapıp yaratıcı çözümler bulmak","feedback":"Collaborative approach, iyi fikirler çıkabilir"},
+                    {"id":"c","text":"Benzer projelerden referans alıp adapte etmek","feedback":"Practical approach ama unique challenge'ları kaçırabilir"},
+                    {"id":"d","text":"Hızlı karar verip deneme yanılma ile ilerlemek","feedback":"Risky approach, resources waste edebilir"}
                 ]
             },
             "message": f"{degree} alanına uygun genel simülasyon oluşturuldu"

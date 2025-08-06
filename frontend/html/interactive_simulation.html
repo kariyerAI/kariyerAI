@@ -251,14 +251,7 @@
             transform: none;
         }
 
-        .score-display {
-            background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
-            color: white;
-            padding: 1rem;
-            border-radius: 8px;
-            text-align: center;
-            margin-bottom: 1.5rem;
-        }
+      
 
         .hidden {
             display: none !important;
@@ -296,10 +289,7 @@
                 </div>
 
                 <div class="flex items-center gap-6">
-                    <div class="flex items-center gap-2 text-sm">
-                        <i class="fas fa-star text-yellow-500"></i>
-                        <span id="totalScore">Skor: 0</span>
-                    </div>
+                    
                     <div class="flex items-center gap-2 text-sm">
                         <i class="fas fa-clock"></i>
                         <span id="simulationTimer">--:--</span>
@@ -315,11 +305,7 @@
     <div class="simulation-workspace">
         <!-- Task Sidebar -->
         <div class="task-sidebar">
-            <div class="score-display">
-                <h3>Günlük Performans</h3>
-                <div style="font-size: 1.8rem; font-weight: bold;" id="scoreDisplay">0</div>
-                <p style="font-size: 0.8rem; margin-top: 0.25rem;">puan</p>
-            </div>
+           
 
             <div class="progress-tracker">
                 <h4>İlerleme</h4>
@@ -483,7 +469,6 @@
                 <h4 style="margin-bottom: 0.5rem;">İstatistikler</h4>
                 <div style="font-size: 0.875rem; color: #6b7280;">
                     <p>Toplam Süre: <span id="totalTime">00:00</span></p>
-                    <p>Ortalama Skor: <span id="averageScore">0</span></p>
                     <p>Tamamlanan: <span id="completedTasks">0</span></p>
                 </div>
             </div>
