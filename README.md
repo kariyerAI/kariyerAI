@@ -1,4 +1,32 @@
 # 🚀 KariyerAI - Yapay Zeka Destekli Kariyer Asistanı
+KariyerAI, bireylerin kariyer yolculuklarında ihtiyaç duydukları desteği sunmak üzere geliştirilen, yapay zeka tabanlı kapsamlı bir kariyer gelişim platformudur. Platform, kullanıcıların CV’lerini analiz ederek güçlü yönlerini ve gelişime açık alanlarını belirler, ardından onlara özel iş ilanları, beceri geliştirme önerileri ve kişiselleştirilmiş öğrenme planları sunar. KariyerAI’nin amacı, özellikle iş hayatına yeni girecek olan kullanıcıların kendilerini daha iyi tanımalarını, doğru fırsatlarla buluşmalarını ve kariyerlerini bilinçli bir şekilde yönlendirmelerini sağlamaktır.
+
+Kullanıcılar platforma giriş yaptıktan sonra, ilk olarak CV’lerini sisteme yükler. Gelişmiş yapay zeka motoru, bu belgeyi analiz ederek kişinin eğitim geçmişini, iş deneyimlerini, teknik ve sosyal becerilerini tanımlar, kişi profilini oluşturur. Bu veriler kullanılarak tüm iş ilanı platformlarında yer alan iş ilanlarıyla kullanıcının profilini eşleştirir. Her bir ilan için eşleşme yüzdesi gösterilir ve kullanıcı, hangi pozisyonlara ne kadar uygun olduğunu net bir şekilde görebilir.
+
+İlan detaylarında kullanıcının eşleşen ve o işe göre eksik kalan yetkinlikleri belirtilir. Bu sayede kullanıcı yalnızca hangi iş ilanına başvurması gerektiğini değil, aynı zamanda hangi becerileri geliştirmesi gerektiğini de doğrudan öğrenmiş olur. Platform, eksik yetkinliklere göre otomatik olarak kişiselleştirilmiş bir öğrenme yol haritası oluşturur. Kullanıcı isterse bu önerileri “Öğrenmek İstiyorum” listesine ekleyebilir, hâlihazırda bildiği becerileri ise “Biliyorum” olarak işaretleyebilir. Bu eksik yetkinliklere göre de kullanıcıya öğrenmek istediği yetkinliğin eğitim modülü verilir.
+
+KariyerAI yalnızca teknik becerilere odaklanmaz; aynı zamanda kişisel ve sosyal yetkinlikleri de değerlendirir. Bu kapsamda kullanıcıya 20 soruluk bir kişilik testi sunulur. Bu test sayesinde kullanıcının takım içindeki rolü, iletişim tarzı ve hangi pozisyonlarda daha başarılı olabileceği analiz edilir. Elde edilen sonuçlarla iş simülasyonu daha isabetli hale getirir.
+
+Platformun en güçlü yönlerinden biri de interaktif simülasyonlardır. Kullanıcılar, müşteri görüşmeleri, iş mülakatları, takım toplantıları gibi gerçek dünya senaryolarını deneyimleyerek pratik yapabilir. Sanki gerçekten iş yerinde bilgisayarından çalışıyormuş izlenimi verilir. Her simülasyondan sonra kullanıcıya gerçek zamanlı geri bildirim verilir. Ayrıca, e-posta simülasyon modülü sayesinde kullanıcılar iş başvurusu, networking ya da müşteri yazışmaları gibi profesyonel iletişim becerilerini geliştirme fırsatı bulur.
+
+Tüm bu özellikler, KariyerAI’yi sadece bir iş bulma aracı değil, aynı zamanda tam donanımlı bir kariyer koçu haline getirir. Platform, her kullanıcıya özel olarak şekillenen deneyimiyle kariyer planlamasını daha akıllı, etkili ve kişisel bir hale getirir.
+
+KariyerAI, modern web teknolojileri ve güçlü yapay zeka servislerinin bir araya geldiği, uçtan uca tasarlanmış bir yapay zeka destekli kariyer asistanı platformudur. Sistem; frontend, backend, veritabanı ve üçüncü parti servislerden oluşan çok katmanlı bir mimariye sahiptir.
+
+Platformun kullanıcı arayüzü HTML, CSS ve JavaScript kullanılarak geliştirilmiştir.
+Tasarımda, kullanıcı dostu ve modern bir arayüz oluşturulmuştur. Ana bileşenler şunlardır:
+HTML: Sayfa iskelet yapıları, form elemanları ve dinamik içerik bölmeleri
+CSS: Grid ve Flexbox ile düzenlenen responsive layout, tema renkleri ve tipografi
+JavaScript: Form validasyonu, kullanıcı etkileşimleri, API çağrıları ve sayfa içi dinamik davranışlar
+
+Sunucu tarafı işlemler Python programlama dili ile yazılmış, hafif ama güçlü bir web çatısı olan Flask kullanılmıştır.Flask uygulaması, CORS ve dotenv desteğiyle yapılandırılmış, frontend ile entegrasyon sorunsuz bir şekilde sağlanmıştır.
+
+Verilerin yönetimi ve kullanıcı kimlik doğrulaması için Supabase'i kullanır. Supabase, PostgreSQL tabanlı bir açık kaynak BaaS platformudur.
+
+API kullanımı olarak SERPAPI, kullanıcının yetkinliklerine göre Google’dan iş ilanlarını çeken ve eşleşme oranlarına göre filtreleyen bir API’dir. Pozisyon, firma, konum gibi bilgiler frontend’e aktarılır ve güncel iş fırsatları sunulur. Gemini 2.0 API, KariyerAI platformunda kullanıcıların yüklediği CV’leri çoklu ajan (multi-agent) mimarisi ile detaylıca analiz eder; deneyim, eğitim, teknik ve sosyal becerileri otomatik olarak çıkarır ve JSON formatında yapılandırılmış çıktılar üretir. Bu veriler doğrultusunda kullanıcıya özel eğitim modelleri oluşturur, kişiselleştirilmiş simülasyon görevleri tasarlar ve her görev sonrası yapay zeka destekli geri bildirimler sağlar. Böylece kullanıcıların hem becerilerini geliştirmeleri hem de kariyer hedeflerine uygun şekilde yönlendirilmesi mümkün olur.
+Ek olarak CORS yapılandırması ile frontend-backend güvenli iletişim sağlanır. Environment (.env) dosyaları ile API key'lerin gizli tutulur.
+
+KariyerAI, modern web geliştirme teknolojileri ile güçlü yapay zeka servislerini birleştirerek kullanıcıya hem görsel açıdan etkileyici hem de işlevsel bir kariyer deneyimi sunar. Flask tabanlı modüler backend yapısı, Supabase entegrasyonu, Google Gemini LLM gücü ve simülasyon özellikleriyle KariyerAI, yalnızca bir platform değil, uçtan uca bir kariyer koçudur.
 
 ## ✨ Kariyerinizi Yapay Zeka ile Şekillendirin!
 
